@@ -1,0 +1,85 @@
+{
+  "name": "ultra-ui-rn",
+  "version": "0.1.0",
+  "description": "React Native port of uview-plus with UP-prefixed components.",
+  "license": "MIT",
+  "main": "./lib/commonjs/index.js",
+  "module": "./lib/module/index.js",
+  "types": "./lib/typescript/src/index.d.ts",
+  "react-native": "./src/index.ts",
+  "source": "./src/index.ts",
+  "files": [
+    "src",
+    "lib",
+    "react-native.config.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "bob build",
+    "clean": "bob clean",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.{ts,tsx}\" \"tests/**/*.{ts,tsx}\"",
+    "test": "jest --runInBand"
+  },
+  "peerDependencies": {
+    "@react-native-documents/picker": "^12.0.2",
+    "react": "^19.2.3",
+    "react-native": "^0.86.0",
+    "react-native-image-picker": "^8.2.1"
+  },
+  "peerDependenciesMeta": {
+    "@react-native-documents/picker": {
+      "optional": true
+    },
+    "react-native-image-picker": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "react-native-canvas": "^0.1.40",
+    "react-native-gesture-handler": "^3.1.0",
+    "react-native-reanimated": "^4.5.3",
+    "react-native-safe-area-context": "^5.8.0",
+    "react-native-webview": "^14.0.1",
+    "react-native-worklets": "^0.11.0"
+  },
+  "devDependencies": {
+    "@react-native-community/cli": "^20.2.0",
+    "@react-native/babel-preset": "0.86.1",
+    "@react-native/jest-preset": "0.86.0",
+    "@react-native/metro-config": "0.86.1",
+    "@react-native/typescript-config": "0.86.1",
+    "@testing-library/react-native": "13.3.3",
+    "@types/jest": "^29.5.14",
+    "@types/react": "^19.2.17",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.0.0",
+    "react": "19.2.8",
+    "react-native": "0.86.0",
+    "react-native-builder-bob": "0.43.0",
+    "react-test-renderer": "19.2.8",
+    "typescript": "^5.9.0"
+  },
+  "react-native-builder-bob": {
+    "source": "src",
+    "output": "lib",
+    "targets": [
+      [
+        "commonjs",
+        {
+          "esm": true
+        }
+      ],
+      [
+        "typescript",
+        {
+          "project": "tsconfig.build.json"
+        }
+      ]
+    ]
+  }
+}
