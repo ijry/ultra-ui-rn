@@ -102,3 +102,4 @@ export * from './canvas';
 export * from './qrcode';
 export * from './barcode';
 export * from './upload';
+export * from './lazy-load';
