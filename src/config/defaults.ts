@@ -669,6 +669,18 @@ export type UPTreeDefaults = {
   height: number | string;
 };
 
+export type UPWaterfallDefaults = {
+  value: readonly unknown[];
+  columns: number | 'auto';
+  columnsMin: number;
+  minColumnWidth: number | string;
+  addTime: number;
+  idKey: string;
+  optimizeItemArrangement: boolean;
+  estimatedItemSize: number | string;
+  height: number | string;
+};
+
 export type UPProps = {
   button: UPButtonDefaults;
   icon: UPIconDefaults;
@@ -758,6 +770,7 @@ export type UPProps = {
   upload: UPUploadDefaults;
   lazyLoad: UPLazyLoadDefaults;
   tree: UPTreeDefaults;
+  waterfall: UPWaterfallDefaults;
   indexList: UPIndexListDefaults;
   indexAnchor: UPIndexAnchorDefaults;
   subsection: UPSubsectionDefaults;
@@ -1360,6 +1373,17 @@ export const sourceDefaults: Readonly<{
       indent: 32,
       nodeKey: '',
       showCheckbox: false,
+    }),
+    waterfall: Object.freeze({
+      addTime: 200,
+      columns: 2 as const,
+      columnsMin: 2,
+      estimatedItemSize: 160,
+      height: '100%',
+      idKey: 'id',
+      minColumnWidth: 230,
+      optimizeItemArrangement: false,
+      value: Object.freeze([]) as readonly unknown[],
     }),
     indexList: Object.freeze({ inactiveColor: '#606266', activeColor: '#5677fc', indexList: Object.freeze([]) as readonly unknown[], sticky: true, customNavHeight: 0, safeBottomFix: false, itemMargin: '0rpx' }),
     indexAnchor: Object.freeze({ text: '', color: '#606266', size: 14, bgColor: '#f1f1f1', height: 32 }),

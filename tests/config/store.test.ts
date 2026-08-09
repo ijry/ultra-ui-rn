@@ -107,6 +107,41 @@ it('merges tree defaults through setUPConfig', () => {
   );
 });
 
+it('merges waterfall defaults through setUPConfig', () => {
+  resetUPConfigForTests();
+
+  expect(getUPConfig().props.waterfall).toEqual(
+    expect.objectContaining({
+      addTime: 200,
+      columns: 2,
+      columnsMin: 2,
+      idKey: 'id',
+      minColumnWidth: 230,
+      optimizeItemArrangement: false,
+      value: [],
+    }),
+  );
+
+  setUPConfig({
+    props: {
+      waterfall: {
+        addTime: 0,
+        columns: 'auto',
+        minColumnWidth: 180,
+      },
+    },
+  });
+
+  expect(getUPConfig().props.waterfall).toEqual(
+    expect.objectContaining({
+      addTime: 0,
+      columns: 'auto',
+      minColumnWidth: 180,
+      optimizeItemArrangement: false,
+    }),
+  );
+});
+
 it('merges a color override without losing source defaults', () => {
   setUPConfig({ color: { primary: '#000000' } });
 
