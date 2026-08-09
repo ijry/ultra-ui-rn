@@ -1,6 +1,7 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import {
+  Pressable,
   ScrollView,
   Text,
   View,
@@ -13,11 +14,15 @@ import { useUPConfig } from '../../config/useUPConfig';
 import { getPx, type UPDimension } from '../../utils';
 import {
   buildTable2SpanMap,
+  collectTable2ExpandableKeys,
+  collectTable2SelectableKeys,
   createTable2CellPayload,
   filterTable2Rows,
   flattenTable2Rows,
   normalizeTable2Tree,
+  resolveTable2Rows,
   sortTable2Rows,
+  toggleTable2Selection,
   type UPTable2CellSpan,
   type UPTable2TreeModel,
   type UPTable2VisibleRow,
@@ -29,6 +34,7 @@ import type {
   UPTable2Props,
   UPTable2RowPayload,
 } from './types';
+import type { UPKey } from '../tree/types';
 
 function resolveHeight(value: UPDimension | undefined): ViewStyle['height'] {
   if (value === undefined || value === '' || String(value).trim() === 'auto') {
@@ -158,9 +164,29 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
     ),
     [childrenKey, hasChildrenKey, props.rowKey, sourceRows],
   );
+  const [localSelectedKeys, setLocalSelectedKeys] = useState<readonly UPKey[]>(
+    () => [...(props.defaultSelectedRowKeys ?? [])],
+  );
+  const [localExpandedKeys, setLocalExpandedKeys] = useState<readonly UPKey[]>(
+    () => props.defaultExpandAll
+      ? collectTable2ExpandableKeys(model)
+      : [...(props.defaultExpandedRowKeys ?? [])],
+  );
+  const [localCurrentKey, setLocalCurrentKey] = useState<UPKey | null>(
+    () => props.defaultCurrentRowKey ?? null,
+  );
+  const selectedKeys = props.selectedRowKeys !== undefined
+    ? props.selectedRowKeys
+    : localSelectedKeys;
+  const expandedKeys = props.expandedRowKeys !== undefined
+    ? props.expandedRowKeys
+    : localExpandedKeys;
+  const currentKey = props.currentRowKey !== undefined
+    ? props.currentRowKey
+    : localCurrentKey;
   const visibleRows = useMemo(
-    () => flattenTable2Rows(model, [], []),
-    [model],
+    () => flattenTable2Rows(model, expandedKeys, selectedKeys),
+    [expandedKeys, model, selectedKeys],
   );
   const spanMap = useMemo(
     () => buildTable2SpanMap(visibleRows, columns, props.spanMethod, props.context),
@@ -170,6 +196,64 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
   const listRef = useRef<FlashListRef<UPTable2VisibleRow<T>> | null>(null);
   const fixedListRef = useRef<FlashListRef<UPTable2VisibleRow<T>> | null>(null);
   const syncingVerticalRef = useRef(false);
+
+  const selectRow = (key: UPKey, nextSelected: boolean): void => {
+    const nextKeys = toggleTable2Selection(model, selectedKeys, key, nextSelected);
+    if (props.selectedRowKeys === undefined) setLocalSelectedKeys(nextKeys);
+    const selectedRows = resolveTable2Rows(model, nextKeys);
+    const row = model.nodes.get(key)?.row;
+    if (row) props.onSelect?.(row, selectedRows, nextKeys);
+    props.onSelectionChange?.(selectedRows, nextKeys);
+  };
+
+  const selectAll = (nextSelected: boolean): void => {
+    const nextKeys = nextSelected ? collectTable2SelectableKeys(model) : [];
+    if (props.selectedRowKeys === undefined) setLocalSelectedKeys(nextKeys);
+    const selectedRows = resolveTable2Rows(model, nextKeys);
+    props.onSelectAll?.(selectedRows, nextKeys);
+    props.onSelectionChange?.(selectedRows, nextKeys);
+  };
+
+  const toggleExpanded = (key: UPKey): void => {
+    const node = model.nodes.get(key);
+    if (!node?.hasChildren) return;
+    const isExpanded = expandedKeys.includes(key);
+    const nextKeys = isExpanded
+      ? expandedKeys.filter((candidate) => candidate !== key)
+      : [...expandedKeys, key];
+    if (props.expandedRowKeys === undefined) setLocalExpandedKeys(nextKeys);
+    props.onExpandChange?.(nextKeys, node.row);
+  };
+
+  const handleRowPress = (row: UPTable2VisibleRow<T>): void => {
+    const payload = resolveRowPayload(row, props.context);
+    props.onRowClick?.(row.row, payload);
+    if (!props.highlightCurrentRow) return;
+    const previousRow = currentKey === null || currentKey === undefined
+      ? null
+      : model.nodes.get(currentKey)?.row ?? null;
+    if (props.currentRowKey === undefined) setLocalCurrentKey(row.key);
+    props.onCurrentChange?.(row.row, previousRow);
+  };
+
+  const handleCellPress = (
+    row: UPTable2VisibleRow<T>,
+    column: UPTable2Column<T>,
+    columnIndex: number,
+  ): void => {
+    const payload = createTable2CellPayload(
+      row,
+      column,
+      columnIndex,
+      props.context,
+      () => selectRow(row.key, !row.selected),
+      () => toggleExpanded(row.key),
+    );
+    props.onCellClick?.(payload);
+  };
+
+  const allRowsSelected = model.nodes.size > 0
+    && collectTable2SelectableKeys(model).every((key) => selectedKeys.includes(key));
 
   const renderHeader = (
     headerColumns: readonly { column: UPTable2Column<T>; columnIndex: number }[],
@@ -198,6 +282,16 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
           ?? column.label
           ?? column.key;
         const width = resolveColumnWidth(column);
+        const headerContent = column.type === 'selection' ? (
+          <Pressable
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: allRowsSelected }}
+            onPress={() => selectAll(!allRowsSelected)}
+            testID="up-table2-select-all"
+          >
+            <Text>{allRowsSelected ? '✓' : ''}</Text>
+          </Pressable>
+        ) : renderContent(content);
         return (
           <View
             key={column.key}
@@ -217,7 +311,7 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
             ]}
             testID={`up-table2-header-${column.key}`}
           >
-            {renderContent(content)}
+            {headerContent}
           </View>
         );
       })}
@@ -233,10 +327,13 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
       ? props.rowStyle(rowPayload)
       : props.rowStyle;
     return (
-      <View
+      <Pressable
+        onPress={() => handleRowPress(row)}
         style={[
           {
-            backgroundColor: props.highlightCurrentRow && row.selected ? '#e6f4ff' : '#ffffff',
+            backgroundColor: props.highlightCurrentRow && row.key === currentKey
+              ? '#e6f4ff'
+              : '#ffffff',
             flexDirection: 'row',
             height: rowHeight,
             minWidth: rowColumns.reduce(
@@ -261,16 +358,40 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
             column,
             columnIndex,
             props.context,
-            () => undefined,
-            () => undefined,
+            () => selectRow(row.key, !row.selected),
+            () => toggleExpanded(row.key),
           );
           const value = valueAt(row.row, column.key);
           const content = column.renderCell?.(payload)
             ?? renderContent(value === undefined || value === null ? null : String(value));
           const cellStyle = props.cellStyle?.(payload);
+          const cellContent = column.type === 'selection' ? (
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: row.selected }}
+              onPress={() => selectRow(row.key, !row.selected)}
+              testID={`up-table2-select-${String(row.key)}`}
+            >
+              <Text>{row.selected ? '✓' : ''}</Text>
+            </Pressable>
+          ) : (
+            <>
+              {column.type === 'expand' && row.hasChildren ? (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => toggleExpanded(row.key)}
+                  testID={`up-table2-expand-${String(row.key)}`}
+                >
+                  <Text>{row.expanded ? '−' : '+'}</Text>
+                </Pressable>
+              ) : null}
+              {content}
+            </>
+          );
           return (
-            <View
+            <Pressable
               key={column.key}
+              onPress={() => handleCellPress(row, column, columnIndex)}
               style={[
                 {
                   alignItems: 'center',
@@ -289,11 +410,11 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
               ]}
               testID={`up-table2-cell-${String(row.key)}-${column.key}`}
             >
-              {content}
-            </View>
+              {cellContent}
+            </Pressable>
           );
         })}
-      </View>
+      </Pressable>
     );
   };
 

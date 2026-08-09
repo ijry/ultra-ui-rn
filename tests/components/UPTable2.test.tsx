@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text } from 'react-native';
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 import { UPRoot, UPTable2, type UPTable2Column } from '../../src';
 
 function renderRoot(node: React.ReactElement) {
@@ -71,4 +71,80 @@ it('renders fixed and scrollable column planes with stable row keys', () => {
   expect(screen.getByTestId('up-table2-fixed-plane')).toBeTruthy();
   expect(screen.getByTestId('up-table2-main-plane')).toBeTruthy();
   expect(screen.getAllByTestId('up-table2-row-a').length).toBeGreaterThanOrEqual(2);
+});
+
+it('updates uncontrolled selection, select-all, and recursive tree selection', () => {
+  const onSelectionChange = jest.fn();
+  const onSelect = jest.fn();
+  const screen = renderRoot(
+    <UPTable2
+      columns={[
+        { key: 'select', title: '', type: 'selection', width: 48 },
+        { key: 'name', title: 'Name', type: 'expand' },
+      ]}
+      data={[{
+        id: 'root',
+        name: 'Root',
+        children: [{ id: 'child', name: 'Child' }],
+      }]}
+      defaultExpandedRowKeys={['root']}
+      onSelect={onSelect}
+      onSelectionChange={onSelectionChange}
+    />,
+  );
+
+  fireEvent.press(screen.getByTestId('up-table2-select-root'));
+  expect(onSelect).toHaveBeenCalledWith(
+    expect.objectContaining({ id: 'root' }),
+    expect.arrayContaining([expect.objectContaining({ id: 'child' })]),
+    ['root', 'child'],
+  );
+  expect(onSelectionChange).toHaveBeenLastCalledWith(
+    expect.arrayContaining([expect.objectContaining({ id: 'root' })]),
+    ['root', 'child'],
+  );
+});
+
+it('does not change controlled selection or caller-owned arrays', () => {
+  const selectedRowKeys = ['root'];
+  const onSelectionChange = jest.fn();
+  const screen = renderRoot(
+    <UPTable2
+      columns={[{ key: 'name', title: 'Name' }, { key: 'select', type: 'selection' }]}
+      data={[{ id: 'root', name: 'Root' }]}
+      onSelectionChange={onSelectionChange}
+      selectedRowKeys={selectedRowKeys}
+    />,
+  );
+
+  fireEvent.press(screen.getByTestId('up-table2-select-root'));
+  expect(selectedRowKeys).toEqual(['root']);
+  expect(onSelectionChange).toHaveBeenCalledWith([], []);
+  expect(screen.getByTestId('up-table2-select-root').props.accessibilityState.checked).toBe(true);
+});
+
+it('supports current-row and expansion callbacks with cell payload toggles', () => {
+  const onCurrentChange = jest.fn();
+  const onExpandChange = jest.fn();
+  const onCellClick = jest.fn();
+  const screen = renderRoot(
+    <UPTable2
+      columns={[{ key: 'name', title: 'Name', type: 'expand' }]}
+      data={[{ id: 'root', name: 'Root', children: [{ id: 'child', name: 'Child' }] }]}
+      highlightCurrentRow
+      onCellClick={onCellClick}
+      onCurrentChange={onCurrentChange}
+      onExpandChange={onExpandChange}
+    />,
+  );
+
+  fireEvent.press(screen.getByTestId('up-table2-expand-root'));
+  expect(onExpandChange).toHaveBeenCalledWith(['root'], expect.objectContaining({ id: 'root' }));
+  fireEvent.press(screen.getByTestId('up-table2-row-root'));
+  expect(onCurrentChange).toHaveBeenCalledWith(expect.objectContaining({ id: 'root' }), null);
+  fireEvent.press(screen.getByTestId('up-table2-cell-root-name'));
+  expect(onCellClick).toHaveBeenCalledWith(expect.objectContaining({
+    row: expect.objectContaining({ id: 'root' }),
+    column: expect.objectContaining({ key: 'name' }),
+  }));
 });
