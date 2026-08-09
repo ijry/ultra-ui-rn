@@ -49,6 +49,22 @@ from the screen that owns scrolling.
 <UPLazyLoad src={imageUrl} visible={isImageVisible} width="100%" height={180} />;
 ```
 
+### Tree
+
+`UPTree` accepts arbitrary object nodes. Use `fieldNames` when the application
+uses different key, label, children, or disabled fields. Pass
+`expandedKeys`, `checkedKeys`, and `currentNodeKey` for controlled state, or
+use the corresponding `default*` props for local state.
+
+```tsx
+<UPTree
+  data={nodes}
+  fieldNames={{ nodeKey: 'code', label: 'title', children: 'items' }}
+  showCheckbox
+  onCheck={(node, state) => setCheckedKeys(state.checkedKeys)}
+/>
+```
+
 ## Status
 
 - [Design](docs/superpowers/specs/2026-07-25-ultra-ui-react-native-design.md)
@@ -144,4 +160,6 @@ application-owned persistence for `keepRunning`.
 P32 adds `UPUpload` and `UPLazyLoad`, preserving source upload queue callbacks
 through explicit picker/upload adapters and source lazy image behavior through
 controlled or scroll-host-provided visibility inputs.
+P33 adds `UPTree` with virtualized visible rows, expansion/current/check state,
+field mapping, custom node rendering, and imperative ref methods.
 Remaining source components stay explicitly tracked in the gap matrix.

@@ -1024,3 +1024,16 @@ host-owned.
 visibility inputs. Use controlled `visible`, or pass `viewport` and
 `scrollOffset` from the screen that owns scrolling. `UPImage.lazyLoad` remains a
 retained compatibility prop and does not start global lazy loading.
+
+## P33 tree
+
+`UPTree` maps the source tree component to a virtualized React Native row
+model. It supports configurable node fields, expansion, current-node
+highlighting, checkbox parent-child propagation, half-checked state, strict
+checking, accordion expansion, custom node rendering, and imperative checked
+and current-node methods.
+
+The component requires stable unique node keys for controlled state and ref
+operations. Missing or duplicate keys use deterministic internal fallbacks and
+emit development warnings. CSS classes remain accepted as `customClass` but
+have no React Native CSS runtime.

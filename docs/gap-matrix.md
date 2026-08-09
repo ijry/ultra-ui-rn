@@ -355,6 +355,13 @@ Source: `uview-plus` 3.8.86. Status values: Supported, Emulated, No-op retained,
 | `u-lazy-load` | source lazy image visibility and placeholder behavior | `UPLazyLoad` | Explicit `visible` or host scroll/viewport inputs render placeholders before mounting `UPImage` or custom content | Emulated | `tests/components/UPLazyLoad.test.tsx` |
 | `u-image` lazy loading | `lazyLoad` prop | Use `UPLazyLoad` wrapper | `UPImage.lazyLoad` remains a typed compatibility prop; implicit global lazy loading is not provided | No-op retained | `src/components/image/UPImage.tsx` |
 
+## P33 Tree
+
+| Component | Source API | React Native API | Default / behavior | Status | Test |
+|---|---|---|---|---|---|
+| `u-tree` | data, node key/label/children fields, expansion, current node, checkbox, half-check, accordion, scoped node slot, ref methods | `UPTree`, `UPTreeRef`, `fieldNames`, `renderNode` | DFS visible-row model rendered by FlashList; raw nodes are preserved in callbacks and parent-child check state is derived without mutating input data | Emulated | `tests/components/UPTree.test.tsx` |
+| `u-tree` | async child loading, drag sorting, CSS class behavior | Retained props / deferred | Application owns data fetching and ordering; React Native does not run source CSS classes | Deferred / No-op retained | Component prop types |
+
 ## Deferred Source Components
 
 All upstream component directories not listed above remain deferred to later approved phases. They are intentionally not exported before their props, default styles, tests, and matrix rows are complete.

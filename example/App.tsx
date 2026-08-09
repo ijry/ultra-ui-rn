@@ -119,6 +119,7 @@ import {
   UPTitle,
   UPToolbar,
   UPTr,
+  UPTree,
   UPUpload,
   type UPUploadAdapter,
   UPVirtualList,
@@ -177,6 +178,18 @@ const demoGuidePages = [
   { desc: 'PanResponder 拖拽排序', title: 'UPDragsort' },
   { desc: 'UPCanvas 签名导出', title: 'UPSignature' },
   { desc: 'Overlay 全屏引导', title: 'UPGuide' },
+] as const;
+
+const demoTree = [
+  {
+    id: 'media',
+    label: 'Media',
+    children: [
+      { id: 'images', label: 'Images' },
+      { id: 'videos', label: 'Videos' },
+    ],
+  },
+  { id: 'settings', label: 'Settings' },
 ] as const;
 
 function App() {
@@ -353,6 +366,14 @@ function App() {
             src="https://picsum.photos/seed/lazy-load/600/240"
             visible
             width="100%"
+          />
+          <Text style={styles.section}>Tree</Text>
+          <UPTree
+            data={demoTree}
+            defaultExpandedKeys={['media']}
+            height={180}
+            renderNode={({ label, level }) => <UPText text={`${'  '.repeat(level)}${label}`} />}
+            showCheckbox
           />
           <Text style={styles.section}>Index list</Text>
           <UPIndexList
