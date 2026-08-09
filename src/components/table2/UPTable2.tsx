@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import {
   Pressable,
@@ -33,6 +33,7 @@ import type {
   UPTable2HeaderPayload,
   UPTable2Props,
   UPTable2RowPayload,
+  UPTable2SortCondition,
 } from './types';
 import type { UPKey } from '../tree/types';
 
@@ -143,16 +144,34 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
     1,
     columnsWithIndex.reduce((total, { column }) => total + resolveColumnWidth(column), 0),
   );
+  const [sortConditions, setSortConditions] = useState<
+    readonly UPTable2SortCondition<T>[]
+  >([]);
+  const [loadedChildren, setLoadedChildren] = useState<
+    ReadonlyMap<UPKey, readonly T[]>
+  >(() => new Map());
+  const [loadingKeys, setLoadingKeys] = useState<ReadonlySet<UPKey>>(
+    () => new Set(),
+  );
+  const attemptedLazyKeysRef = useRef(new Set<UPKey>());
   const sourceRows = useMemo(
     () => sortTable2Rows(
       filterTable2Rows(data, props.filters ?? {}),
       columns,
-      [],
+      sortConditions,
       props.sortBy,
       props.sortMethod,
       props.context,
     ),
-    [columns, data, props.context, props.filters, props.sortBy, props.sortMethod],
+    [
+      columns,
+      data,
+      props.context,
+      props.filters,
+      props.sortBy,
+      props.sortMethod,
+      sortConditions,
+    ],
   );
   const model = useMemo<UPTable2TreeModel<T>>(
     () => normalizeTable2Tree(
@@ -160,9 +179,9 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
       props.rowKey,
       childrenKey,
       hasChildrenKey,
-      new Map(),
+      loadedChildren,
     ),
-    [childrenKey, hasChildrenKey, props.rowKey, sourceRows],
+    [childrenKey, hasChildrenKey, loadedChildren, props.rowKey, sourceRows],
   );
   const [localSelectedKeys, setLocalSelectedKeys] = useState<readonly UPKey[]>(
     () => [...(props.defaultSelectedRowKeys ?? [])],
@@ -184,6 +203,52 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
   const currentKey = props.currentRowKey !== undefined
     ? props.currentRowKey
     : localCurrentKey;
+  useEffect(() => {
+    props.onFilterChange?.({ ...(props.filters ?? {}) });
+  }, [props.filters, props.onFilterChange]);
+
+  const loadChildren = (row: T, key: UPKey, level: number): void => {
+    if (!props.lazy || !props.load || attemptedLazyKeysRef.current.has(key)) return;
+    attemptedLazyKeysRef.current.add(key);
+    setLoadingKeys((current) => new Set(current).add(key));
+    let settled = false;
+    const finish = (children: readonly T[]): void => {
+      if (settled) return;
+      settled = true;
+      setLoadedChildren((current) => new Map(current).set(key, [...children]));
+      setLoadingKeys((current) => {
+        const next = new Set(current);
+        next.delete(key);
+        return next;
+      });
+    };
+    const fail = (error: unknown): void => {
+      if (settled) return;
+      settled = true;
+      setLoadingKeys((current) => {
+        const next = new Set(current);
+        next.delete(key);
+        return next;
+      });
+      props.onLoadError?.(error, row);
+    };
+    try {
+      const result = props.load(
+        row,
+        {
+          context: props.context,
+          expanded: true,
+          level,
+          loading: true,
+          row,
+        },
+        finish,
+      );
+      if (result && typeof result.then === 'function') result.then(finish, fail);
+    } catch (error) {
+      fail(error);
+    }
+  };
   const visibleRows = useMemo(
     () => flattenTable2Rows(model, expandedKeys, selectedKeys),
     [expandedKeys, model, selectedKeys],
@@ -196,6 +261,26 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
   const listRef = useRef<FlashListRef<UPTable2VisibleRow<T>> | null>(null);
   const fixedListRef = useRef<FlashListRef<UPTable2VisibleRow<T>> | null>(null);
   const syncingVerticalRef = useRef(false);
+  const warnedSpanBoundaryRef = useRef(new Set<string>());
+
+  useEffect(() => {
+    if (typeof __DEV__ === 'undefined' || !__DEV__) return;
+    visibleRows.forEach((row) => {
+      columns.forEach((column, columnIndex) => {
+        const span = spanMap.get(`${row.flatIndex}:${columnIndex}`);
+        const crossesFixedBoundary = columnIndex < fixedColumns.length
+          && column.fixed === 'left'
+          && (columnIndex + (span?.colspan ?? 1)) > fixedColumns.length;
+        const warningKey = `${String(row.key)}:${column.key}`;
+        if (crossesFixedBoundary && !warnedSpanBoundaryRef.current.has(warningKey)) {
+          warnedSpanBoundaryRef.current.add(warningKey);
+          console.warn(
+            `[UPTable2] span crosses the fixed-column boundary at ${warningKey}.`,
+          );
+        }
+      });
+    });
+  }, [columns, fixedColumns.length, spanMap, visibleRows]);
 
   const selectRow = (key: UPKey, nextSelected: boolean): void => {
     const nextKeys = toggleTable2Selection(model, selectedKeys, key, nextSelected);
@@ -221,6 +306,11 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
     const nextKeys = isExpanded
       ? expandedKeys.filter((candidate) => candidate !== key)
       : [...expandedKeys, key];
+    if (isExpanded) {
+      attemptedLazyKeysRef.current.delete(key);
+    } else if (props.lazy && props.load && node.children.length === 0) {
+      loadChildren(node.row, key, node.level);
+    }
     if (props.expandedRowKeys === undefined) setLocalExpandedKeys(nextKeys);
     props.onExpandChange?.(nextKeys, node.row);
   };
@@ -255,6 +345,36 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
   const allRowsSelected = model.nodes.size > 0
     && collectTable2SelectableKeys(model).every((key) => selectedKeys.includes(key));
 
+  const handleHeaderPress = (
+    column: UPTable2Column<T>,
+    columnIndex: number,
+  ): void => {
+    props.onHeaderClick?.(column, columnIndex);
+    if (!(column.sortable ?? props.sortable)) return;
+    const orders = column.sortOrders?.length
+      ? column.sortOrders
+      : props.sortOrders?.length
+        ? props.sortOrders
+        : ['ascending', 'descending'] as const;
+    const currentIndex = sortConditions.findIndex(
+      (condition) => condition.field === column.key,
+    );
+    const currentOrder = currentIndex >= 0 ? sortConditions[currentIndex].order : null;
+    const nextOrderIndex = currentOrder === null
+      ? 0
+      : orders.indexOf(currentOrder) + 1;
+    const next = nextOrderIndex >= orders.length
+      ? sortConditions.filter((condition) => condition.field !== column.key)
+      : props.multiSort
+        ? [
+            ...sortConditions.filter((condition) => condition.field !== column.key),
+            { field: column.key, order: orders[nextOrderIndex], column },
+          ]
+        : [{ field: column.key, order: orders[nextOrderIndex], column }];
+    setSortConditions(next);
+    props.onSortChange?.(next);
+  };
+
   const renderHeader = (
     headerColumns: readonly { column: UPTable2Column<T>; columnIndex: number }[],
   ): React.JSX.Element => (
@@ -271,11 +391,14 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
       testID="up-table2-header"
     >
       {headerColumns.map(({ column, columnIndex }) => {
+        const sortOrder = sortConditions.find(
+          (condition) => condition.field === column.key,
+        )?.order ?? null;
         const payload: UPTable2HeaderPayload<T> = {
           column,
           columnIndex,
           context: props.context,
-          sortOrder: null,
+          sortOrder,
         };
         const content = column.renderHeader?.(payload)
           ?? column.title
@@ -293,8 +416,9 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
           </Pressable>
         ) : renderContent(content);
         return (
-          <View
+          <Pressable
             key={column.key}
+            onPress={() => handleHeaderPress(column, columnIndex)}
             style={[
               {
                 alignItems: 'center',
@@ -312,7 +436,7 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
             testID={`up-table2-header-${column.key}`}
           >
             {headerContent}
-          </View>
+          </Pressable>
         );
       })}
     </View>
@@ -353,6 +477,21 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
             hidden: false,
             rowspan: 1,
           };
+          const isFixedPlane = rowColumns === fixedColumnsWithIndex;
+          const fixedColumnIndex = isFixedPlane
+            ? fixedColumnsWithIndex.findIndex(({ column: fixedColumn }) => (
+                fixedColumn.key === column.key
+              ))
+            : -1;
+          const renderSpan = isFixedPlane && fixedColumnIndex >= 0
+            ? {
+                ...span,
+                colspan: Math.min(
+                  span.colspan,
+                  Math.max(1, fixedColumns.length - fixedColumnIndex),
+                ),
+              }
+            : span;
           const payload = createTable2CellPayload(
             row,
             column,
@@ -379,10 +518,12 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
               {column.type === 'expand' && row.hasChildren ? (
                 <Pressable
                   accessibilityRole="button"
+                  accessibilityState={{ busy: loadingKeys.has(row.key) }}
+                  disabled={loadingKeys.has(row.key)}
                   onPress={() => toggleExpanded(row.key)}
                   testID={`up-table2-expand-${String(row.key)}`}
                 >
-                  <Text>{row.expanded ? '−' : '+'}</Text>
+                  <Text>{loadingKeys.has(row.key) ? '...' : row.expanded ? '−' : '+'}</Text>
                 </Pressable>
               ) : null}
               {content}
@@ -405,7 +546,7 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
                   width,
                 },
                 resolveAlign(column.align),
-                resolveSpanStyle(span, width, rowHeight),
+                resolveSpanStyle(renderSpan, width, rowHeight),
                 cellStyle,
               ]}
               testID={`up-table2-cell-${String(row.key)}-${column.key}`}

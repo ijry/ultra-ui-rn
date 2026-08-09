@@ -2,6 +2,7 @@ import React from 'react';
 import { Text } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 import { UPRoot, UPTable2, type UPTable2Column } from '../../src';
+import { buildTable2SpanMap } from '../../src/components/table2/state';
 
 function renderRoot(node: React.ReactElement) {
   return render(<UPRoot>{node}</UPRoot>);
@@ -147,4 +148,107 @@ it('supports current-row and expansion callbacks with cell payload toggles', () 
     row: expect.objectContaining({ id: 'root' }),
     column: expect.objectContaining({ key: 'name' }),
   }));
+});
+
+it('cycles sort order and emits source sort conditions', () => {
+  const onSortChange = jest.fn();
+  const screen = renderRoot(
+    <UPTable2
+      columns={[{ key: 'name', title: 'Name', sortable: true }]}
+      data={[{ id: 'b', name: 'B' }, { id: 'a', name: 'A' }]}
+      onSortChange={onSortChange}
+    />,
+  );
+
+  fireEvent.press(screen.getByTestId('up-table2-header-name'));
+  expect(onSortChange).toHaveBeenLastCalledWith([
+    expect.objectContaining({ field: 'name', order: 'ascending' }),
+  ]);
+  expect(screen.getAllByText('A').length).toBeGreaterThan(0);
+});
+
+it('emits filter changes and applies source-compatible contains filters', () => {
+  const onFilterChange = jest.fn();
+  const screen = renderRoot(
+    <UPTable2
+      columns={[{ key: 'name', title: 'Name' }]}
+      data={[{ id: 'a', name: 'Ada' }, { id: 'b', name: 'Bea' }]}
+      filters={{ name: 'Ad' }}
+      onFilterChange={onFilterChange}
+    />,
+  );
+
+  expect(screen.getByText('Ada')).toBeTruthy();
+  expect(screen.queryByText('Bea')).toBeNull();
+  expect(onFilterChange).toHaveBeenCalledWith({ name: 'Ad' });
+});
+
+it('loads lazy children through callback and Promise forms without mutating rows', async () => {
+  const callbackChildren = [{ id: 'callback-child', name: 'Callback child' }];
+  const promiseChildren = [{ id: 'promise-child', name: 'Promise child' }];
+  const source = [
+    { id: 'callback', name: 'Callback', hasChildren: true },
+    { id: 'promise', name: 'Promise', hasChildren: true },
+  ];
+  const callbackLoad = jest.fn((_row, _payload, resolve) => resolve(callbackChildren));
+  const promiseLoad = jest.fn((row: (typeof source)[number]) => (
+    row.id === 'promise' ? Promise.resolve(promiseChildren) : undefined
+  ));
+  const screen = renderRoot(
+    <UPTable2
+      columns={[{ key: 'name', title: 'Name', type: 'expand' }]}
+      data={source}
+      lazy
+      load={(row, payload, resolve) => {
+        if (row.id === 'callback') return callbackLoad(row, payload, resolve);
+        return promiseLoad(row);
+      }}
+    />,
+  );
+
+  fireEvent.press(screen.getByTestId('up-table2-expand-callback'));
+  fireEvent.press(screen.getByTestId('up-table2-expand-promise'));
+  expect(await screen.findByText('Callback child')).toBeTruthy();
+  expect(await screen.findByText('Promise child')).toBeTruthy();
+  expect(source[0]).not.toHaveProperty('children');
+});
+
+it('renders hidden covered cells and warns when a span crosses fixed columns', () => {
+  const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+  const screen = renderRoot(
+    <UPTable2
+      columns={[
+        { fixed: 'left', key: 'name', title: 'Name' },
+        { key: 'score', title: 'Score' },
+      ]}
+      data={[{ id: 'a', name: 'Ada', score: 98 }]}
+      spanMethod={({ columnIndex }) => columnIndex === 0 ? [1, 2] : [0, 0]}
+    />,
+  );
+
+  expect(screen.getAllByTestId('up-table2-cell-a-name')[0].props.style).toEqual(
+    expect.arrayContaining([expect.objectContaining({ width: expect.any(Number) })]),
+  );
+  expect(warning).toHaveBeenCalledWith(expect.stringContaining('fixed-column boundary'));
+  warning.mockRestore();
+});
+
+it('marks covered row and column cells in the span map', () => {
+  const map = buildTable2SpanMap(
+    [{
+      key: 'a',
+      row: { id: 'a', name: 'Ada', score: 98, status: 'ready' },
+      rowIndex: 0,
+      flatIndex: 0,
+      level: 0,
+      parentRow: null,
+      expanded: false,
+      hasChildren: false,
+      selected: false,
+    }],
+    columns,
+    ({ columnIndex }) => columnIndex === 0 ? [2, 2] : [0, 0],
+  );
+  expect(map.get('0:0')).toEqual(expect.objectContaining({ rowspan: 2, colspan: 2 }));
+  expect(map.get('0:1')).toEqual(expect.objectContaining({ hidden: true }));
 });
