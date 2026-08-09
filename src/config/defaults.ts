@@ -681,6 +681,34 @@ export type UPWaterfallDefaults = {
   height: number | string;
 };
 
+export type UPTable2Defaults = {
+  data: readonly unknown[];
+  columns: readonly Record<string, unknown>[];
+  rowKey: string;
+  stripe: boolean;
+  border: boolean;
+  height: UPDimension;
+  maxHeight: UPDimension;
+  rowHeight: UPDimension;
+  showHeader: boolean;
+  fixedHeader: boolean;
+  highlightCurrentRow: boolean;
+  defaultCurrentRowKey: string | number | null;
+  defaultSelectedRowKeys: readonly (string | number)[];
+  defaultExpandedRowKeys: readonly (string | number)[];
+  defaultExpandAll: boolean;
+  treeProps: { children: string; hasChildren: string };
+  lazy: boolean;
+  sortable: boolean | 'custom';
+  multiSort: boolean;
+  sortOrders: readonly ('ascending' | 'descending')[];
+  filters: Readonly<Record<string, unknown>>;
+  showOverflowTooltip: boolean;
+  emptyText: string;
+  mainCol: string;
+  expandWidth: UPDimension;
+};
+
 export type UPProps = {
   button: UPButtonDefaults;
   icon: UPIconDefaults;
@@ -771,6 +799,7 @@ export type UPProps = {
   lazyLoad: UPLazyLoadDefaults;
   tree: UPTreeDefaults;
   waterfall: UPWaterfallDefaults;
+  table2: UPTable2Defaults;
   indexList: UPIndexListDefaults;
   indexAnchor: UPIndexAnchorDefaults;
   subsection: UPSubsectionDefaults;
@@ -1384,6 +1413,33 @@ export const sourceDefaults: Readonly<{
       minColumnWidth: 230,
       optimizeItemArrangement: false,
       value: Object.freeze([]) as readonly unknown[],
+    }),
+    table2: Object.freeze({
+      border: false,
+      columns: Object.freeze([]) as readonly Record<string, unknown>[],
+      data: Object.freeze([]) as readonly unknown[],
+      defaultCurrentRowKey: null,
+      defaultExpandAll: false,
+      defaultExpandedRowKeys: Object.freeze([]) as readonly (string | number)[],
+      defaultSelectedRowKeys: Object.freeze([]) as readonly (string | number)[],
+      emptyText: '暂无数据',
+      expandWidth: 25,
+      filters: Object.freeze({}) as Readonly<Record<string, unknown>>,
+      fixedHeader: true,
+      height: 'auto',
+      highlightCurrentRow: false,
+      lazy: false,
+      mainCol: '',
+      maxHeight: 'auto',
+      multiSort: false,
+      rowHeight: 36,
+      rowKey: 'id',
+      showHeader: true,
+      showOverflowTooltip: false,
+      sortOrders: Object.freeze(['ascending', 'descending']) as readonly ('ascending' | 'descending')[],
+      sortable: false,
+      stripe: false,
+      treeProps: Object.freeze({ children: 'children', hasChildren: 'hasChildren' }),
     }),
     indexList: Object.freeze({ inactiveColor: '#606266', activeColor: '#5677fc', indexList: Object.freeze([]) as readonly unknown[], sticky: true, customNavHeight: 0, safeBottomFix: false, itemMargin: '0rpx' }),
     indexAnchor: Object.freeze({ text: '', color: '#606266', size: 14, bgColor: '#f1f1f1', height: 32 }),

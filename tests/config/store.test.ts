@@ -142,6 +142,40 @@ it('merges waterfall defaults through setUPConfig', () => {
   );
 });
 
+it('merges table2 defaults through setUPConfig', () => {
+  resetUPConfigForTests();
+
+  expect(getUPConfig().props.table2).toEqual(
+    expect.objectContaining({
+      defaultExpandAll: false,
+      fixedHeader: true,
+      rowHeight: 36,
+      rowKey: 'id',
+      showHeader: true,
+      treeProps: { children: 'children', hasChildren: 'hasChildren' },
+    }),
+  );
+
+  setUPConfig({
+    props: {
+      table2: {
+        emptyText: 'Nothing',
+        fixedHeader: false,
+        rowHeight: 48,
+      },
+    },
+  });
+
+  expect(getUPConfig().props.table2).toEqual(
+    expect.objectContaining({
+      emptyText: 'Nothing',
+      fixedHeader: false,
+      rowHeight: 48,
+      rowKey: 'id',
+    }),
+  );
+});
+
 it('merges a color override without losing source defaults', () => {
   setUPConfig({ color: { primary: '#000000' } });
 
