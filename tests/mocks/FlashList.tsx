@@ -41,6 +41,12 @@ export const FlashList = forwardRef<MockFlashListRef, MockFlashListProps>(
           ? empty
           : React.createElement(empty as React.ComponentType)
         : null;
+    const header = props.ListHeaderComponent;
+    const headerElement = header
+      ? React.isValidElement(header)
+        ? header
+        : React.createElement(header as React.ComponentType)
+      : null;
     const layoutProps = {
       masonry: props.masonry,
       numColumns: props.numColumns,
@@ -50,6 +56,7 @@ export const FlashList = forwardRef<MockFlashListRef, MockFlashListProps>(
 
     return (
       <View {...layoutProps} testID={props.testID}>
+        {headerElement}
         {data.map((item, index) => (
           <React.Fragment key={keyExtractor(item, index)}>
             {props.renderItem?.({

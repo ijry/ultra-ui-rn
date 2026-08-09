@@ -353,3 +353,23 @@ it('keeps caller-owned rows, nested children, and key arrays immutable', () => {
   expect(selectedRowKeys).toEqual(['root']);
   expect(expandedRowKeys).toEqual(['root']);
 });
+
+it('renders non-fixed headers and emits a row double-click payload', () => {
+  const onRowDoubleClick = jest.fn();
+  const screen = renderRoot(
+    <UPTable2
+      columns={[{ key: 'name', title: 'Name' }]}
+      data={[{ id: 'root', name: 'Root' }]}
+      fixedHeader={false}
+      onRowDoubleClick={onRowDoubleClick}
+    />,
+  );
+
+  expect(screen.getByTestId('up-table2-header-name')).toBeTruthy();
+  fireEvent.press(screen.getByTestId('up-table2-row-root'));
+  fireEvent.press(screen.getByTestId('up-table2-row-root'));
+  expect(onRowDoubleClick).toHaveBeenCalledWith(
+    expect.objectContaining({ id: 'root' }),
+    expect.objectContaining({ rowKey: 'root' }),
+  );
+});

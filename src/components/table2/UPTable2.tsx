@@ -261,6 +261,7 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
   const listRef = useRef<FlashListRef<UPTable2VisibleRow<T>> | null>(null);
   const fixedListRef = useRef<FlashListRef<UPTable2VisibleRow<T>> | null>(null);
   const syncingVerticalRef = useRef(false);
+  const lastRowPressRef = useRef<{ key: UPKey; time: number } | null>(null);
   const warnedSpanBoundaryRef = useRef(new Set<string>());
 
   useEffect(() => {
@@ -318,6 +319,12 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
   const handleRowPress = (row: UPTable2VisibleRow<T>): void => {
     const payload = resolveRowPayload(row, props.context);
     props.onRowClick?.(row.row, payload);
+    const now = Date.now();
+    const previousPress = lastRowPressRef.current;
+    if (previousPress?.key === row.key && now - previousPress.time < 350) {
+      props.onRowDoubleClick?.(row.row, payload);
+    }
+    lastRowPressRef.current = { key: row.key, time: now };
     if (!props.highlightCurrentRow) return;
     const previousRow = currentKey === null || currentKey === undefined
       ? null
