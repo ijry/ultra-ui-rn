@@ -104,3 +104,4 @@ export * from './barcode';
 export * from './upload';
 export * from './lazy-load';
 export * from './tree';
+export * from './waterfall';
