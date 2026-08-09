@@ -504,6 +504,8 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
           const content = column.renderCell?.(payload)
             ?? renderContent(value === undefined || value === null ? null : String(value));
           const cellStyle = props.cellStyle?.(payload);
+          const isExpandColumn = column.type === 'expand'
+            || (Boolean(props.mainCol) && column.key === props.mainCol);
           const cellContent = column.type === 'selection' ? (
             <Pressable
               accessibilityRole="checkbox"
@@ -515,16 +517,18 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
             </Pressable>
           ) : (
             <>
-              {column.type === 'expand' && row.hasChildren ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityState={{ busy: loadingKeys.has(row.key) }}
-                  disabled={loadingKeys.has(row.key)}
-                  onPress={() => toggleExpanded(row.key)}
-                  testID={`up-table2-expand-${String(row.key)}`}
-                >
-                  <Text>{loadingKeys.has(row.key) ? '...' : row.expanded ? '−' : '+'}</Text>
-                </Pressable>
+              {isExpandColumn && row.hasChildren ? (
+                <View style={{ width: resolvePositivePx(props.expandWidth, 25) }}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ busy: loadingKeys.has(row.key) }}
+                    disabled={loadingKeys.has(row.key)}
+                    onPress={() => toggleExpanded(row.key)}
+                    testID={`up-table2-expand-${String(row.key)}`}
+                  >
+                    <Text>{loadingKeys.has(row.key) ? '...' : row.expanded ? '−' : '+'}</Text>
+                  </Pressable>
+                </View>
               ) : null}
               {content}
             </>
@@ -619,7 +623,7 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
       {fixedColumns.length > 0 ? (
         <View
           style={{
-            backgroundColor: '#ffffff',
+            backgroundColor: visibleRows.length > 0 ? '#ffffff' : 'transparent',
             bottom: 0,
             elevation: 2,
             left: 0,
@@ -639,6 +643,7 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
             onScroll={() => undefined}
             ref={fixedListRef}
             renderItem={({ item }) => renderRow(item, fixedColumnsWithIndex)}
+            scrollEnabled={false}
             style={{ maxHeight: bodyMaxHeight }}
             testID="up-table2-fixed-list"
           />

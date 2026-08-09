@@ -3,6 +3,10 @@ import { Text } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 import { UPRoot, UPTable2, type UPTable2Column } from '../../src';
 import { buildTable2SpanMap } from '../../src/components/table2/state';
+import {
+  flashListScrollCalls,
+  resetFlashListScrollCalls,
+} from '../mocks/FlashList';
 
 function renderRoot(node: React.ReactElement) {
   return render(<UPRoot>{node}</UPRoot>);
@@ -251,4 +255,101 @@ it('marks covered row and column cells in the span map', () => {
   );
   expect(map.get('0:0')).toEqual(expect.objectContaining({ rowspan: 2, colspan: 2 }));
   expect(map.get('0:1')).toEqual(expect.objectContaining({ hidden: true }));
+});
+
+it('adopts controlled selected, expanded, and current keys when parents change', () => {
+  const screen = renderRoot(
+    <UPTable2
+      currentRowKey={null}
+      data={[{ id: 'root', name: 'Root', children: [{ id: 'child', name: 'Child' }] }]}
+      expandedRowKeys={[]}
+      highlightCurrentRow
+      columns={[
+        { key: 'select', title: '', type: 'selection' },
+        { key: 'name', title: 'Name', type: 'expand' },
+      ]}
+      selectedRowKeys={[]}
+    />,
+  );
+
+  screen.rerender(
+    <UPRoot>
+      <UPTable2
+        columns={[
+          { key: 'select', title: '', type: 'selection' },
+          { key: 'name', title: 'Name', type: 'expand' },
+        ]}
+        currentRowKey="root"
+        data={[{ id: 'root', name: 'Root', children: [{ id: 'child', name: 'Child' }] }]}
+        expandedRowKeys={['root']}
+        highlightCurrentRow
+        selectedRowKeys={['child']}
+      />
+    </UPRoot>,
+  );
+
+  expect(screen.getByTestId('up-table2-row-child')).toBeTruthy();
+  expect(screen.getAllByTestId('up-table2-select-child')[0].props.accessibilityState.checked)
+    .toBe(true);
+});
+
+it('mirrors main vertical offsets to the fixed list without exposing a FlashList ref', () => {
+  resetFlashListScrollCalls();
+  const screen = renderRoot(
+    <UPTable2
+      columns={[
+        { fixed: 'left', key: 'name', title: 'Name' },
+        { key: 'score', title: 'Score' },
+      ]}
+      data={[{ id: 'a', name: 'Ada', score: 98 }]}
+    />,
+  );
+
+  fireEvent.scroll(screen.getByTestId('up-table2-main-list'), {
+    nativeEvent: { contentOffset: { x: 0, y: 72 } },
+  });
+
+  expect(flashListScrollCalls).toContainEqual({ animated: false, offset: 72 });
+});
+
+it('renders unknown values as empty and treats fixed-right as scrollable', () => {
+  const screen = renderRoot(
+    <UPTable2
+      columns={[
+        { fixed: 'left', key: 'name', title: 'Name' },
+        { fixed: 'right' as never, key: 'unknown', title: 'Unknown' },
+        { key: 'score', title: 'Score' },
+      ]}
+      data={[{ id: 'a', name: 'Ada', score: 98 }]}
+    />,
+  );
+
+  expect(screen.getByTestId('up-table2-fixed-plane')).toBeTruthy();
+  expect(screen.getByTestId('up-table2-cell-a-unknown')).toBeTruthy();
+  expect(screen.queryByText('undefined')).toBeNull();
+});
+
+it('keeps caller-owned rows, nested children, and key arrays immutable', () => {
+  const children = [{ id: 'child', name: 'Child' }];
+  const source = [{ id: 'root', name: 'Root', children }];
+  const selectedRowKeys = ['root'];
+  const expandedRowKeys = ['root'];
+  const screen = renderRoot(
+    <UPTable2
+      columns={[
+        { key: 'select', type: 'selection' },
+        { key: 'name', type: 'expand' },
+      ]}
+      data={source}
+      expandedRowKeys={expandedRowKeys}
+      selectedRowKeys={selectedRowKeys}
+    />,
+  );
+
+  fireEvent.press(screen.getByTestId('up-table2-select-root'));
+  fireEvent.press(screen.getByTestId('up-table2-expand-root'));
+  expect(source).toEqual([{ id: 'root', name: 'Root', children }]);
+  expect(children).toEqual([{ id: 'child', name: 'Child' }]);
+  expect(selectedRowKeys).toEqual(['root']);
+  expect(expandedRowKeys).toEqual(['root']);
 });
