@@ -249,6 +249,7 @@ management benefits from them:
 - `onHeaderClick(column, columnIndex)`
 - `onSortChange(conditions)`
 - `onFilterChange(filters)`
+- `onScroll(scrollTop)`
 - `onCurrentChange(currentRow, previousRow)`
 - `onExpandChange(expandedRowKeys, row)`
 - `onLoadError(error, row)`
