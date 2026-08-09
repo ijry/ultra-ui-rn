@@ -105,3 +105,4 @@ export * from './upload';
 export * from './lazy-load';
 export * from './tree';
 export * from './waterfall';
+export * from './table2';

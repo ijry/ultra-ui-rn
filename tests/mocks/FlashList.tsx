@@ -1,6 +1,12 @@
 import React, { forwardRef, useImperativeHandle } from 'react';
 import { View, type FlatListProps } from 'react-native';
 
+export const flashListScrollCalls: Array<{ offset: number; animated?: boolean }> = [];
+
+export function resetFlashListScrollCalls(): void {
+  flashListScrollCalls.length = 0;
+}
+
 type MockFlashListRef = {
   scrollToIndex: (options: { index: number; animated?: boolean }) => void;
   scrollToOffset: (options: { offset: number; animated?: boolean }) => void;
@@ -21,6 +27,7 @@ export const FlashList = forwardRef<MockFlashListRef, MockFlashListProps>(
         props.__onScrollToIndex?.(options);
       },
       scrollToOffset: (options: { offset: number; animated?: boolean }) => {
+        flashListScrollCalls.push(options);
         props.__onScrollToOffset?.(options);
       },
     }));
@@ -38,6 +45,7 @@ export const FlashList = forwardRef<MockFlashListRef, MockFlashListProps>(
       masonry: props.masonry,
       numColumns: props.numColumns,
       optimizeItemArrangement: props.optimizeItemArrangement,
+      onScroll: props.onScroll,
     } as unknown as React.ComponentProps<typeof View>;
 
     return (
