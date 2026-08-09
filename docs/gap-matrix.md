@@ -362,6 +362,13 @@ Source: `uview-plus` 3.8.86. Status values: Supported, Emulated, No-op retained,
 | `u-tree` | data, node key/label/children fields, expansion, current node, checkbox, half-check, accordion, scoped node slot, ref methods | `UPTree`, `UPTreeRef`, `fieldNames`, `renderNode` | DFS visible-row model rendered by FlashList; raw nodes are preserved in callbacks and parent-child check state is derived without mutating input data | Emulated | `tests/components/UPTree.test.tsx` |
 | `u-tree` | async child loading, drag sorting, CSS class behavior | Retained props / deferred | Application owns data fetching and ordering; React Native does not run source CSS classes | Deferred / No-op retained | Component prop types |
 
+## P33 Waterfall
+
+| Component | Source API | React Native API | Default / behavior | Status | Test |
+|---|---|---|---|---|---|
+| `u-waterfall` | v-model list, columns, auto column width, id key, delayed add events, clear/remove refs, scoped column slot | `UPWaterfall`, `UPWaterfallRef`, `renderItem` | FlashList masonry renders dynamic-height items; fixed or measured automatic columns; `value` remains the external source of truth | Emulated | `tests/components/UPWaterfall.test.tsx` |
+| `u-waterfall` | stable internal column arrays and source CSS layout behavior | Per-item render callback and documented limits | Masonry placement is engine-owned; column indices are not stable public data | Deferred / Boundary | Component prop types |
+
 ## Deferred Source Components
 
 All upstream component directories not listed above remain deferred to later approved phases. They are intentionally not exported before their props, default styles, tests, and matrix rows are complete.

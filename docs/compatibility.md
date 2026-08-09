@@ -1037,3 +1037,16 @@ The component requires stable unique node keys for controlled state and ref
 operations. Missing or duplicate keys use deterministic internal fallbacks and
 emit development warnings. CSS classes remain accepted as `customClass` but
 have no React Native CSS runtime.
+
+## P33 waterfall
+
+`UPWaterfall` maps the source waterfall data model to a React Native
+FlashList masonry surface. It supports dynamic item heights, fixed or
+automatic columns, stable `idKey` identity, delayed add callbacks, ref-driven
+remove/clear operations, and scroll methods.
+
+The React API uses `value` / `defaultValue` and `onChange`. The source column
+slot is represented by per-item `renderItem`; internal masonry column arrays
+and `columnIndex` are deliberately not public because measurement can change
+placement. Pagination and network loading remain application-owned through
+`onEndReached`.

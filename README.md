@@ -65,6 +65,26 @@ use the corresponding `default*` props for local state.
 />
 ```
 
+### Waterfall
+
+`UPWaterfall` uses FlashList masonry for dynamic-height items. Use
+`columns={2}` for a fixed layout or `columns="auto"` with `minColumnWidth`
+for width-based column calculation. The component uses `value` and `onChange`
+for the React equivalent of the source `v-model`.
+
+```tsx
+<UPWaterfall
+  columns="auto"
+  minColumnWidth={220}
+  value={items}
+  renderItem={({ item }) => <ProductCard item={item} />}
+/>
+```
+
+`remove(id)` and `clear()` are exposed through `UPWaterfallRef`. The render
+callback does not receive a column index because masonry placement can change
+after measurement.
+
 ## Status
 
 - [Design](docs/superpowers/specs/2026-07-25-ultra-ui-react-native-design.md)
@@ -92,6 +112,7 @@ use the corresponding `default*` props for local state.
 - [P21 tooltip and popover plan](docs/superpowers/plans/2026-07-26-ultra-ui-react-native-p21-tooltip-popover.md)
 - [P22 index list PanResponder plan](docs/superpowers/plans/2026-07-26-ultra-ui-react-native-p22-index-list-pan-responder.md)
 - [P23 code countdown plan](docs/superpowers/plans/2026-07-26-ultra-ui-react-native-p23-code.md)
+- [P33 tree and waterfall plan](docs/superpowers/plans/2026-08-09-ultra-ui-react-native-p33-waterfall.md)
 - [Compatibility guide](docs/compatibility.md)
 - [API gap matrix](docs/gap-matrix.md)
 - [Native smoke tests](tests/e2e/README.md)
@@ -160,6 +181,9 @@ application-owned persistence for `keepRunning`.
 P32 adds `UPUpload` and `UPLazyLoad`, preserving source upload queue callbacks
 through explicit picker/upload adapters and source lazy image behavior through
 controlled or scroll-host-provided visibility inputs.
-P33 adds `UPTree` with virtualized visible rows, expansion/current/check state,
-field mapping, custom node rendering, and imperative ref methods.
+P33 adds `UPTree` and `UPWaterfall`. `UPTree` uses virtualized visible rows,
+expansion/current/check state, field mapping, custom node rendering, and
+imperative ref methods. `UPWaterfall` uses FlashList masonry for dynamic item
+heights, fixed or automatic columns, delayed additions, and ref-driven
+remove/clear/scroll methods.
 Remaining source components stay explicitly tracked in the gap matrix.

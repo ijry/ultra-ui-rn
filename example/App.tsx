@@ -124,6 +124,7 @@ import {
   type UPUploadAdapter,
   UPVirtualList,
   UPView,
+  UPWaterfall,
 } from 'ultra-ui-rn';
 
 const demoCascaderData = [
@@ -190,6 +191,13 @@ const demoTree = [
     ],
   },
   { id: 'settings', label: 'Settings' },
+] as const;
+
+const demoWaterfallItems = [
+  { id: 'card-1', title: 'Short card', height: 96 },
+  { id: 'card-2', title: 'Tall card', height: 156 },
+  { id: 'card-3', title: 'Medium card', height: 124 },
+  { id: 'card-4', title: 'Another card', height: 180 },
 ] as const;
 
 function App() {
@@ -374,6 +382,20 @@ function App() {
             height={180}
             renderNode={({ label, level }) => <UPText text={`${'  '.repeat(level)}${label}`} />}
             showCheckbox
+          />
+          <Text style={styles.section}>Waterfall</Text>
+          <UPWaterfall
+            columns={2}
+            height={260}
+            renderItem={({ item }) => (
+              <UPCard
+                customStyle={{ height: item.height, margin: 4 }}
+                title={item.title}
+              >
+                <UPText text={`Item ${item.id}`} />
+              </UPCard>
+            )}
+            value={demoWaterfallItems}
           />
           <Text style={styles.section}>Index list</Text>
           <UPIndexList
