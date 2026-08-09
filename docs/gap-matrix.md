@@ -154,7 +154,7 @@ Source: `uview-plus` 3.8.86. Status values: Supported, Emulated, No-op retained,
 | `u-th` | source inherited header style and percentage width | `UPThProps` | Inherits source table context; supports percentage or native dimension width | Supported | `tests/components/UPStaticTable.test.tsx` |
 | `u-td` | inherited table styles plus width/text/border/color overrides | `UPTdProps` | Inherits table defaults and applies source per-cell overrides | Supported | `tests/components/UPStaticTable.test.tsx` |
 | `u-table` family | CSS `customClass`, style effects on arbitrary React child trees | Retained deprecated props | React Native CSS classes are unavailable; source text styles apply automatically to primitive children | No-op retained | `src/components/table/cell.tsx` |
-| `u-table2` | sortable/tree/selectable/fixed-column data grid | Deferred | Requires a separate virtualized data-grid implementation and explicit gesture/scroll behavior | Deferred | `docs/superpowers/plans/2026-07-26-ultra-ui-react-native-p8-static-table.md` |
+| `u-table2` | sortable/tree/selectable/fixed-column data grid | `UPTable2Props`, `UPTable2Column`, `renderCell`, `renderHeader`, FlashList virtualization, sort/filter events, recursive tree selection, callback/Promise lazy loading, fixed-left overlay, fixed header, `spanMethod` | Generic source-shaped columns with fixed row height; FlashList refs remain private; fixed-right and pagination/remote fetching remain application-owned boundaries | Emulated | `tests/components/UPTable2.test.tsx`, `tests/components/UPTable2State.test.ts` |
 
 ## P9 Swiper
 

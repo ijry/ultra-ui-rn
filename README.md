@@ -85,6 +85,46 @@ for the React equivalent of the source `v-model`.
 callback does not receive a column index because masonry placement can change
 after measurement.
 
+### Table2
+
+`UPTable2` is a separate virtualized data grid built on the existing FlashList
+dependency. It supports generic source-shaped columns, React
+`renderCell`/`renderHeader`, fixed row heights, sorting/filter events,
+recursive tree selection, callback or Promise lazy children, fixed headers, and
+fixed-left columns.
+
+```tsx
+type OrderRow = {
+  id: string;
+  customer: string;
+  amount: number;
+  children?: readonly OrderRow[];
+};
+
+const columns = [
+  { fixed: 'left' as const, key: 'customer', title: 'Customer', width: 140, type: 'expand' as const },
+  { key: 'amount', title: 'Amount', sortable: true, width: 100 },
+  { key: 'status', title: 'Status', width: 100 },
+];
+
+const [selectedRowKeys, setSelectedRowKeys] = useState<readonly string[]>([]);
+
+<UPTable2<OrderRow>
+  columns={columns}
+  data={orders}
+  defaultExpandedRowKeys={['order-1']}
+  height={320}
+  onSelectionChange={(_rows, keys) => setSelectedRowKeys(keys.map(String))}
+  rowHeight={40}
+  selectedRowKeys={selectedRowKeys}
+  showHeader
+/>
+```
+
+`UPTable2` keeps FlashList refs private, supports fixed-left columns only, and
+uses fixed row height as its virtualization contract. Pagination and remote
+fetching remain application-owned.
+
 ## Status
 
 - [Design](docs/superpowers/specs/2026-07-25-ultra-ui-react-native-design.md)
@@ -113,6 +153,8 @@ after measurement.
 - [P22 index list PanResponder plan](docs/superpowers/plans/2026-07-26-ultra-ui-react-native-p22-index-list-pan-responder.md)
 - [P23 code countdown plan](docs/superpowers/plans/2026-07-26-ultra-ui-react-native-p23-code.md)
 - [P33 tree and waterfall plan](docs/superpowers/plans/2026-08-09-ultra-ui-react-native-p33-waterfall.md)
+- [P34 table2 design](docs/superpowers/specs/2026-08-09-ultra-ui-react-native-p34-table2-design.md)
+- [P34 table2 plan](docs/superpowers/plans/2026-08-09-ultra-ui-react-native-p34-table2.md)
 - [Compatibility guide](docs/compatibility.md)
 - [API gap matrix](docs/gap-matrix.md)
 - [Native smoke tests](tests/e2e/README.md)
@@ -186,4 +228,8 @@ expansion/current/check state, field mapping, custom node rendering, and
 imperative ref methods. `UPWaterfall` uses FlashList masonry for dynamic item
 heights, fixed or automatic columns, delayed additions, and ref-driven
 remove/clear/scroll methods.
+P34 adds `UPTable2`, a FlashList-backed generic data grid with source-shaped
+columns, controlled selection/expansion/current-row state, tree flattening,
+sorting/filtering, callback or Promise lazy children, fixed headers, and a
+synchronized fixed-left overlay. The static `UPTable` family remains unchanged.
 Remaining source components stay explicitly tracked in the gap matrix.

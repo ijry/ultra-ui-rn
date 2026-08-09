@@ -109,6 +109,7 @@ import {
   UPSwipeActionItem,
   UPTag,
   UPTable,
+  UPTable2,
   UPTd,
   UPTabs,
   UPTabbar,
@@ -200,6 +201,30 @@ const demoWaterfallItems = [
   { id: 'card-4', title: 'Another card', height: 180 },
 ] as const;
 
+const demoTable2 = [
+  {
+    id: 'order-1',
+    customer: 'Ada',
+    amount: 128,
+    status: 'Ready',
+    children: [{ id: 'order-1-child', customer: 'Ada / Gift', amount: 24, status: 'Packed' }],
+  },
+  { id: 'order-2', customer: 'Bea', amount: 84, status: 'Queued' },
+] as const;
+
+const demoTable2Columns = [
+  { key: 'select', title: '', type: 'selection' as const, width: 48 },
+  {
+    fixed: 'left' as const,
+    key: 'customer',
+    title: 'Customer',
+    type: 'expand' as const,
+    width: 140,
+  },
+  { key: 'amount', title: 'Amount', sortable: true, width: 90 },
+  { key: 'status', title: 'Status', width: 90 },
+] as const;
+
 function App() {
   const [clicks, setClicks] = useState(0);
   const [query, setQuery] = useState('');
@@ -253,6 +278,7 @@ function App() {
   const [connected, setConnected] = useState(true);
   const [copiedValue, setCopiedValue] = useState('');
   const [guideVisible, setGuideVisible] = useState(false);
+  const [table2SelectedKeys, setTable2SelectedKeys] = useState<readonly string[]>([]);
   const formRef = useRef<UPFormRef>(null);
   const agreementRef = useRef<UPAgreementRef>(null);
   const codeRef = useRef<UPCodeRef>(null);
@@ -397,6 +423,17 @@ function App() {
             )}
             value={demoWaterfallItems}
           />
+          <Text style={styles.section}>Table2</Text>
+          <UPTable2
+            columns={demoTable2Columns}
+            data={demoTable2}
+            defaultExpandedRowKeys={['order-1']}
+            height={260}
+            onSelectionChange={(_rows, keys) => setTable2SelectedKeys(keys.map(String))}
+            rowHeight={40}
+            selectedRowKeys={table2SelectedKeys}
+          />
+          <Text>Selected table rows: {table2SelectedKeys.length}</Text>
           <Text style={styles.section}>Index list</Text>
           <UPIndexList
             height={240}
