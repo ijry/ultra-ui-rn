@@ -103,6 +103,7 @@ export type UPConfigOverrides = {
     album?: Partial<UPProps['album']>;
     upload?: Partial<UPProps['upload']>;
     lazyLoad?: Partial<UPProps['lazyLoad']>;
+    tree?: Partial<UPProps['tree']>;
     indexList?: Partial<UPProps['indexList']>;
     indexAnchor?: Partial<UPProps['indexAnchor']>;
     subsection?: Partial<UPProps['subsection']>;
@@ -227,6 +228,7 @@ function createSourceState(): UPConfigState {
       album: { ...sourceDefaults.props.album },
       upload: { ...sourceDefaults.props.upload },
       lazyLoad: { ...sourceDefaults.props.lazyLoad },
+      tree: { ...sourceDefaults.props.tree },
       indexList: { ...sourceDefaults.props.indexList },
       indexAnchor: { ...sourceDefaults.props.indexAnchor },
       subsection: { ...sourceDefaults.props.subsection },
@@ -356,6 +358,7 @@ export function setUPConfig(overrides: UPConfigOverrides): void {
       album: { ...state.props.album, ...overrides.props?.album },
       upload: { ...state.props.upload, ...overrides.props?.upload },
       lazyLoad: { ...state.props.lazyLoad, ...overrides.props?.lazyLoad },
+      tree: { ...state.props.tree, ...overrides.props?.tree },
       indexList: { ...state.props.indexList, ...overrides.props?.indexList },
       indexAnchor: { ...state.props.indexAnchor, ...overrides.props?.indexAnchor },
       subsection: { ...state.props.subsection, ...overrides.props?.subsection },

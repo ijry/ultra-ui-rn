@@ -642,6 +642,33 @@ export type UPBarcodeDefaults = {
   useCanvas: boolean;
 };
 
+export type UPTreeFieldNameDefaults = {
+  nodeKey: string;
+  label: string;
+  children: string;
+  disabled: string;
+};
+
+export type UPTreeDefaults = {
+  data: readonly unknown[];
+  fieldNames: UPTreeFieldNameDefaults;
+  nodeKey: string;
+  showCheckbox: boolean;
+  defaultExpandAll: boolean;
+  defaultExpandedKeys: readonly (string | number)[];
+  defaultCheckedKeys: readonly (string | number)[];
+  expandOnClickNode: boolean;
+  checkOnClickNode: boolean;
+  checkStrictly: boolean;
+  accordion: boolean;
+  highlightCurrent: boolean;
+  defaultCurrentNodeKey: string | number | null;
+  indent: number;
+  iconSize: number;
+  checkboxSize: number;
+  height: number | string;
+};
+
 export type UPProps = {
   button: UPButtonDefaults;
   icon: UPIconDefaults;
@@ -730,6 +757,7 @@ export type UPProps = {
   album: UPAlbumDefaults;
   upload: UPUploadDefaults;
   lazyLoad: UPLazyLoadDefaults;
+  tree: UPTreeDefaults;
   indexList: UPIndexListDefaults;
   indexAnchor: UPIndexAnchorDefaults;
   subsection: UPSubsectionDefaults;
@@ -1309,6 +1337,30 @@ export const sourceDefaults: Readonly<{
     album: Object.freeze({ urls: Object.freeze([]) as readonly unknown[], keyName: '', singleSize: 180, multipleSize: 70, space: 6, singleMode: 'scaleToFill', multipleMode: 'aspectFill', maxCount: 9, previewFullImage: true, rowCount: 3, showMore: true, autoWrap: false, unit: 'px', stop: true }),
     upload: Object.freeze({ accept: 'image' as const, autoUpload: true, capture: false as const, deletable: true, disabled: false, fileList: Object.freeze([]) as readonly unknown[], formData: Object.freeze({}) as Record<string, unknown>, header: Object.freeze({}) as Record<string, string>, maxCount: 9, maxSize: Number.POSITIVE_INFINITY, multiple: false, name: 'file', previewImage: true, uploadText: '上传图片', url: '' }),
     lazyLoad: Object.freeze({ height: 100, mode: 'aspectFill', once: true, threshold: 0, width: 100 }),
+    tree: Object.freeze({
+      accordion: false,
+      checkOnClickNode: false,
+      checkStrictly: false,
+      checkboxSize: 16,
+      data: Object.freeze([]) as readonly unknown[],
+      defaultCheckedKeys: Object.freeze([]) as readonly (string | number)[],
+      defaultCurrentNodeKey: null,
+      defaultExpandAll: false,
+      defaultExpandedKeys: Object.freeze([]) as readonly (string | number)[],
+      expandOnClickNode: false,
+      fieldNames: Object.freeze({
+        children: 'children',
+        disabled: 'disabled',
+        label: 'label',
+        nodeKey: 'id',
+      }),
+      height: '100%',
+      highlightCurrent: false,
+      iconSize: 14,
+      indent: 32,
+      nodeKey: '',
+      showCheckbox: false,
+    }),
     indexList: Object.freeze({ inactiveColor: '#606266', activeColor: '#5677fc', indexList: Object.freeze([]) as readonly unknown[], sticky: true, customNavHeight: 0, safeBottomFix: false, itemMargin: '0rpx' }),
     indexAnchor: Object.freeze({ text: '', color: '#606266', size: 14, bgColor: '#f1f1f1', height: 32 }),
     subsection: Object.freeze({ list: Object.freeze([]) as readonly unknown[], current: 0, activeColor: '#3c9cff', inactiveColor: '#303133', mode: 'button' as const, fontSize: 12, bold: true, bgColor: '#eeeeef', keyName: 'name', activeColorKeyName: 'activeColorKey', inactiveColorKeyName: 'inactiveColorKey', disabled: false }),

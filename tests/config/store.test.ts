@@ -5,6 +5,7 @@ import {
 } from '../../src/config/store';
 
 const packageJson = jest.requireActual('../../package.json') as {
+  dependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
   peerDependenciesMeta?: Record<string, { optional?: boolean }>;
 };
@@ -61,6 +62,48 @@ it('merges P32 upload and lazy-load defaults through setUPConfig', () => {
   );
   expect(getUPConfig().props.lazyLoad).toEqual(
     expect.objectContaining({ once: true, threshold: 80 }),
+  );
+});
+
+it('declares the FlashList runtime dependency for P33', () => {
+  expect(packageJson.dependencies).toEqual(
+    expect.objectContaining({ '@shopify/flash-list': '^2.3.2' }),
+  );
+});
+
+it('merges tree defaults through setUPConfig', () => {
+  resetUPConfigForTests();
+
+  expect(getUPConfig().props.tree).toEqual(
+    expect.objectContaining({
+      accordion: false,
+      checkStrictly: false,
+      defaultCheckedKeys: [],
+      defaultExpandedKeys: [],
+      defaultExpandAll: false,
+      fieldNames: {
+        children: 'children',
+        disabled: 'disabled',
+        label: 'label',
+        nodeKey: 'id',
+      },
+      highlightCurrent: false,
+      showCheckbox: false,
+    }),
+  );
+
+  setUPConfig({
+    props: {
+      tree: {
+        accordion: true,
+        indent: 40,
+        showCheckbox: true,
+      },
+    },
+  });
+
+  expect(getUPConfig().props.tree).toEqual(
+    expect.objectContaining({ accordion: true, indent: 40, showCheckbox: true }),
   );
 });
 
