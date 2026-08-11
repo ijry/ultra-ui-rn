@@ -32,7 +32,7 @@ the source implementation declares an event but does not emit it in 3.8.86.
 | `load` | Function, default `null`; callback or Promise result | Callback or Promise result | Emulated | Keep | Input rows remain immutable in RN |
 | `treeProps` | Object default `{ children: 'children', hasChildren: 'hasChildren' }` | Same optional fields/default | Supported | Keep | None |
 | `defaultExpandAll` | Boolean, default `false` | Boolean, default `false` | Supported | Keep | None |
-| `expandRowKeys` | Array, default `[]` | Missing; RN exposes `expandedRowKeys` and `defaultExpandedRowKeys` | Missing | Add source-named controlled alias | `expandedRowKeys` remains a backward-compatible RN alias |
+| `expandRowKeys` | Array, default `[]` | Missing; RN exposes `expandedRowKeys` and `defaultExpandedRowKeys` | Supported after P35 | `src/components/table2/types.ts`, `src/components/table2/UPTable2.tsx`, `src/config/defaults.ts` | `expandedRowKeys` remains a backward-compatible RN alias |
 | `sortOrders` | Array, default `['ascending', 'descending']` | Same readonly values/default | Supported | Keep | None |
 | `sortable` | Boolean/String, default `false` | Boolean/`'custom'`, default `false` | Emulated | Keep | Source treats a truthy string as sortable; no new custom semantics |
 | `multiSort` | Boolean, default `false` | Boolean, default `false` | Supported | Keep | None |
@@ -61,15 +61,15 @@ the source implementation declares an event but does not emit it in 3.8.86.
 | `sortBy` | Column sort field/value resolver | String/array/function | Emulated | Keep | Existing RN value resolver |
 | `sortOrders` | Column order list | Same readonly values | Supported | Keep | None |
 | `showOverflowTooltip` | Boolean/Object override | Boolean | Emulated | Keep | Native truncation boundary |
-| `style` | Source header style object is spread into header cell style | Missing from public type | Partial | Add source-named column style mapping | RN accepts a native style object; CSS strings remain unsupported |
+| `style` | Source header style object is spread into header cell style | `StyleProp<ViewStyle>` after P35 | Emulated | `src/components/table2/types.ts`, `src/components/table2/UPTable2.tsx` | RN accepts a native style object; CSS strings remain unsupported |
 
 ## Events
 
 | Source event | Source payload/order | P34 RN callback | Status | P35 action | RN boundary |
 |---|---|---|---|---|---|
-| `select` | Emits the toggled row after `selection-change` | `onSelect(row, selectedRows, selectedRowKeys)` | Emulated | Correct dispatch order only | RN adds derived rows and keys for controlled state |
+| `select` | Emits the toggled row after `selection-change` | `onSelect(row, selectedRows, selectedRowKeys)` | Emulated | Corrected in `src/components/table2/UPTable2.tsx`; test in `tests/components/UPTable2.test.tsx` | RN adds derived rows and keys for controlled state |
 | `select-all` | Declared in `emits`, not emitted by the 3.8.86 implementation | `onSelectAll` is retained | No-op retained | Keep | Existing RN select-all control remains backward-compatible |
-| `selection-change` | Emits selected rows before `select` | `onSelectionChange(selectedRows, selectedRowKeys)` | Emulated | Emit before `onSelect` | RN adds key array |
+| `selection-change` | Emits selected rows before `select` | `onSelectionChange(selectedRows, selectedRowKeys)` | Emulated | Corrected in `src/components/table2/UPTable2.tsx`; test in `tests/components/UPTable2.test.tsx` | RN adds key array |
 | `cell-click` | Declared, not emitted by source implementation | `onCellClick` is retained | No-op retained | Keep | Existing RN cell callback remains an adapter |
 | `row-click` | Emits row after current-row update when enabled | `onRowClick(row, payload)` | Emulated | Verify order | RN payload adds tree/state metadata |
 | `row-dblclick` | Declared, not emitted by source implementation | `onRowDoubleClick` is retained | No-op retained | Keep | Existing RN double-press adapter |

@@ -1051,28 +1051,32 @@ and `columnIndex` are deliberately not public because measurement can change
 placement. Pagination and network loading remain application-owned through
 `onEndReached`.
 
-## P34 table2
+## P34/P35 table2
 
 `UPTable2` is a separate virtualized grid and does not change the static
 `UPTable` family. Its public column fields are source-shaped `key`, `title`,
-`fixed`, `type`, and `sortable`; `label` is accepted as a title alias.
+`fixed`, `type`, `sortable`, and `style`; `label` is accepted as a title alias.
 React-specific `renderCell` and `renderHeader` callbacks replace Vue slots.
 
 The component supports controlled and default selection, expansion, and
 current-row keys. Selecting a tree parent recursively selects loaded
 descendants. `load(row, payload, resolve)` may resolve lazy children through
-the callback or return a Promise. Sort and filter changes are emitted through
-`onSortChange` and `onFilterChange`.
+the callback or return a Promise. `expandRowKeys` matches the source expansion
+prop name, while `expandedRowKeys` remains as the P34 compatibility alias.
+`onSelectionChange` is dispatched before `onSelect`, matching the source event
+order. Sort and filter values retain the P34 behavior; P35 does not add filter
+UI or synthetic filter events.
 
 FlashList remains an internal implementation detail. `onScroll` emits a
 numeric vertical offset, while the fixed-left sibling overlay synchronizes its
-private list internally. Fixed-right columns are treated as normal scrollable
-columns. Rows use a fixed height for virtualization, and pagination or remote
-fetching remains application-owned.
+private list internally. The source implementation supports fixed-left columns;
+fixed-right columns are outside this contract. Rows use a fixed height for
+virtualization, and pagination or remote fetching remains application-owned.
 
 `spanMethod` accepts array or object results. Zero spans hide covered cells,
 and spans crossing the fixed-column boundary are clipped in the fixed plane
 with a development warning. Hover tooltips, CSS classes, and CSS sticky
 behavior are retained as native truncation or no-op-compatible boundaries.
 The component does not mutate caller data, row objects, nested child arrays, or
-incoming key arrays.
+incoming key arrays. P35 verification is recorded in
+`docs/table2-source-compatibility.md`.

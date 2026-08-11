@@ -91,7 +91,10 @@ after measurement.
 dependency. It supports generic source-shaped columns, React
 `renderCell`/`renderHeader`, fixed row heights, sorting/filter events,
 recursive tree selection, callback or Promise lazy children, fixed headers, and
-fixed-left columns.
+fixed-left columns. P35 adds the source-named `expandRowKeys` controlled
+expansion prop, source column `style` mapping to the header cell, and source
+selection callback ordering. The existing `expandedRowKeys` prop remains
+supported for P34 callers.
 
 ```tsx
 type OrderRow = {
@@ -103,7 +106,7 @@ type OrderRow = {
 
 const columns = [
   { fixed: 'left' as const, key: 'customer', title: 'Customer', width: 140, type: 'expand' as const },
-  { key: 'amount', title: 'Amount', sortable: true, width: 100 },
+  { key: 'amount', title: 'Amount', sortable: true, width: 100, style: { backgroundColor: '#f5f7fa' } },
   { key: 'status', title: 'Status', width: 100 },
 ];
 
@@ -112,7 +115,7 @@ const [selectedRowKeys, setSelectedRowKeys] = useState<readonly string[]>([]);
 <UPTable2<OrderRow>
   columns={columns}
   data={orders}
-  defaultExpandedRowKeys={['order-1']}
+  expandRowKeys={['order-1']}
   height={320}
   onSelectionChange={(_rows, keys) => setSelectedRowKeys(keys.map(String))}
   rowHeight={40}
@@ -122,8 +125,13 @@ const [selectedRowKeys, setSelectedRowKeys] = useState<readonly string[]>([]);
 ```
 
 `UPTable2` keeps FlashList refs private, supports fixed-left columns only, and
-uses fixed row height as its virtualization contract. Pagination and remote
-fetching remain application-owned.
+uses fixed row height as its virtualization contract. `expandRowKeys` follows
+the source naming; `expandedRowKeys` remains as a P34 compatibility alias.
+Column `style` is applied to the corresponding header cell. Selection emits
+`onSelectionChange` before `onSelect`, matching the source event order.
+Pagination and remote fetching remain application-owned. Fixed-right columns,
+dynamic row-height virtualization, half-selection, filter UI, and exposed
+native refs are not part of the source-compatible API.
 
 ## Status
 
