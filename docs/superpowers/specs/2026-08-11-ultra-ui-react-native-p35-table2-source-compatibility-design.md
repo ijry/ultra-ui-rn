@@ -28,14 +28,15 @@ P35 includes only behavior that satisfies both conditions:
 The implementation work is therefore:
 
 - Freeze a source-to-RN compatibility matrix before changing implementation.
-- Correct source field names, defaults, event names, payload order, and event
-  timing where P34 differs.
-- Complete verified source sorting and filtering behavior.
-- Complete verified source selection, select-all, tree expansion, and lazy
-  loading behavior.
-- Complete verified source span return formats and covered-cell behavior.
-- Preserve and regression-test the existing fixed-left and fixed-header
-  behavior.
+- Correct the source-named `expandRowKeys` controlled prop where P34 currently
+  exposes only `expandedRowKeys`.
+- Add the source-named column `style` field using the repository's native style
+  type and apply it where the source applies column style.
+- Correct selection callback ordering so `selection-change` is dispatched
+  before `select`, matching the source implementation.
+- Preserve and regression-test the existing sorting, filtering, selection,
+  tree, lazy-loading, span, fixed-left, and fixed-header behavior because the
+  source audit found these already covered by P34.
 - Document every platform boundary that cannot be represented directly in
   React Native.
 
@@ -162,13 +163,13 @@ source data and source-shaped props
   -> main and fixed-left planes
 ```
 
-P35 must explicitly verify the following behavior instead of assuming that
-similar React behavior is source-compatible:
+P35 must explicitly preserve the following already-covered behavior instead of
+assuming that similar React behavior is source-compatible:
 
-- whether custom sorting emits an event without applying local sorting;
-- whether filter changes are controlled, local, or event-only;
-- callback ordering for selection, select-all, expansion, sorting, filtering, and
-  lazy loading;
+- source `sortMethod` comparator precedence and stable ordering;
+- source contains-style `filters` derivation without adding filter UI;
+- callback ordering for selection, select-all, expansion, sorting, and lazy
+  loading;
 - whether tree selection includes loaded descendants and how hidden descendants
   are reported;
 - retry and error behavior for callback and Promise lazy loading;
@@ -214,12 +215,13 @@ Add a focused compatibility fixture that verifies:
 
 ### Pure State Tests
 
-Extend `UPTable2State.test.ts` only for verified source behavior:
+Keep `UPTable2State.test.ts` as the regression suite for the already-covered
+source behavior:
 
 - row-key normalization;
 - filter semantics;
 - stable single and multi-sort;
-- custom-sort behavior;
+- `sortMethod` comparator behavior;
 - tree flattening and expansion;
 - recursive selection of loaded descendants;
 - lazy-load completion, rejection, and retry;
@@ -227,16 +229,14 @@ Extend `UPTable2State.test.ts` only for verified source behavior:
 
 ### Component Tests
 
-Extend `UPTable2.test.tsx` for:
+Extend `UPTable2.test.tsx` for the P35 corrections and regressions:
 
-- source-compatible header and cell rendering;
-- selection and select-all callback order;
-- current-row and expansion callback payloads;
-- sort and filter event behavior;
-- callback and Promise lazy loading;
-- fixed-left and fixed-header synchronization;
-- span rendering and development warnings;
-- controlled state updates without mutating caller data.
+- `expandRowKeys` controlled alias behavior;
+- source column `style` application;
+- selection callback order;
+- existing source-compatible header/cell rendering;
+- current-row, expansion, sort/filter, lazy-loading, fixed-plane, span, and
+  immutability regressions.
 
 No test should be added for excluded RN-only features.
 

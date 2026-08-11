@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Close only the verified `u-table2` source-compatibility gaps left by P34 while preserving the existing `UPTable2` public API and React Native boundaries.
+**Goal:** Close only the verified `u-table2` source-compatibility gaps left by P34 while preserving existing `UPTable2` behavior and React Native boundaries.
 
-**Architecture:** Keep the P34 FlashList-backed table, immutable tree model, fixed-left overlay, fixed header, and fixed-row-height virtualization contract. First freeze an official `uview-plus` 3.8.86 compatibility matrix, then change only the existing state helpers, types/defaults, and component event dispatch that the matrix identifies as incomplete.
+**Architecture:** Keep the P34 FlashList-backed table, immutable tree model, fixed-left overlay, fixed header, and fixed-row-height contract. Freeze the `uview-plus` 3.8.86 matrix first, then apply only three verified corrections: `expandRowKeys`, column `style`, and selection callback order.
 
 **Tech Stack:** TypeScript, React Native, `@shopify/flash-list`, Jest, `@testing-library/react-native`, ESLint, React Native Builder Bob.
 
@@ -12,30 +12,28 @@
 
 - Source compatibility is tracked against `uview-plus` 3.8.86.
 - The source API and source behavior are authoritative.
-- P35 must not add React Native-only table features or invent new source semantics.
+- P35 must not add React Native-only table features or invent source semantics.
 - Existing P34 public props and callbacks remain backward-compatible.
-- `renderCell` and `renderHeader` remain the only React slot adapters; do not add a second RN-specific rendering API.
+- `renderCell` and `renderHeader` remain the only React slot adapters.
 - `fixed: 'left'` remains the supported fixed-column mode.
 - `rowHeight` remains the virtualization contract.
 - Pagination, remote fetching, network requests, and application-owned query state remain outside `UPTable2`.
 - FlashList implementation details and native refs remain private.
-- The component must not mutate caller-owned rows, nested child arrays, data arrays, or key arrays.
-- Do not add a new native data-grid dependency.
-- Every implementation change must map to a row in the frozen source compatibility matrix.
+- Caller-owned rows, nested child arrays, data arrays, and key arrays remain immutable.
+- Do not add a native data-grid dependency.
+- Every implementation change must map to a `P35 action` row in `docs/table2-source-compatibility.md`.
 
 ## File Map
 
-- Create: `docs/table2-source-compatibility.md` - frozen source-to-RN property, event, default, slot, and boundary matrix.
-- Modify: `src/components/table2/types.ts` - only source-verified public type corrections or additions.
-- Modify: `src/components/table2/state.ts` - pure source behavior corrections for filtering, sorting, tree state, lazy loading, selection, or spans.
-- Modify: `src/components/table2/UPTable2.tsx` - source-verified event ordering, controlled-state dispatch, rendering, or native adapter corrections.
-- Modify: `src/config/defaults.ts` - only source-verified `table2` default corrections.
-- Modify: `tests/components/UPTable2State.test.ts` - pure compatibility regression tests.
-- Modify: `tests/components/UPTable2.test.tsx` - component, callback, rendering, and synchronization tests.
-- Modify: `README.md` - final source-compatible public surface and unchanged RN boundaries.
-- Modify: `docs/compatibility.md` - detailed `UPTable2` behavior and platform boundaries.
-- Modify: `docs/gap-matrix.md` - final `u-table2` status and source-verified gaps.
-- Modify: `example/App.tsx` - only when a source-verified behavior needs a visible example.
+- Create: `docs/table2-source-compatibility.md`
+- Modify: `src/components/table2/types.ts`
+- Modify: `src/components/table2/UPTable2.tsx`
+- Modify: `src/config/defaults.ts`
+- Modify: `tests/components/UPTable2.test.tsx`
+- Modify: `README.md`
+- Modify: `docs/compatibility.md`
+- Modify: `docs/gap-matrix.md`
+- Modify: `example/App.tsx` only if the existing example cannot demonstrate a source correction.
 
 ---
 
@@ -45,56 +43,58 @@
 - Create: `docs/table2-source-compatibility.md`
 - Read: `docs/superpowers/specs/2026-08-11-ultra-ui-react-native-p35-table2-source-compatibility-design.md`
 - Read: `src/components/table2/types.ts`
-- Read: `src/components/table2/state.ts`
 - Read: `src/components/table2/UPTable2.tsx`
 - Read: `tests/components/UPTable2.test.tsx`
-- Read: `tests/components/UPTable2State.test.ts`
 
 **Interfaces:**
-- Consumes: official `uview-plus` 3.8.86 `u-table2` docs/source and the current P34 implementation.
-- Produces: a frozen matrix with exact source names, value shapes, defaults, event payloads, event order, current P34 status, P35 action, and RN boundary.
+- Consumes: official `uview-plus` 3.8.86 `u-table2` source and the P34 implementation.
+- Produces: a frozen matrix of source fields, defaults, events, slots, current status, P35 action, and RN boundary.
 
 - [ ] **Step 1: Obtain the pinned source package without changing repository dependencies**
 
 Run in PowerShell:
 
 ```powershell
-$sourceDir = Join-Path $env:TEMP 'uview-plus-3.8.86-p35'
+$suffix = Get-Date -Format 'yyyyMMddHHmmss'
+$sourceDir = Join-Path $env:TEMP ("uview-plus-3.8.86-p35-" + $suffix)
+$extractDir = Join-Path $env:TEMP ("uview-plus-3.8.86-p35-extracted-" + $suffix)
 New-Item -ItemType Directory -Force $sourceDir | Out-Null
 npm pack uview-plus@3.8.86 --pack-destination $sourceDir
 $archive = Get-ChildItem $sourceDir -Filter 'uview-plus-3.8.86.tgz' | Select-Object -First 1
-$extractDir = Join-Path $env:TEMP 'uview-plus-3.8.86-p35-extracted'
 New-Item -ItemType Directory -Force $extractDir | Out-Null
 tar -xf $archive.FullName -C $extractDir
 Get-ChildItem $extractDir -Recurse -Filter '*table2*'
 ```
 
-Extract the generated tarball into a second temporary directory and inspect
-the `u-table2` documentation, component implementation, type declarations, and
-default configuration. Do not add `uview-plus` to this repository's
-`package.json` or lockfile.
+Inspect `package/components/u-table2/u-table2.vue` and
+`package/components/u-table2/tableRow.vue`. Do not add `uview-plus` to this
+repository's `package.json` or lockfile.
 
 - [ ] **Step 2: Record the exact source contract**
 
-Create `docs/table2-source-compatibility.md` with one row for every source
-table property, column property, default, slot, event, and exposed behavior.
-Use this table shape:
+Create the matrix with this shape:
 
 ```markdown
 | Source item | Source shape/default | P34 RN shape | Status | P35 action | RN boundary |
 |---|---|---|---|---|---|
 ```
 
-Record event argument order and whether the source event is emitted before or
-after the related state transition. Record source behavior as `Supported`,
-`Partial`, `Missing`, `No-op boundary`, or `Deferred`.
+Record event argument order and whether each event is actually emitted by the
+3.8.86 implementation. Use the statuses `Supported`, `Partial`, `Missing`,
+`No-op retained`, and `Deferred`.
 
 - [ ] **Step 3: Freeze the P35 change set**
 
-Mark only source items that are both source-defined and incorrect or missing in
-P34 as `P35 action`. Explicitly mark fixed-right columns, dynamic row-height
-virtualization, half-selection additions, pagination/remote-query APIs,
-column drag behavior, and exposed native refs as outside this P35 plan.
+The only `P35 action` rows are:
+
+1. Add source-named controlled `expandRowKeys`, retaining
+   `expandedRowKeys` and `defaultExpandedRowKeys` for P34 callers.
+2. Add source-named column `style` and apply it where the source applies it.
+3. Dispatch `selection-change` before `select`.
+
+Mark fixed-right columns, dynamic row-height virtualization, half-selection,
+`checkStrictly`, pagination/remote-query APIs, filter UI, column drag behavior,
+and exposed native refs as outside P35.
 
 - [ ] **Step 4: Validate the matrix**
 
@@ -105,8 +105,8 @@ rg -n -i "TBD|TODO|unknown|later" docs/table2-source-compatibility.md
 git diff --check -- docs/table2-source-compatibility.md
 ```
 
-Expected: no placeholder terms and no whitespace errors. Every P35 action must
-name an existing source field, event, default, or behavior.
+Expected: no placeholders or whitespace errors. Every `P35 action` names an
+existing source field or event and has a concrete implementation target.
 
 - [ ] **Step 5: Commit the matrix**
 
@@ -117,134 +117,61 @@ git commit -m "docs: freeze table2 source compatibility matrix"
 
 ---
 
-### Task 2: Align Pure Table2 State Semantics
-
-**Files:**
-- Modify: `src/components/table2/state.ts`
-- Modify: `tests/components/UPTable2State.test.ts`
-- Read: `docs/table2-source-compatibility.md`
-
-**Interfaces:**
-- Consumes: the frozen matrix rows marked `P35 action` for pure state behavior.
-- Produces: source-compatible behavior through the existing helpers
-  `filterTable2Rows`, `sortTable2Rows`, `normalizeTable2Tree`,
-  `flattenTable2Rows`, `toggleTable2Selection`, `normalizeTable2Span`, and
-  `buildTable2SpanMap`.
-
-- [ ] **Step 1: Add failing tests for each pure-state matrix row**
-
-Add focused tests to `tests/components/UPTable2State.test.ts`. The tests must
-cover only matrix rows marked `P35 action`, and must include:
-
-```ts
-it('matches the source filter value semantics', () => {
-  const rows = [
-    { id: 'a', name: 'Ada' },
-    { id: 'b', name: 'Bea' },
-  ];
-  const result = filterTable2Rows(
-    rows,
-    { name: 'Ad' },
-  );
-  expect(result).toEqual([{ id: 'a', name: 'Ada' }]);
-  expect(rows).toEqual([
-    { id: 'a', name: 'Ada' },
-    { id: 'b', name: 'Bea' },
-  ]);
-});
-
-it('matches source custom-sort behavior', () => {
-  const columns = [{ key: 'score', title: 'Score' }] as const;
-  const rows = [
-    { id: 'a', score: 2 },
-    { id: 'b', score: 1 },
-  ];
-  const result = sortTable2Rows(
-    rows,
-    columns,
-    [{ field: 'score', order: 'ascending', column: columns[0] }],
-    undefined,
-    (left, right) => left.score - right.score,
-    undefined,
-  );
-  expect(result.map((row) => row.id)).toEqual(['b', 'a']);
-});
-```
-
-Adjust the concrete values only when the frozen matrix records different
-source semantics. Add immutability assertions for every helper that receives
-caller-owned arrays or nested children.
-
-- [ ] **Step 2: Run the focused state tests and verify the failures**
-
-Run:
-
-```powershell
-npx jest tests/components/UPTable2State.test.ts --runInBand
-```
-
-Expected: the new tests fail only on the source behaviors identified by the
-matrix; all existing P34 state tests continue to pass.
-
-- [ ] **Step 3: Implement the smallest pure-helper corrections**
-
-Update `state.ts` without changing helper names or adding a second state model.
-Keep these invariants:
-
-- filtering and sorting return new arrays;
-- sorting remains stable;
-- tree normalization never writes into source rows or child arrays;
-- selection keys are derived immutably;
-- span zero values hide covered cells;
-- unknown values do not throw.
-
-Implement no behavior that is not represented by a matrix row.
-
-- [ ] **Step 4: Run the focused state tests**
-
-Run:
-
-```powershell
-npx jest tests/components/UPTable2State.test.ts --runInBand
-```
-
-Expected: all state tests pass.
-
-- [ ] **Step 5: Commit the pure-state change**
-
-```powershell
-git add src/components/table2/state.ts tests/components/UPTable2State.test.ts
-git commit -m "fix: align table2 source state semantics"
-```
-
----
-
-### Task 3: Align Source Types And Defaults
+### Task 2: Add The Source Alias And Column Style
 
 **Files:**
 - Modify: `src/components/table2/types.ts`
+- Modify: `src/components/table2/UPTable2.tsx`
 - Modify: `src/config/defaults.ts`
 - Modify: `tests/components/UPTable2.test.tsx`
 - Read: `docs/table2-source-compatibility.md`
 
 **Interfaces:**
-- Consumes: source property/default rows marked `P35 action`.
-- Produces: public TypeScript types and `UP.setConfig({ props: { table2 } })` defaults matching the pinned source contract.
+- Consumes: matrix rows for `expandRowKeys` and column `style`.
+- Produces: `UPTable2Props.expandRowKeys`, `UPTable2Column.style`, and source-compatible expansion/header rendering.
 
-- [ ] **Step 1: Add failing type/default coverage**
+- [ ] **Step 1: Add failing tests**
 
-Add component tests that mount `UPTable2` through `UPRoot` and verify every
-matrix row marked as a type or default correction. Cover:
+Add these tests to `tests/components/UPTable2.test.tsx`:
 
-- source default values;
-- source column value shapes;
-- source event callback props;
-- retained P34 controlled/default precedence.
+```ts
+it('accepts the source expandRowKeys controlled prop', () => {
+  const screen = renderRoot(
+    <UPTable2
+      columns={[{ key: 'name', title: 'Name', type: 'expand' }]}
+      data={[{
+        id: 'root',
+        name: 'Root',
+        children: [{ id: 'child', name: 'Child' }],
+      }]}
+      expandRowKeys={['root']}
+    />,
+  );
 
-Use the existing public import path from `../../src` and do not introduce a
-private test-only type.
+  expect(screen.getByTestId('up-table2-row-child')).toBeTruthy();
+});
 
-- [ ] **Step 2: Run the focused component tests**
+it('applies source column style to the header cell', () => {
+  const screen = renderRoot(
+    <UPTable2
+      columns={[{
+        key: 'name',
+        title: 'Name',
+        style: { backgroundColor: '#f5f7fa' },
+      }]}
+      data={[{ id: 'a', name: 'Ada' }]}
+    />,
+  );
+
+  expect(screen.getByTestId('up-table2-header-name').props.style).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ backgroundColor: '#f5f7fa' }),
+    ]),
+  );
+});
+```
+
+- [ ] **Step 2: Run the focused tests and verify the failures**
 
 Run:
 
@@ -252,19 +179,41 @@ Run:
 npx jest tests/components/UPTable2.test.tsx --runInBand
 ```
 
-Expected: new assertions fail only for source-verified type/default gaps.
+Expected: the two new tests fail because P34 does not expose `expandRowKeys`
+or column `style`; existing tests remain green.
 
-- [ ] **Step 3: Apply only matrix-approved type/default changes**
+- [ ] **Step 3: Implement the minimal type/default/render changes**
 
-Update `types.ts` with exact source names and value shapes. Update the
-`table2` default object in `defaults.ts` only where the matrix records a
-source default mismatch. Preserve the existing `renderCell` and
-`renderHeader` adapter callbacks and all P34 props.
+In `src/components/table2/types.ts`, add:
 
-Do not add `prop`, `fixed: 'right'`, dynamic-height callbacks, half-selection
-props, remote-query props, or other excluded fields.
+```ts
+style?: StyleProp<ViewStyle>;
+```
 
-- [ ] **Step 4: Run focused type and component checks**
+to `UPTable2Column`, and add:
+
+```ts
+expandRowKeys?: readonly UPKey[];
+```
+
+to `UPTable2Props`.
+
+Add `expandRowKeys` with an immutable empty-array default to
+`UPTable2Defaults` and the `table2` default object in `src/config/defaults.ts`.
+
+In `UPTable2.tsx`, resolve the controlled expansion source in this order:
+
+```ts
+const controlledExpandedKeys =
+  input.expandedRowKeys ?? input.expandRowKeys;
+```
+
+Use `controlledExpandedKeys` wherever the component currently reads
+`props.expandedRowKeys`. Keep `expandedRowKeys` as the existing P34 alias.
+Apply `column.style` to the shared header-cell style array so the main and
+fixed-left headers both receive it.
+
+- [ ] **Step 4: Run focused checks**
 
 Run:
 
@@ -275,52 +224,59 @@ npx jest tests/components/UPTable2.test.tsx --runInBand
 
 Expected: typecheck and all focused component tests pass.
 
-- [ ] **Step 5: Commit the public contract change**
+- [ ] **Step 5: Commit the alias/style change**
 
 ```powershell
-git add src/components/table2/types.ts src/config/defaults.ts tests/components/UPTable2.test.tsx
-git commit -m "fix: align table2 source types and defaults"
+git add src/components/table2/types.ts src/components/table2/UPTable2.tsx src/config/defaults.ts tests/components/UPTable2.test.tsx
+git commit -m "fix: align table2 source alias and column style"
 ```
 
 ---
 
-### Task 4: Align Table2 Component Events And Rendering
+### Task 3: Correct Selection Callback Order
 
 **Files:**
 - Modify: `src/components/table2/UPTable2.tsx`
 - Modify: `tests/components/UPTable2.test.tsx`
 - Read: `docs/table2-source-compatibility.md`
-- Read: `src/components/table2/state.ts`
 
 **Interfaces:**
-- Consumes: corrected pure helpers from Task 2 and source types/defaults from Task 3.
-- Produces: source-compatible component event dispatch and rendering through the existing `UPTable2` export.
+- Consumes: existing `selectRow` state transition and the source selection event row.
+- Produces: `onSelectionChange` dispatched before `onSelect`, with both existing callback signatures unchanged.
 
-- [ ] **Step 1: Add failing event-order and payload tests**
+- [ ] **Step 1: Add a failing callback-order test**
 
-Add focused tests for every event row marked `P35 action`. Each test must
-assert the complete callback payload and callback order, not only that a
-callback was called. Cover:
-
-- header sort interaction and custom-sort behavior;
-- controlled filter changes;
-- row selection and select-all;
-- current-row changes;
-- tree expansion and lazy loading;
-- `spanMethod` rendering and covered-cell hiding;
-- existing fixed-left vertical synchronization.
-
-Use an ordered event array in tests:
+Add:
 
 ```ts
-const events: string[] = [];
-const onSelect = jest.fn(() => events.push('select'));
-const onSelectionChange = jest.fn(() => events.push('selection-change'));
+it('dispatches selection-change before select', () => {
+  const events: string[] = [];
+  const onSelect = jest.fn(() => events.push('select'));
+  const onSelectionChange = jest.fn(() => events.push('selection-change'));
+  const screen = renderRoot(
+    <UPTable2
+      columns={[
+        { key: 'select', type: 'selection' },
+        { key: 'name', title: 'Name' },
+      ]}
+      data={[{ id: 'a', name: 'Ada' }]}
+      onSelect={onSelect}
+      onSelectionChange={onSelectionChange}
+    />,
+  );
+
+  fireEvent.press(screen.getByTestId('up-table2-select-a'));
+
+  expect(events).toEqual(['selection-change', 'select']);
+  expect(onSelect).toHaveBeenCalledWith(
+    expect.objectContaining({ id: 'a' }),
+    expect.any(Array),
+    ['a'],
+  );
+});
 ```
 
-Assert the exact sequence recorded by the source matrix.
-
-- [ ] **Step 2: Run the focused component tests and verify failures**
+- [ ] **Step 2: Run the focused test and verify the failure**
 
 Run:
 
@@ -328,95 +284,81 @@ Run:
 npx jest tests/components/UPTable2.test.tsx --runInBand
 ```
 
-Expected: new tests fail only for the source behavior rows assigned to this
-task; existing P34 tests remain green.
+Expected: the new test fails with the P34 order `['select', 'selection-change']`.
 
-- [ ] **Step 3: Implement minimal component corrections**
+- [ ] **Step 3: Change only the dispatch order**
 
-Update only the existing handlers and render paths:
+In `selectRow`, calculate `nextKeys` and `selectedRows` exactly as P34 does,
+then call `onSelectionChange` before `onSelect`. Do not change callback
+arguments, controlled-state handling, recursive selection, or select-all.
 
-- `handleHeaderPress`;
-- `selectRow`;
-- `selectAll`;
-- `toggleExpanded`;
-- `loadChildren`;
-- `renderHeader`;
-- `renderRow`;
-- `onMainListScroll`.
-
-Preserve controlled/uncontrolled precedence, immutable inputs, private refs,
-fixed-left overlay synchronization, and fixed row heights. Do not add a new
-public RN-only callback or layout mode.
-
-- [ ] **Step 4: Run focused tests and lint**
+- [ ] **Step 4: Run focused regression checks**
 
 Run:
 
 ```powershell
-npx jest tests/components/UPTable2.test.tsx tests/components/UPTable2State.test.ts --runInBand
-npx eslint "src/components/table2/**/*.{ts,tsx}" "tests/components/UPTable2*.{ts,tsx}"
+npx jest tests/components/UPTable2.test.tsx --runInBand
+npx eslint "src/components/table2/UPTable2.tsx" "tests/components/UPTable2.test.tsx"
 ```
 
-Expected: all focused tests and the scoped lint command pass.
+Expected: all table2 component tests and scoped lint pass.
 
-- [ ] **Step 5: Commit the component change**
+- [ ] **Step 5: Commit the event-order change**
 
 ```powershell
-git add src/components/table2/UPTable2.tsx tests/components/UPTable2.test.tsx tests/components/UPTable2State.test.ts
-git commit -m "fix: align table2 source events and rendering"
+git add src/components/table2/UPTable2.tsx tests/components/UPTable2.test.tsx
+git commit -m "fix: match table2 selection event order"
 ```
 
 ---
 
-### Task 5: Update Compatibility Documentation And Example
+### Task 4: Update Compatibility Documentation
 
 **Files:**
 - Modify: `README.md`
 - Modify: `docs/compatibility.md`
 - Modify: `docs/gap-matrix.md`
-- Modify: `example/App.tsx` only when a source-verified behavior needs an example
 - Modify: `docs/table2-source-compatibility.md`
+- Modify: `example/App.tsx` only if the current example cannot demonstrate a P35 correction
 
 **Interfaces:**
-- Consumes: the frozen matrix and the final behavior from Tasks 2-4.
-- Produces: user-facing documentation that distinguishes source compatibility from unavoidable React Native platform boundaries.
+- Consumes: the frozen matrix and final behavior from Tasks 2-3.
+- Produces: documentation matching the source matrix and unchanged RN boundaries.
 
-- [ ] **Step 1: Add documentation assertions to the matrix**
+- [ ] **Step 1: Record final matrix coverage**
 
-Update each matrix row marked `P35 action` with:
-
-- the final source field/event name;
-- the final RN prop/callback shape;
-- the implementation test file;
-- the final boundary status.
-
-Remove any row whose source verification did not confirm it. Do not leave
-unresolved or speculative compatibility claims.
+Update the rows for `expandRowKeys`, column `style`, and selection event order
+with final implementation files and test names. Keep sorting, filtering, tree,
+lazy loading, spans, fixed-left, and fixed-header rows marked as already
+covered by P34.
 
 - [ ] **Step 2: Update the README**
 
-Keep the existing `UPTable2` example source-shaped. Document:
+Document only:
 
-- supported source fields and callbacks;
-- controlled/default state behavior;
+- source `expandRowKeys` and retained `expandedRowKeys` compatibility;
+- source column `style` mapping;
+- source selection callback order;
+- existing source-shaped fields and callbacks;
 - fixed-left and fixed-row-height boundaries;
-- the fact that pagination and remote fetching belong to the host;
+- host-owned pagination and remote fetching;
 - `renderCell` and `renderHeader` as RN slot adapters.
 
-Do not document excluded properties as available.
+Do not advertise fixed-right, dynamic row height, half-selection, filter UI,
+remote-query props, or other excluded features.
 
-- [ ] **Step 3: Update the compatibility documents**
+- [ ] **Step 3: Update compatibility documents**
 
 Update `docs/compatibility.md` and `docs/gap-matrix.md` so their `u-table2`
-rows match the matrix exactly. Use `Supported`, `Emulated`, `No-op retained`,
-or `Deferred` consistently with the repository's existing terminology.
+rows match the matrix exactly. Use the repository's existing `Supported`,
+`Emulated`, `No-op retained`, and `Deferred` terminology.
 
-- [ ] **Step 4: Update the example only if required**
+- [ ] **Step 4: Keep the example source-shaped**
 
-If the matrix contains a source behavior that cannot be demonstrated by the
-current example, add the smallest source-shaped example using existing public
-props. Do not add a demo for fixed-right columns, dynamic row height,
-half-selection, remote-query props, or other excluded behavior.
+The current example already demonstrates source-shaped columns, selection,
+tree expansion, sorting, fixed-left, and spans. Leave `example/App.tsx`
+unchanged unless a P35 correction cannot be verified through existing usage.
+If it must change, add only the smallest source-shaped demonstration.
 
 - [ ] **Step 5: Verify documentation consistency**
 
@@ -427,7 +369,7 @@ rg -n -i "fixed-right|dynamic row|half-selected|checkStrictly|remote-query|prop=
 git diff --check
 ```
 
-Expected: any matches are exclusion/boundary statements only, not advertised
+Expected: matches are exclusion/boundary statements only, not advertised
 supported API.
 
 - [ ] **Step 6: Commit the documentation**
@@ -439,10 +381,10 @@ git commit -m "docs: finalize table2 source compatibility"
 
 ---
 
-### Task 6: Run Full Quality Gates And Review The Diff
+### Task 5: Run Full Quality Gates And Review The Diff
 
 **Files:**
-- Read: all files changed by Tasks 1-5
+- Read: all files changed by Tasks 1-4
 
 **Interfaces:**
 - Consumes: the complete P35 implementation and documentation.
@@ -456,7 +398,7 @@ Run:
 npm test
 ```
 
-Expected: all repository test suites pass, including the P34 table2 tests.
+Expected: all repository test suites pass, including all P34 table2 tests.
 
 - [ ] **Step 2: Run static checks and package validation**
 
@@ -470,42 +412,32 @@ npm pack --dry-run
 git diff --check
 ```
 
-Expected: every command exits successfully and the package contains the
-intended source, build, type, and documentation files only.
+Expected: every command exits successfully.
 
 - [ ] **Step 3: Review the public API diff**
 
 Run:
 
 ```powershell
-git diff HEAD~5..HEAD -- src/components/table2 src/config/defaults.ts README.md docs example/App.tsx
+git diff HEAD~4..HEAD -- src/components/table2 src/config/defaults.ts README.md docs example/App.tsx
 rg -n "fixed: 'right'|estimatedRowHeight|checkStrictly|halfSelected|onQueryChange|remote" src README.md docs example
 ```
 
-Confirm that no excluded API appears as an implemented or advertised feature.
-Any remaining match must be an explicit exclusion or compatibility boundary.
+Confirm that no excluded API appears as implemented or advertised. Any match
+must be an explicit exclusion or compatibility boundary.
 
-- [ ] **Step 4: Review source matrix coverage**
+- [ ] **Step 4: Review matrix coverage**
 
-For every matrix row marked `P35 action`, identify:
+For each matrix row marked `P35 action`, identify the implementation file,
+focused test, and documentation entry. For every changed implementation line,
+identify the matrix row that justifies it. Revert any change without both
+links before finalizing.
 
-- the implementation file;
-- the focused test;
-- the documentation entry.
-
-For every changed implementation line, identify the source matrix row that
-justifies it. Revert any change without both links before finalizing.
-
-- [ ] **Step 5: Commit the verified P35 result**
+- [ ] **Step 5: Commit the verified result if fixes were needed**
 
 ```powershell
 git status --short
 git log --oneline -8
-```
-
-If the final quality-gate commit is needed after fixes:
-
-```powershell
 git add src tests docs README.md example/App.tsx
 git commit -m "chore: verify table2 source compatibility"
 ```
