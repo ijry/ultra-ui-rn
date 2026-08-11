@@ -169,11 +169,98 @@ it('renders only visible rows and custom node payloads', () => {
   expect(screen.getByText('0:Other')).toBeTruthy();
 });
 
+it('accepts source props as a field-mapping alias', () => {
+  const screen = renderRoot(
+    <UPTree
+      data={[{
+        code: 'root',
+        title: 'Root',
+        items: [{ code: 'child', title: 'Child' }],
+      }]}
+      defaultExpandedKeys={['root']}
+      props={{ nodeKey: 'code', label: 'title', children: 'items' }}
+    />,
+  );
+
+  expect(screen.getByTestId('up-tree-row-child')).toBeTruthy();
+});
+
+it('lets existing fieldNames override the source props alias', () => {
+  const screen = renderRoot(
+    <UPTree
+      data={[{
+        code: 'root',
+        title: 'Root',
+        items: [{ code: 'child', title: 'Child' }],
+      }]}
+      defaultExpandedKeys={['root']}
+      fieldNames={{ nodeKey: 'code', label: 'title', children: 'items' }}
+      props={{ nodeKey: 'id', label: 'label', children: 'children' }}
+    />,
+  );
+
+  expect(screen.getByTestId('up-tree-row-child')).toBeTruthy();
+});
+
+it('uses source icon props and expands content by default', () => {
+  const screen = renderRoot(
+    <UPTree
+      collapseIcon="source-collapse"
+      data={[{ id: 'root', label: 'Root', children: [{ id: 'child', label: 'Child' }] }]}
+      expandIcon="source-expand"
+    />,
+  );
+
+  expect(screen.getByTestId('up-icon-glyph').props.children).toBe('source-expand');
+  fireEvent.press(screen.getByTestId('up-tree-content-root'));
+  expect(screen.getByTestId('up-tree-row-child')).toBeTruthy();
+  expect(screen.getByTestId('up-icon-glyph').props.children).toBe('source-collapse');
+});
+
+it('uses explicit expandOnClickNode false for non-expanding content presses', () => {
+  const screen = renderRoot(
+    <UPTree
+      data={[{ id: 'root', label: 'Root', children: [{ id: 'child', label: 'Child' }] }]}
+      expandOnClickNode={false}
+    />,
+  );
+
+  fireEvent.press(screen.getByTestId('up-tree-content-root'));
+  expect(screen.queryByTestId('up-tree-row-child')).toBeNull();
+});
+
+it('merges node flags into uncontrolled initial state but honors controlled keys', () => {
+  const source = [{
+    id: 'root',
+    label: 'Root',
+    expanded: true,
+    checked: true,
+    children: [{ id: 'child', label: 'Child' }],
+  }];
+
+  const uncontrolled = renderRoot(
+    <UPTree data={source} showCheckbox />,
+  );
+  expect(uncontrolled.getByTestId('up-tree-row-child')).toBeTruthy();
+  expect(uncontrolled.getByTestId('up-tree-checkbox-root').props.accessibilityState.checked).toBe(true);
+
+  const controlled = renderRoot(
+    <UPTree checkedKeys={[]} data={source} expandedKeys={[]} showCheckbox />,
+  );
+  expect(controlled.queryByTestId('up-tree-row-child')).toBeNull();
+  expect(controlled.getByTestId('up-tree-checkbox-root').props.accessibilityState.checked).toBe(false);
+});
+
 it('emits expand and node-click callbacks', () => {
   const onNodeClick = jest.fn();
   const onNodeExpand = jest.fn();
   const screen = renderRoot(
-    <UPTree data={data} onNodeClick={onNodeClick} onNodeExpand={onNodeExpand} />,
+    <UPTree
+      data={data}
+      expandOnClickNode={false}
+      onNodeClick={onNodeClick}
+      onNodeExpand={onNodeExpand}
+    />,
   );
 
   fireEvent.press(screen.getByTestId('up-tree-content-root'));

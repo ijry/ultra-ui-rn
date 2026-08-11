@@ -14,6 +14,7 @@ import { UPIcon } from '../icon';
 import {
   collectExpandableKeys,
   deriveTreeCheckState,
+  expandInitialCheckedKeys,
   flattenVisibleTree,
   getCheckedKeys,
   getCheckedNodes,
@@ -50,14 +51,16 @@ function UPTreeInner<T extends object = Record<string, unknown>>(
 ): React.JSX.Element {
   const config = useUPConfig();
   const defaults = config.props.tree;
+  const resolvedFieldNames = {
+    ...defaults.fieldNames,
+    ...input.props,
+    ...input.fieldNames,
+  };
   const props = {
     ...defaults,
     ...input,
     data: (input.data ?? defaults.data) as readonly T[],
-    fieldNames: {
-      ...defaults.fieldNames,
-      ...input.fieldNames,
-    },
+    fieldNames: resolvedFieldNames,
   } as UPTreeProps<T> & typeof defaults;
   const fieldNames = props.fieldNames as {
     children: string;
@@ -73,10 +76,14 @@ function UPTreeInner<T extends object = Record<string, unknown>>(
   const [localExpandedKeys, setLocalExpandedKeys] = useState<readonly UPKey[]>(
     () => props.defaultExpandAll
       ? collectExpandableKeys(model)
-      : props.defaultExpandedKeys,
+      : [...new Set([...model.initialExpandedKeys, ...props.defaultExpandedKeys])],
   );
   const [localCheckedKeys, setLocalCheckedKeys] = useState<readonly UPKey[]>(
-    () => props.defaultCheckedKeys,
+    () => expandInitialCheckedKeys(
+      model,
+      [...new Set([...model.initialCheckedKeys, ...props.defaultCheckedKeys])],
+      Boolean(props.checkStrictly),
+    ),
   );
   const [localCurrentKey, setLocalCurrentKey] = useState<UPKey | null>(
     () => props.defaultCurrentNodeKey ?? null,
@@ -230,7 +237,7 @@ function UPTreeInner<T extends object = Record<string, unknown>>(
             >
               <UPIcon
                 color={row.disabled ? '#c8c9cc' : '#606266'}
-                name={expanded ? 'arrow-down' : 'arrow-right'}
+                name={expanded ? props.collapseIcon : props.expandIcon}
                 size={iconSize}
               />
             </Pressable>

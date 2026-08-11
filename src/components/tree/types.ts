@@ -37,6 +37,7 @@ export type UPTreeRenderPayload<T> = UPTreeVisibleNode<T> & {
 
 export type UPTreeProps<T extends object = Record<string, unknown>> = {
   data?: readonly T[];
+  props?: UPTreeFieldNames;
   fieldNames?: UPTreeFieldNames;
   nodeKey?: string;
   showCheckbox?: boolean;
@@ -55,6 +56,8 @@ export type UPTreeProps<T extends object = Record<string, unknown>> = {
   indent?: number | string;
   iconSize?: number | string;
   checkboxSize?: number | string;
+  expandIcon?: string;
+  collapseIcon?: string;
   height?: number | string;
   customStyle?: StyleProp<ViewStyle>;
   customClass?: string;

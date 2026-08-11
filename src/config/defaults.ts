@@ -666,6 +666,8 @@ export type UPTreeDefaults = {
   indent: number;
   iconSize: number;
   checkboxSize: number;
+  expandIcon: string;
+  collapseIcon: string;
   height: number | string;
 };
 
@@ -1390,7 +1392,9 @@ export const sourceDefaults: Readonly<{
       defaultCurrentNodeKey: null,
       defaultExpandAll: false,
       defaultExpandedKeys: Object.freeze([]) as readonly (string | number)[],
-      expandOnClickNode: false,
+      expandIcon: 'play-right-fill',
+      expandOnClickNode: true,
+      collapseIcon: 'arrow-down-fill',
       fieldNames: Object.freeze({
         children: 'children',
         disabled: 'disabled',
