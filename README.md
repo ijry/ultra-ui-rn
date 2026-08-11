@@ -85,21 +85,25 @@ clickable and expandable, but their checkbox cannot change checked state.
 
 `UPWaterfall` uses FlashList masonry for dynamic-height items. Use
 `columns={2}` for a fixed layout or `columns="auto"` with `minColumnWidth`
-for width-based column calculation. The component uses `value` and `onChange`
-for the React equivalent of the source `v-model`.
+for width-based column calculation. `modelValue` and `onUpdateModelValue`
+match the source Vue 3 binding; existing `value`/`defaultValue` and
+`onChange` remain supported React Native interfaces.
 
 ```tsx
 <UPWaterfall
   columns="auto"
   minColumnWidth={220}
-  value={items}
+  modelValue={items}
+  onUpdateModelValue={setItems}
   renderItem={({ item }) => <ProductCard item={item} />}
 />
 ```
 
-`remove(id)` and `clear()` are exposed through `UPWaterfallRef`. The render
-callback does not receive a column index because masonry placement can change
-after measurement.
+When both `modelValue` and `value` are supplied, `modelValue` is authoritative.
+`remove(id)`, `clear()`, and `modify(id, key, value)` are exposed through
+`UPWaterfallRef`; ref mutations call `onUpdateModelValue` before `onChange`.
+The render callback does not receive a column index because masonry placement
+can change after measurement.
 
 ### Table2
 
@@ -250,8 +254,9 @@ controlled or scroll-host-provided visibility inputs.
 P33 adds `UPTree` and `UPWaterfall`. `UPTree` uses virtualized visible rows,
 expansion/current/check state, field mapping, custom node rendering, and
 imperative ref methods. `UPWaterfall` uses FlashList masonry for dynamic item
-heights, fixed or automatic columns, delayed additions, and ref-driven
-remove/clear/scroll methods.
+heights, fixed or automatic columns, delayed additions, source-shaped
+`modelValue` callbacks, immutable ref mutations, and ref-driven
+remove/clear/modify/scroll methods.
 P34 adds `UPTable2`, a FlashList-backed generic data grid with source-shaped
 columns, controlled selection/expansion/current-row state, tree flattening,
 sorting/filtering, callback or Promise lazy children, fixed headers, and a

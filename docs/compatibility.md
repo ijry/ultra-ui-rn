@@ -1052,18 +1052,25 @@ have no React Native CSS runtime. The audited `u-tree` source does not define
 async child loading, network loading, drag sorting, reordering, `allow-drop`,
 `node-drag`, or `node-drop`; those APIs are not exposed by `UPTree`.
 
-## P33 waterfall
+## P37 waterfall source compatibility
 
-`UPWaterfall` maps the source waterfall data model to a React Native
-FlashList masonry surface. It supports dynamic item heights, fixed or
-automatic columns, stable `idKey` identity, delayed add callbacks, ref-driven
-remove/clear operations, and scroll methods.
+`UPWaterfall` keeps the existing FlashList masonry implementation and adds the
+source `modelValue`/`onUpdateModelValue` binding. Input precedence is
+`modelValue`, `value`, `defaultValue`, then the configured default `value`.
+Existing `onChange` callers continue to work; ref mutations call
+`onUpdateModelValue` before `onChange`.
 
-The React API uses `value` / `defaultValue` and `onChange`. The source column
-slot is represented by per-item `renderItem`; internal masonry column arrays
-and `columnIndex` are deliberately not public because measurement can change
-placement. Pagination and network loading remain application-owned through
-`onEndReached`.
+Delayed additions retain the private displayed/pending queue. `onAfterAddOne`
+receives a source-shaped item payload with a measured native height when one
+is available, otherwise `estimatedItemSize`. `onAfterAddAll` receives
+`{ newData }`; `columnHeights` is not reported because FlashList does not
+expose stable source-equivalent column measurements.
+
+`remove(id)`, `clear()`, and `modify(id, key, value)` are available through
+`UPWaterfallRef`. Mutations create new arrays, and `modify` shallow-clones
+object items. The component does not expose `column`/`left` slots, stable
+column indices, a manually maintained column model, source window-resize
+subscriptions, network loading, pagination, drag/drop, or reordering.
 
 ## P34/P35 table2
 

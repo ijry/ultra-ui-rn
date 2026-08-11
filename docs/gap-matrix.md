@@ -366,8 +366,8 @@ Source: `uview-plus` 3.8.86. Status values: Supported, Emulated, No-op retained,
 
 | Component | Source API | React Native API | Default / behavior | Status | Test |
 |---|---|---|---|---|---|
-| `u-waterfall` | v-model list, columns, auto column width, id key, delayed add events, clear/remove refs, scoped column slot | `UPWaterfall`, `UPWaterfallRef`, `renderItem` | FlashList masonry renders dynamic-height items; fixed or measured automatic columns; `value` remains the external source of truth | Emulated | `tests/components/UPWaterfall.test.tsx` |
-| `u-waterfall` | stable internal column arrays and source CSS layout behavior | Per-item render callback and documented limits | Masonry placement is engine-owned; column indices are not stable public data | Deferred / Boundary | Component prop types |
+| `u-waterfall` | `value`/`modelValue`, `addTime`, `idKey`, `columns`, `columnsMin`, `minColumnWidth`, add callbacks, `remove`, `clear`, `modify` | `UPWaterfall`, `UPWaterfallRef`, `modelValue`, `onUpdateModelValue`, retained RN aliases, `renderItem` | Source-shaped data binding and callbacks over FlashList masonry; measured item height with estimate fallback; immutable ref mutations | Emulated | `tests/components/UPWaterfall.test.tsx`; `docs/waterfall-source-compatibility.md` |
+| `u-waterfall` | `column`/`left` slots, stable column arrays, stable `colIndex`, exact `columnHeights`, window-level `uni` resize behavior | No public equivalent | FlashList owns placement and measurement; container layout drives automatic columns | Deferred / Boundary | `src/components/waterfall/types.ts`; `docs/waterfall-source-compatibility.md` |
 
 ## Deferred Source Components
 
