@@ -132,20 +132,33 @@ function UPTreeInner<T extends object = Record<string, unknown>>(
     props.onUpdateExpandedKeys,
   ]);
 
-  const selectNode = useCallback((key: UPKey | null) => {
+  const updateCurrentKey = useCallback((key: UPKey | null) => {
     const oldNode = currentKey === null ? null : model.nodes.get(currentKey)?.node ?? null;
     const nextNode = key === null ? null : model.nodes.get(key)?.node ?? null;
-    if (key !== null && !nextNode) return;
-    if (key !== null && model.nodes.get(key)?.disabled) return;
+    if (key !== null && !nextNode) return null;
     if (props.currentNodeKey === undefined) setLocalCurrentKey(key);
     props.onUpdateCurrentNodeKey?.(key);
-    props.onCurrentChange?.(nextNode, oldNode);
+    return {
+      changed: currentKey !== key,
+      nextNode,
+      oldNode,
+    };
   }, [
     currentKey,
     model,
     props.currentNodeKey,
-    props.onCurrentChange,
     props.onUpdateCurrentNodeKey,
+  ]);
+
+  const selectNode = useCallback((key: UPKey | null) => {
+    if (key !== null && model.nodes.get(key)?.disabled) return;
+    const transition = updateCurrentKey(key);
+    if (!transition) return;
+    props.onCurrentChange?.(transition.nextNode, transition.oldNode);
+  }, [
+    model,
+    props.onCurrentChange,
+    updateCurrentKey,
   ]);
 
   const toggleChecked = useCallback((key: UPKey, nextChecked: boolean, deep = true) => {
@@ -173,24 +186,29 @@ function UPTreeInner<T extends object = Record<string, unknown>>(
   ]);
 
   const onNodePress = useCallback((row: UPTreeVisibleNode<T>) => {
-    props.onNodeClick?.(row.node);
-    selectNode(row.key);
+    const transition = updateCurrentKey(row.key);
+    if (!transition) return;
     if (props.expandOnClickNode && row.hasChildren) {
       toggleExpanded(row.key, !expandedSet.has(row.key));
     }
-    if (props.checkOnClickNode && props.showCheckbox) {
+    if (props.checkOnClickNode && props.showCheckbox && !row.disabled) {
       toggleChecked(row.key, !checkedSet.has(row.key));
+    }
+    props.onNodeClick?.(row.node);
+    if (transition.changed) {
+      props.onCurrentChange?.(transition.nextNode, transition.oldNode);
     }
   }, [
     checkedSet,
     expandedSet,
     props.checkOnClickNode,
+    props.onCurrentChange,
     props.expandOnClickNode,
     props.onNodeClick,
     props.showCheckbox,
-    selectNode,
     toggleChecked,
     toggleExpanded,
+    updateCurrentKey,
   ]);
 
   const renderTreeRow = (row: UPTreeVisibleNode<T>): React.JSX.Element => {
@@ -230,7 +248,6 @@ function UPTreeInner<T extends object = Record<string, unknown>>(
               accessibilityLabel={`${expanded ? 'Collapse' : 'Expand'} ${row.label}`}
               accessibilityRole="button"
               accessibilityState={{ disabled: row.disabled, expanded }}
-              disabled={row.disabled}
               onPress={() => toggleExpanded(row.key, !expanded)}
               style={{ alignItems: 'center', height: 36, justifyContent: 'center', width: 36 }}
               testID={`up-tree-expand-${String(row.key)}`}
@@ -277,7 +294,6 @@ function UPTreeInner<T extends object = Record<string, unknown>>(
               expanded: row.hasChildren ? expanded : undefined,
               selected,
             }}
-            disabled={row.disabled}
             onPress={() => onNodePress(row)}
             style={[
               {

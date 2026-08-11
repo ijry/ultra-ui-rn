@@ -229,6 +229,63 @@ it('uses explicit expandOnClickNode false for non-expanding content presses', ()
   expect(screen.queryByTestId('up-tree-row-child')).toBeNull();
 });
 
+it('dispatches tree content callbacks in source order', () => {
+  const events: string[] = [];
+  const screen = renderRoot(
+    <UPTree
+      checkOnClickNode
+      data={[{ id: 'root', label: 'Root', children: [{ id: 'child', label: 'Child' }] }]}
+      onCheck={() => events.push('check')}
+      onCheckChange={() => events.push('check-change')}
+      onCurrentChange={() => events.push('current-change')}
+      onNodeClick={() => events.push('node-click')}
+      onNodeExpand={() => events.push('node-expand')}
+      onUpdateCurrentNodeKey={() => events.push('update-current')}
+      showCheckbox
+    />,
+  );
+
+  fireEvent.press(screen.getByTestId('up-tree-content-root'));
+
+  expect(events).toEqual([
+    'update-current',
+    'node-expand',
+    'check-change',
+    'check',
+    'node-click',
+    'current-change',
+  ]);
+});
+
+it('keeps disabled nodes clickable and expandable but not checkable', () => {
+  const onCheckChange = jest.fn();
+  const onNodeClick = jest.fn();
+  const onNodeExpand = jest.fn();
+  const screen = renderRoot(
+    <UPTree
+      checkOnClickNode
+      data={[{
+        id: 'disabled',
+        label: 'Disabled',
+        disabled: true,
+        children: [{ id: 'child', label: 'Child' }],
+      }]}
+      onCheckChange={onCheckChange}
+      onNodeClick={onNodeClick}
+      onNodeExpand={onNodeExpand}
+      showCheckbox
+    />,
+  );
+
+  fireEvent.press(screen.getByTestId('up-tree-content-disabled'));
+  expect(onNodeClick).toHaveBeenCalledWith(expect.objectContaining({ id: 'disabled' }));
+  expect(onNodeExpand).toHaveBeenCalledWith(expect.objectContaining({ id: 'disabled' }));
+  expect(screen.getByTestId('up-tree-row-child')).toBeTruthy();
+
+  fireEvent.press(screen.getByTestId('up-tree-checkbox-disabled'));
+  expect(onCheckChange).not.toHaveBeenCalled();
+});
+
 it('merges node flags into uncontrolled initial state but honors controlled keys', () => {
   const source = [{
     id: 'root',
