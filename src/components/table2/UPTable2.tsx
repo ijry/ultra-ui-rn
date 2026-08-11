@@ -290,9 +290,9 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
     const nextKeys = toggleTable2Selection(model, selectedKeys, key, nextSelected);
     if (props.selectedRowKeys === undefined) setLocalSelectedKeys(nextKeys);
     const selectedRows = resolveTable2Rows(model, nextKeys);
+    props.onSelectionChange?.(selectedRows, nextKeys);
     const row = model.nodes.get(key)?.row;
     if (row) props.onSelect?.(row, selectedRows, nextKeys);
-    props.onSelectionChange?.(selectedRows, nextKeys);
   };
 
   const selectAll = (nextSelected: boolean): void => {

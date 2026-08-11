@@ -145,6 +145,32 @@ it('updates uncontrolled selection, select-all, and recursive tree selection', (
   );
 });
 
+it('dispatches selection-change before select', () => {
+  const events: string[] = [];
+  const onSelect = jest.fn(() => events.push('select'));
+  const onSelectionChange = jest.fn(() => events.push('selection-change'));
+  const screen = renderRoot(
+    <UPTable2
+      columns={[
+        { key: 'select', type: 'selection' },
+        { key: 'name', title: 'Name' },
+      ]}
+      data={[{ id: 'a', name: 'Ada' }]}
+      onSelect={onSelect}
+      onSelectionChange={onSelectionChange}
+    />,
+  );
+
+  fireEvent.press(screen.getByTestId('up-table2-select-a'));
+
+  expect(events).toEqual(['selection-change', 'select']);
+  expect(onSelect).toHaveBeenCalledWith(
+    expect.objectContaining({ id: 'a' }),
+    expect.any(Array),
+    ['a'],
+  );
+});
+
 it('does not change controlled selection or caller-owned arrays', () => {
   const selectedRowKeys = ['root'];
   const onSelectionChange = jest.fn();
