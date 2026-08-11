@@ -4,6 +4,7 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import { UP, UPRoot, UPTree, type UPTreeRef } from '../../src';
 import {
   deriveTreeCheckState,
+  expandInitialCheckedKeys,
   flattenVisibleTree,
   normalizeTree,
   toggleCheckedKeys,
@@ -57,6 +58,64 @@ it('uses path-qualified internal keys for missing or duplicate keys', () => {
   );
 
   expect(model.visibleKeys).toEqual(['path:0', 'same', 'same@path:2']);
+});
+
+it('collects node-level initial flags without mutating source nodes', () => {
+  const source = [{
+    id: 'root',
+    label: 'Root',
+    expanded: true,
+    checked: true,
+    children: [{ id: 'child', label: 'Child' }],
+  }];
+
+  const model = normalizeTree(source, fieldNames);
+
+  expect(model.initialExpandedKeys).toEqual(['root']);
+  expect(model.initialCheckedKeys).toEqual(['root']);
+  expect(source).toEqual([{
+    id: 'root',
+    label: 'Root',
+    expanded: true,
+    checked: true,
+    children: [{ id: 'child', label: 'Child' }],
+  }]);
+});
+
+it('allows disabled nodes to expand but still excludes them from check mutations', () => {
+  const model = normalizeTree([{
+    id: 'disabled',
+    label: 'Disabled',
+    disabled: true,
+    children: [{ id: 'child', label: 'Child' }],
+  }], fieldNames);
+
+  expect(toggleExpandedKeys(model, [], 'disabled', true, false)).toEqual(['disabled']);
+  expect(toggleCheckedKeys(model, [], 'disabled', true, {
+    checkStrictly: false,
+  })).toEqual([]);
+});
+
+it('preserves initial checked targets and propagates only to enabled descendants', () => {
+  const model = normalizeTree([{
+    id: 'root',
+    label: 'Root',
+    disabled: true,
+    children: [
+      { id: 'enabled', label: 'Enabled' },
+      {
+        id: 'blocked',
+        label: 'Blocked',
+        disabled: true,
+        children: [{ id: 'nested', label: 'Nested' }],
+      },
+    ],
+  }], fieldNames);
+
+  expect(expandInitialCheckedKeys(model, ['root'], false)).toEqual([
+    'root',
+    'enabled',
+  ]);
 });
 
 it('enforces accordion expansion among siblings', () => {

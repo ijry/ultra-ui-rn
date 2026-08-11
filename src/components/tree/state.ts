@@ -19,6 +19,8 @@ export type UPTreeNodeModel<T> = {
   nodes: Map<UPKey, UPTreeNodeRecord<T>>;
   roots: UPKey[];
   visibleKeys: UPKey[];
+  initialExpandedKeys: UPKey[];
+  initialCheckedKeys: UPKey[];
 };
 
 function pathKey(path: number[]): string {
@@ -38,6 +40,8 @@ export function normalizeTree<T extends object>(
 ): UPTreeNodeModel<T> {
   const nodes = new Map<UPKey, UPTreeNodeRecord<T>>();
   const roots: UPKey[] = [];
+  const initialExpandedKeys: UPKey[] = [];
+  const initialCheckedKeys: UPKey[] = [];
   let warnedMissingKey = false;
   let warnedDuplicateKey = false;
 
@@ -89,12 +93,20 @@ export function normalizeTree<T extends object>(
       nodes.set(key, record);
       if (parentKey === null) roots.push(key);
       else nodes.get(parentKey)?.children.push(key);
+      if (recordNode.expanded === true) initialExpandedKeys.push(key);
+      if (recordNode.checked === true) initialCheckedKeys.push(key);
       visit(children, key, level + 1, path);
     });
   };
 
   visit(data, null, 0, []);
-  return { nodes, roots, visibleKeys: roots };
+  return {
+    initialCheckedKeys,
+    initialExpandedKeys,
+    nodes,
+    roots,
+    visibleKeys: roots,
+  };
 }
 
 export function flattenVisibleTree<T>(
@@ -129,6 +141,29 @@ export function collectExpandableKeys<T>(model: UPTreeNodeModel<T>): UPKey[] {
     .map((record) => record.key);
 }
 
+export function expandInitialCheckedKeys<T>(
+  model: UPTreeNodeModel<T>,
+  checkedKeys: readonly UPKey[],
+  checkStrictly: boolean,
+): UPKey[] {
+  const next = new Set(checkedKeys);
+  if (checkStrictly) return [...next];
+
+  const visit = (key: UPKey): void => {
+    const record = model.nodes.get(key);
+    if (!record) return;
+    record.children.forEach((childKey) => {
+      const child = model.nodes.get(childKey);
+      if (!child || child.disabled) return;
+      next.add(childKey);
+      visit(childKey);
+    });
+  };
+
+  checkedKeys.forEach(visit);
+  return [...next];
+}
+
 export function toggleExpandedKeys<T>(
   model: UPTreeNodeModel<T>,
   expandedKeys: readonly UPKey[],
@@ -137,7 +172,7 @@ export function toggleExpandedKeys<T>(
   accordion: boolean,
 ): UPKey[] {
   const record = model.nodes.get(key);
-  if (!record || record.disabled || record.children.length === 0) return [...expandedKeys];
+  if (!record || record.children.length === 0) return [...expandedKeys];
   const next = new Set(expandedKeys);
   if (!expanded) next.delete(key);
   else {
