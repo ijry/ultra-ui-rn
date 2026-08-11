@@ -18,7 +18,10 @@ import { useUPConfig } from '../../config/useUPConfig';
 import { getPx } from '../../utils';
 import {
   calculateWaterfallColumns,
+  composeWaterfallData,
   createWaterfallAddQueue,
+  createWaterfallAfterAddOnePayload,
+  modifyWaterfallItem,
   reconcileWaterfallItems,
   resolveWaterfallId,
   warnDuplicateWaterfallIds,
@@ -31,6 +34,33 @@ function resolveHeight(value: number | string): ViewStyle['height'] {
   }
   const height = getPx(value);
   return Number.isFinite(height) && height > 0 ? height : undefined;
+}
+
+function resolveItemHeight(
+  measured: number | undefined,
+  estimatedItemSize: number | string,
+): number {
+  if (measured !== undefined && Number.isFinite(measured) && measured > 0) {
+    return measured;
+  }
+  const estimated = getPx(estimatedItemSize);
+  return Number.isFinite(estimated) && estimated > 0 ? estimated : 0;
+}
+
+function resolveWaterfallRenderKey<T>(
+  items: readonly T[],
+  item: T,
+  index: number,
+  idKey: string,
+): string {
+  const id = resolveWaterfallId(item, index, idKey);
+  const occurrence = items
+    .slice(0, index)
+    .filter(
+      (candidate, candidateIndex) =>
+        resolveWaterfallId(candidate, candidateIndex, idKey) === id,
+    ).length;
+  return occurrence === 0 ? String(id) : `${String(id)}:${occurrence}`;
 }
 
 function UPWaterfallInner<T = unknown>(
@@ -57,69 +87,131 @@ function UPWaterfallInner<T = unknown>(
   > &
     UPWaterfallProps<T>;
   const sourceValue =
-    input.value !== undefined
-      ? input.value
-      : input.defaultValue !== undefined
-        ? input.defaultValue
-        : props.value ?? [];
+    input.modelValue !== undefined
+      ? input.modelValue
+      : input.value !== undefined
+        ? input.value
+        : input.defaultValue !== undefined
+          ? input.defaultValue
+          : props.value ?? [];
   const [displayed, setDisplayed] = useState<readonly T[]>(() => [...sourceValue]);
   const [pending, setPending] = useState<readonly T[]>([]);
   const displayedRef = useRef<readonly T[]>([...sourceValue]);
+  const pendingRef = useRef<readonly T[]>([]);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useRef<FlashListRef<T> | null>(null);
+  const measuredHeightsRef = useRef<Map<string | number, number>>(new Map());
+  const modelValueWarningRef = useRef(false);
   const [containerWidth, setContainerWidth] = useState(0);
 
-  const replaceDisplayed = useCallback((next: readonly T[]) => {
-    const normalized = [...next];
-    displayedRef.current = normalized;
-    setDisplayed(normalized);
-  }, []);
-
-  const emitChange = useCallback(
-    (next: readonly T[]) => {
-      const normalized = [...next];
-      displayedRef.current = normalized;
-      setDisplayed(normalized);
-      input.onChange?.(normalized);
+  const replaceQueue = useCallback(
+    (nextDisplayed: readonly T[], nextPending: readonly T[]) => {
+      const displayedNext = [...nextDisplayed];
+      const pendingNext = [...nextPending];
+      displayedRef.current = displayedNext;
+      pendingRef.current = pendingNext;
+      setDisplayed(displayedNext);
+      setPending(pendingNext);
     },
-    [input.onChange],
+    [],
   );
+
+  const emitMutation = useCallback(
+    (nextDisplayed: readonly T[], nextPending: readonly T[]) => {
+      const displayedNext = [...nextDisplayed];
+      const pendingNext = [...nextPending];
+      const next = composeWaterfallData(displayedNext, pendingNext);
+      displayedRef.current = displayedNext;
+      pendingRef.current = pendingNext;
+      setDisplayed(displayedNext);
+      setPending(pendingNext);
+      input.onUpdateModelValue?.(next);
+      input.onChange?.(next);
+    },
+    [input.onChange, input.onUpdateModelValue],
+  );
+
+  useEffect(() => {
+    if (
+      typeof __DEV__ !== 'undefined' &&
+      __DEV__ &&
+      input.modelValue !== undefined &&
+      input.value !== undefined &&
+      !modelValueWarningRef.current
+    ) {
+      modelValueWarningRef.current = true;
+      console.warn('[UPWaterfall] modelValue takes precedence over value.');
+    }
+  }, [input.modelValue, input.value]);
 
   useEffect(() => {
     warnDuplicateWaterfallIds(sourceValue, props.idKey);
 
-    const previous = displayedRef.current;
-    const reconciled = reconcileWaterfallItems(previous, sourceValue, props.idKey);
-    const additions = createWaterfallAddQueue(previous, sourceValue, props.idKey);
+    const previousDisplayed = displayedRef.current;
+    const previousPending = pendingRef.current;
+    const previousQueue = composeWaterfallData(previousDisplayed, previousPending);
+    const reconciled = reconcileWaterfallItems(
+      previousQueue,
+      sourceValue,
+      props.idKey,
+    );
 
-    if (props.addTime <= 0 || additions.length === 0) {
-      replaceDisplayed(reconciled.displayed);
-      setPending([]);
+    if (props.addTime <= 0) {
+      replaceQueue(reconciled.displayed, []);
       return;
     }
 
+    const additions = createWaterfallAddQueue(
+      previousQueue,
+      sourceValue,
+      props.idKey,
+    );
     const previousIds = new Set(
-      previous.map((item, index) => resolveWaterfallId(item, index, props.idKey)),
+      previousQueue.map((item, index) =>
+        resolveWaterfallId(item, index, props.idKey),
+      ),
     );
-    const additionIds = new Set(
-      sourceValue
-        .map((item, index) => ({
-          id: resolveWaterfallId(item, index, props.idKey),
-          isAddition: !previousIds.has(resolveWaterfallId(item, index, props.idKey)),
-        }))
-        .filter(({ isAddition }) => isAddition)
-        .map(({ id }) => id),
+    const pendingIds = new Set(
+      previousPending.map((item, index) =>
+        resolveWaterfallId(item, index, props.idKey),
+      ),
     );
-    const existingIncoming = reconciled.displayed.filter(
-      (item, index) => !additionIds.has(resolveWaterfallId(item, index, props.idKey)),
+    const incomingPending = sourceValue.filter((item, index) =>
+      pendingIds.has(resolveWaterfallId(item, index, props.idKey)),
+    );
+    const nextPending = [...incomingPending, ...additions];
+    const nextPendingIds = new Set(
+      nextPending.map((item, index) =>
+        resolveWaterfallId(item, index, props.idKey),
+      ),
+    );
+    const nextDisplayed = sourceValue.filter(
+      (item, index) =>
+        !nextPendingIds.has(resolveWaterfallId(item, index, props.idKey)),
     );
 
-    replaceDisplayed(existingIncoming);
-    setPending(additions);
+    if (additions.length === 0 && previousPending.length === 0) {
+      replaceQueue(reconciled.displayed, []);
+      return;
+    }
+
+    if (previousPending.length > 0 && nextPending.length === 0) {
+      replaceQueue(nextDisplayed, []);
+      return;
+    }
+
+    if (additions.length > 0 || nextPending.length > 0) {
+      replaceQueue(nextDisplayed, nextPending);
+      return;
+    }
+
+    if (previousIds.size === 0) {
+      replaceQueue(reconciled.displayed, []);
+    }
   }, [
     props.addTime,
     props.idKey,
-    replaceDisplayed,
+    replaceQueue,
     sourceValue,
   ]);
 
@@ -127,12 +219,29 @@ function UPWaterfallInner<T = unknown>(
     if (pending.length === 0) return undefined;
 
     timerRef.current = setTimeout(() => {
-      const [nextItem, ...remaining] = pending;
-      const nextIndex = displayedRef.current.length;
-      replaceDisplayed([...displayedRef.current, nextItem]);
-      setPending(remaining);
-      input.onAfterAddOne?.(nextItem, nextIndex);
-      if (remaining.length === 0) input.onAfterAddAll?.();
+      const queued = pendingRef.current;
+      if (queued.length === 0) return;
+
+      const [nextItem, ...remaining] = queued;
+      const nextDisplayed = [...displayedRef.current, nextItem];
+      const itemId = resolveWaterfallId(
+        nextItem,
+        nextDisplayed.length - 1,
+        props.idKey,
+      );
+      const height = resolveItemHeight(
+        measuredHeightsRef.current.get(itemId),
+        props.estimatedItemSize,
+      );
+
+      timerRef.current = null;
+      replaceQueue(nextDisplayed, remaining);
+      input.onAfterAddOne?.(
+        createWaterfallAfterAddOnePayload(nextItem, height),
+      );
+      if (remaining.length === 0) {
+        input.onAfterAddAll?.({ newData: [...nextDisplayed] });
+      }
     }, Math.max(0, Number(props.addTime)));
 
     return () => {
@@ -146,7 +255,9 @@ function UPWaterfallInner<T = unknown>(
     input.onAfterAddOne,
     pending,
     props.addTime,
-    replaceDisplayed,
+    props.estimatedItemSize,
+    props.idKey,
+    replaceQueue,
   ]);
 
   useEffect(
@@ -163,29 +274,69 @@ function UPWaterfallInner<T = unknown>(
     ref,
     () => ({
       remove: (id) => {
-        const index = displayedRef.current.findIndex(
-          (item, itemIndex) =>
-            resolveWaterfallId(item, itemIndex, props.idKey) === id,
+        const displayedIndex = displayedRef.current.findIndex(
+          (item, index) =>
+            resolveWaterfallId(item, index, props.idKey) === id,
         );
-        const pendingWithoutId = pending.filter(
-          (item, itemIndex) =>
-            resolveWaterfallId(item, itemIndex, props.idKey) !== id,
+        if (displayedIndex >= 0) {
+          emitMutation(
+            displayedRef.current.filter(
+              (_item, index) => index !== displayedIndex,
+            ),
+            pendingRef.current,
+          );
+          return true;
+        }
+
+        const pendingIndex = pendingRef.current.findIndex(
+          (item, index) =>
+            resolveWaterfallId(item, index, props.idKey) === id,
         );
-        const removedFromPending = pendingWithoutId.length !== pending.length;
+        if (pendingIndex < 0) return false;
 
-        if (index < 0 && !removedFromPending) return false;
-
-        setPending(pendingWithoutId);
-        if (index < 0) return true;
-
-        emitChange(
-          displayedRef.current.filter((_item, itemIndex) => itemIndex !== index),
+        emitMutation(
+          displayedRef.current,
+          pendingRef.current.filter((_item, index) => index !== pendingIndex),
         );
         return true;
       },
       clear: () => {
-        setPending([]);
-        emitChange([]);
+        emitMutation([], []);
+      },
+      modify: (id, key, value) => {
+        const displayedIndex = displayedRef.current.findIndex(
+          (item, index) =>
+            resolveWaterfallId(item, index, props.idKey) === id,
+        );
+        if (displayedIndex >= 0) {
+          const modified = modifyWaterfallItem(
+            displayedRef.current[displayedIndex],
+            key,
+            value,
+          );
+          if (modified === undefined) return false;
+          const nextDisplayed = [...displayedRef.current];
+          nextDisplayed[displayedIndex] = modified;
+          emitMutation(nextDisplayed, pendingRef.current);
+          return true;
+        }
+
+        const pendingIndex = pendingRef.current.findIndex(
+          (item, index) =>
+            resolveWaterfallId(item, index, props.idKey) === id,
+        );
+        if (pendingIndex < 0) return false;
+
+        const modified = modifyWaterfallItem(
+          pendingRef.current[pendingIndex],
+          key,
+          value,
+        );
+        if (modified === undefined) return false;
+        const nextPending = [...pendingRef.current];
+        nextPending[pendingIndex] = modified;
+        emitMutation(displayedRef.current, nextPending);
+        return true;
       },
       getData: () => displayedRef.current,
       scrollToIndex: (index, animated = false) => {
@@ -196,7 +347,7 @@ function UPWaterfallInner<T = unknown>(
         listRef.current?.scrollToOffset({ offset: 0, animated });
       },
     }),
-    [emitChange, pending, props.idKey],
+    [emitMutation, props.idKey],
   );
 
   const columnCount = calculateWaterfallColumns(
@@ -223,7 +374,7 @@ function UPWaterfallInner<T = unknown>(
       <FlashList
         data={[...displayed]}
         keyExtractor={(item, index) =>
-          String(resolveWaterfallId(item, index, props.idKey))
+          resolveWaterfallRenderKey(displayed, item, index, props.idKey)
         }
         masonry
         numColumns={columnCount}
@@ -231,19 +382,22 @@ function UPWaterfallInner<T = unknown>(
         onScroll={onScroll}
         optimizeItemArrangement={Boolean(props.optimizeItemArrangement)}
         ref={listRef}
-        renderItem={({ item, index }) =>
-          input.renderItem
-            ? (
-                <>
-                  {input.renderItem({
-                    id: resolveWaterfallId(item, index, props.idKey),
-                    index,
-                    item,
-                  })}
-                </>
-              )
-            : null
-        }
+        renderItem={({ item, index }) => {
+          const id = resolveWaterfallId(item, index, props.idKey);
+          return (
+            <View
+              onLayout={(event) => {
+                const height = event.nativeEvent.layout.height;
+                if (Number.isFinite(height) && height > 0) {
+                  measuredHeightsRef.current.set(id, height);
+                }
+              }}
+              testID={`up-waterfall-item-${String(id)}`}
+            >
+              {input.renderItem?.({ id, index, item })}
+            </View>
+          );
+        }}
         testID="up-waterfall-list"
         ListEmptyComponent={emptyComponent}
       />
