@@ -53,6 +53,41 @@ it('renders source fields and React cell/header callbacks', () => {
   expect(screen.getAllByTestId('up-table2-row-a').length).toBeGreaterThan(0);
 });
 
+it('accepts the source expandRowKeys controlled prop', () => {
+  const screen = renderRoot(
+    <UPTable2
+      columns={[{ key: 'name', title: 'Name', type: 'expand' }]}
+      data={[{
+        id: 'root',
+        name: 'Root',
+        children: [{ id: 'child', name: 'Child' }],
+      }]}
+      expandRowKeys={['root']}
+    />,
+  );
+
+  expect(screen.getByTestId('up-table2-row-child')).toBeTruthy();
+});
+
+it('applies source column style to the header cell', () => {
+  const screen = renderRoot(
+    <UPTable2
+      columns={[{
+        key: 'name',
+        title: 'Name',
+        style: { backgroundColor: '#f5f7fa' },
+      }]}
+      data={[{ id: 'a', name: 'Ada' }]}
+    />,
+  );
+
+  expect(screen.getByTestId('up-table2-header-name').props.style).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ backgroundColor: '#f5f7fa' }),
+    ]),
+  );
+});
+
 it('renders an empty state and preserves explicit fixed dimensions', () => {
   const screen = renderRoot(
     <UPTable2

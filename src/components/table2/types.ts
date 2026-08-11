@@ -11,6 +11,7 @@ export type UPTable2Column<T = unknown> = {
   title?: React.ReactNode;
   label?: React.ReactNode;
   width?: UPDimension;
+  style?: StyleProp<ViewStyle>;
   fixed?: 'left';
   type?: 'default' | 'selection' | 'expand';
   align?: UPTable2Align;
@@ -103,6 +104,7 @@ export type UPTable2Props<T extends object = Record<string, unknown>> = {
   defaultCurrentRowKey?: UPKey | null;
   selectedRowKeys?: readonly UPKey[];
   defaultSelectedRowKeys?: readonly UPKey[];
+  expandRowKeys?: readonly UPKey[];
   expandedRowKeys?: readonly UPKey[];
   defaultExpandedRowKeys?: readonly UPKey[];
   defaultExpandAll?: boolean;

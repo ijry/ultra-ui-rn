@@ -119,6 +119,9 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
       ...input.treeProps,
     },
   } as UPTable2Props<T> & typeof defaults;
+  const controlledExpandedKeys = input.expandedRowKeys
+    ?? input.expandRowKeys
+    ?? (defaults.expandRowKeys.length > 0 ? defaults.expandRowKeys : undefined);
   const columns = props.columns as readonly UPTable2Column<T>[];
   const data = props.data as readonly T[];
   const childrenKey = props.treeProps.children ?? 'children';
@@ -197,8 +200,8 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
   const selectedKeys = props.selectedRowKeys !== undefined
     ? props.selectedRowKeys
     : localSelectedKeys;
-  const expandedKeys = props.expandedRowKeys !== undefined
-    ? props.expandedRowKeys
+  const expandedKeys = controlledExpandedKeys !== undefined
+    ? controlledExpandedKeys
     : localExpandedKeys;
   const currentKey = props.currentRowKey !== undefined
     ? props.currentRowKey
@@ -439,6 +442,7 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
                 width,
               },
               resolveAlign(column.headerAlign ?? column.align),
+              column.style,
             ]}
             testID={`up-table2-header-${column.key}`}
           >

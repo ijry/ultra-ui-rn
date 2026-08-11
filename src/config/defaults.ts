@@ -696,6 +696,7 @@ export type UPTable2Defaults = {
   defaultCurrentRowKey: string | number | null;
   defaultSelectedRowKeys: readonly (string | number)[];
   defaultExpandedRowKeys: readonly (string | number)[];
+  expandRowKeys: readonly (string | number)[];
   defaultExpandAll: boolean;
   treeProps: { children: string; hasChildren: string };
   lazy: boolean;
@@ -1421,6 +1422,7 @@ export const sourceDefaults: Readonly<{
       defaultCurrentRowKey: null,
       defaultExpandAll: false,
       defaultExpandedRowKeys: Object.freeze([]) as readonly (string | number)[],
+      expandRowKeys: Object.freeze([]) as readonly (string | number)[],
       defaultSelectedRowKeys: Object.freeze([]) as readonly (string | number)[],
       emptyText: '暂无数据',
       expandWidth: 25,
