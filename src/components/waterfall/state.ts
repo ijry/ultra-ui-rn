@@ -1,5 +1,6 @@
 import { getPx } from '../../utils';
 import type { UPKey } from '../tree/types';
+import type { UPWaterfallAfterAddOnePayload } from './types';
 
 export type UPWaterfallReconcileResult<T> = {
   displayed: T[];
@@ -87,4 +88,38 @@ export function warnDuplicateWaterfallIds<T>(
     }
     ids.add(id);
   });
+}
+
+export function composeWaterfallData<T>(
+  displayed: readonly T[],
+  pending: readonly T[],
+): T[] {
+  return [...displayed, ...pending];
+}
+
+export function modifyWaterfallItem<T>(
+  item: T,
+  key: string,
+  value: unknown,
+): T | undefined {
+  if (item === null || typeof item !== 'object' || key.trim().length === 0) {
+    return undefined;
+  }
+  return {
+    ...(item as Record<string, unknown>),
+    [key]: value,
+  } as T;
+}
+
+export function createWaterfallAfterAddOnePayload<T>(
+  item: T,
+  height: number,
+): UPWaterfallAfterAddOnePayload<T> {
+  if (item !== null && typeof item === 'object') {
+    return {
+      ...(item as Record<string, unknown>),
+      height,
+    } as UPWaterfallAfterAddOnePayload<T>;
+  }
+  return { item, height } as UPWaterfallAfterAddOnePayload<T>;
 }

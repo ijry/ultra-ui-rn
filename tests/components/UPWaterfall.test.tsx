@@ -4,7 +4,10 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import { UP, UPRoot, UPWaterfall, type UPWaterfallRef } from '../../src';
 import {
   calculateWaterfallColumns,
+  composeWaterfallData,
   createWaterfallAddQueue,
+  createWaterfallAfterAddOnePayload,
+  modifyWaterfallItem,
   reconcileWaterfallItems,
   resolveWaterfallId,
 } from '../../src/components/waterfall/state';
@@ -48,6 +51,43 @@ it('creates a queue only for new ids', () => {
     items[1],
     items[2],
   ]);
+});
+
+it('builds source-shaped after-add-one payloads', () => {
+  expect(createWaterfallAfterAddOnePayload({ id: 'a', title: 'A' }, 128)).toEqual({
+    id: 'a',
+    title: 'A',
+    height: 128,
+  });
+  expect(createWaterfallAfterAddOnePayload('plain', 96)).toEqual({
+    item: 'plain',
+    height: 96,
+  });
+});
+
+it('modifies object items immutably and rejects primitive items', () => {
+  const source = { id: 'a', title: 'A', meta: { color: 'red' } };
+  const changed = modifyWaterfallItem(source, 'title', 'Updated');
+
+  expect(changed).toEqual({
+    id: 'a',
+    title: 'Updated',
+    meta: { color: 'red' },
+  });
+  expect(changed).not.toBe(source);
+  expect(source).toEqual({ id: 'a', title: 'A', meta: { color: 'red' } });
+  expect(modifyWaterfallItem('plain', 'title', 'Updated')).toBeUndefined();
+  expect(modifyWaterfallItem(source, '', 'Updated')).toBeUndefined();
+});
+
+it('composes displayed and pending data into a new array', () => {
+  const displayed = [{ id: 'a' }];
+  const pending = [{ id: 'b' }];
+  const result = composeWaterfallData(displayed, pending);
+
+  expect(result).toEqual([{ id: 'a' }, { id: 'b' }]);
+  expect(result).not.toBe(displayed);
+  expect(result).not.toBe(pending);
 });
 
 const cards = [
