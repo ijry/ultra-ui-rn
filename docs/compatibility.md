@@ -1028,15 +1028,29 @@ retained compatibility prop and does not start global lazy loading.
 ## P33 tree
 
 `UPTree` maps the source tree component to a virtualized React Native row
-model. It supports configurable node fields, expansion, current-node
-highlighting, checkbox parent-child propagation, half-checked state, strict
-checking, accordion expansion, custom node rendering, and imperative checked
-and current-node methods.
+model. The source `props` field mapping is supported alongside the retained RN
+`fieldNames` alias. Mapping precedence is top-level `nodeKey`, `fieldNames`,
+`props`, then the default `id`/`label`/`children`/`disabled` fields.
+
+Source `expandIcon="play-right-fill"` and
+`collapseIcon="arrow-down-fill"` defaults are rendered through `UPIcon`, and
+`expandOnClickNode` defaults to `true`. Node-level `expanded` and `checked`
+flags are merged into initial uncontrolled state; controlled
+`expandedKeys`/`checkedKeys` remain authoritative. The normalized model keeps
+caller-owned nodes and child arrays unchanged.
+
+Node content presses follow the source order: current-key update, expansion,
+check-change/check, node-click, then current-change. The native update
+callbacks remain available as React adapters. Disabled nodes keep
+node-click/current-change and expand/collapse behavior, while disabled
+checkboxes and `checkOnClickNode` do not mutate checked state.
 
 The component requires stable unique node keys for controlled state and ref
 operations. Missing or duplicate keys use deterministic internal fallbacks and
 emit development warnings. CSS classes remain accepted as `customClass` but
-have no React Native CSS runtime.
+have no React Native CSS runtime. The audited `u-tree` source does not define
+async child loading, network loading, drag sorting, reordering, `allow-drop`,
+`node-drag`, or `node-drop`; those APIs are not exposed by `UPTree`.
 
 ## P33 waterfall
 

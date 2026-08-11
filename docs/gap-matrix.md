@@ -359,8 +359,8 @@ Source: `uview-plus` 3.8.86. Status values: Supported, Emulated, No-op retained,
 
 | Component | Source API | React Native API | Default / behavior | Status | Test |
 |---|---|---|---|---|---|
-| `u-tree` | data, node key/label/children fields, expansion, current node, checkbox, half-check, accordion, scoped node slot, ref methods | `UPTree`, `UPTreeRef`, `fieldNames`, `renderNode` | DFS visible-row model rendered by FlashList; raw nodes are preserved in callbacks and parent-child check state is derived without mutating input data | Emulated | `tests/components/UPTree.test.tsx` |
-| `u-tree` | async child loading, drag sorting, CSS class behavior | Retained props / deferred | Application owns data fetching and ordering; React Native does not run source CSS classes | Deferred / No-op retained | Component prop types |
+| `u-tree` | data, source `props`, `nodeKey`, expansion/current/check props, node `expanded`/`checked`, `expandIcon`/`collapseIcon`, source callbacks, disabled behavior, scoped node slot, ref methods | `UPTree`, `UPTreeRef`, `props`, retained `fieldNames`, `renderNode`, source icon aliases, RN update callbacks | Source-shaped field precedence, source defaults, initial node flags, source callback order, disabled clickable/expandable rows, and a non-mutating DFS model rendered by FlashList | Emulated | `tests/components/UPTree.test.tsx`; `docs/tree-source-compatibility.md` |
+| `u-tree` 3.8.86 | No async loading, Promise child loading, network, drag sorting, reordering, `allow-drop`, `node-drag`, or `node-drop` API | No tree async/drag API | These are explicit source-audit boundaries; data fetching and ordering remain application-owned | Deferred | `src/components/tree/types.ts`; `docs/tree-source-compatibility.md` |
 
 ## P33 Waterfall
 

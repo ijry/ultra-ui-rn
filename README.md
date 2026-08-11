@@ -51,19 +51,35 @@ from the screen that owns scrolling.
 
 ### Tree
 
-`UPTree` accepts arbitrary object nodes. Use `fieldNames` when the application
-uses different key, label, children, or disabled fields. Pass
+`UPTree` accepts arbitrary object nodes. Source-shaped callers can use `props`
+for key, label, children, and disabled field mapping. Existing React Native
+callers can continue using `fieldNames`; explicit `fieldNames` takes precedence
+over `props`, and top-level `nodeKey` takes precedence over both. Pass
 `expandedKeys`, `checkedKeys`, and `currentNodeKey` for controlled state, or
 use the corresponding `default*` props for local state.
 
 ```tsx
 <UPTree
   data={nodes}
-  fieldNames={{ nodeKey: 'code', label: 'title', children: 'items' }}
+  props={{ nodeKey: 'code', label: 'title', children: 'items' }}
+  expandIcon="play-right-fill"
+  collapseIcon="arrow-down-fill"
   showCheckbox
   onCheck={(node, state) => setCheckedKeys(state.checkedKeys)}
 />
 ```
+
+The existing RN alias remains valid:
+
+```tsx
+<UPTree
+  data={nodes}
+  fieldNames={{ nodeKey: 'code', label: 'title', children: 'items' }}
+/>
+```
+
+`expandOnClickNode` defaults to `true`. Nodes with `disabled: true` remain
+clickable and expandable, but their checkbox cannot change checked state.
 
 ### Waterfall
 
