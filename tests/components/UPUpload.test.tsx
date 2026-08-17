@@ -5,6 +5,7 @@ import {
   UP,
   UPRoot,
   UPUpload,
+  buildUploadDetail,
   clampUploadProgress,
   createDocumentPickerChooseFile,
   createImagePickerChooseFile,
@@ -349,4 +350,199 @@ it('uses render hooks and merges UP.setConfig upload defaults', async () => {
   });
   expect(screen.getByText('custom-photo.jpg')).toBeTruthy();
   expect(screen.queryByTestId('up-upload-add')).toBeNull();
+});
+
+describe('P38 upload dual-surface source compatibility', () => {
+  it('normalizes source-shaped files that use url instead of uri', () => {
+    const file = normalizeUploadFile(
+      { name: 'a.jpg', size: 100, thumb: 'https://cdn.example/a.jpg', type: 'image', url: 'https://cdn.example/a.jpg' },
+      'source-1',
+    );
+
+    expect(file.uri).toBe('https://cdn.example/a.jpg');
+    expect(file.url).toBe('https://cdn.example/a.jpg');
+    expect(file.name).toBe('a.jpg');
+    expect(file.size).toBe(100);
+    expect(file.thumb).toBe('https://cdn.example/a.jpg');
+  });
+
+  it('keeps uri as the source when both url and uri are present', () => {
+    const file = normalizeUploadFile(
+      { uri: 'file:///local.jpg', url: 'https://cdn.example/a.jpg' },
+      'both',
+    );
+
+    expect(file.uri).toBe('file:///local.jpg');
+    expect(file.url).toBe('https://cdn.example/a.jpg');
+  });
+
+  it('builds source detail payloads with name and index', () => {
+    expect(buildUploadDetail('form-avatar', 3)).toEqual({ index: 3, name: 'form-avatar' });
+  });
+
+  it('renders and previews source-shaped fileList items', () => {
+    const uploadAdapter = adapter();
+    const screen = renderRoot(
+      <UPUpload
+        defaultFileList={[
+          { name: 'cdn.jpg', thumb: 'https://cdn.example/cdn.jpg', type: 'image', url: 'https://cdn.example/cdn.jpg' },
+        ]}
+        uploadAdapter={uploadAdapter}
+      />,
+    );
+
+    expect(screen.getByText('cdn.jpg')).toBeTruthy();
+    fireEvent.press(screen.getByTestId('up-upload-preview-0'));
+    expect(uploadAdapter.previewFile).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'cdn.jpg', url: 'https://cdn.example/cdn.jpg' }),
+      expect.any(Array),
+    );
+  });
+
+  it('gates insertion through onBeforeRead callback when useBeforeRead is true', async () => {
+    const uploadAdapter = adapter();
+    const onBeforeRead = jest.fn(({ callback }) => callback(false));
+    const screen = renderRoot(
+      <UPUpload autoUpload={false} onBeforeRead={onBeforeRead as never} uploadAdapter={uploadAdapter} useBeforeRead />,
+    );
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('up-upload-add'));
+    });
+
+    expect(onBeforeRead).toHaveBeenCalledWith(expect.objectContaining({
+      callback: expect.any(Function),
+      index: 0,
+      name: 'file',
+    }));
+    expect(screen.queryByText('photo.jpg')).toBeNull();
+  });
+
+  it('removes only when autoDelete is true and emits delete detail otherwise', () => {
+    const uploadAdapter = adapter();
+    const onDelete = jest.fn();
+    const onUpdateFileList = jest.fn();
+    const screen = renderRoot(
+      <UPUpload
+        autoDelete={false}
+        defaultFileList={[{ name: 'old.jpg', uri: 'file:///old.jpg' }]}
+        onDelete={onDelete}
+        onUpdateFileList={onUpdateFileList}
+        uploadAdapter={uploadAdapter}
+      />,
+    );
+
+    fireEvent.press(screen.getByTestId('up-upload-delete-0'));
+    expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({ index: 0, name: 'file' }));
+    expect(screen.getByText('old.jpg')).toBeTruthy();
+    expect(onUpdateFileList).not.toHaveBeenCalled();
+
+    screen.rerender(
+      <UPRoot>
+        <UPUpload
+          autoDelete
+          defaultFileList={[{ name: 'old.jpg', uri: 'file:///old.jpg' }]}
+          onDelete={onDelete}
+          onUpdateFileList={onUpdateFileList}
+          uploadAdapter={uploadAdapter}
+        />
+      </UPRoot>,
+    );
+
+    fireEvent.press(screen.getByTestId('up-upload-delete-0'));
+    expect(screen.queryByText('old.jpg')).toBeNull();
+    expect(onUpdateFileList).toHaveBeenCalledWith([]);
+  });
+
+  it('rejects the whole batch through onOversize and emits source detail', async () => {
+    const uploadAdapter = adapter([
+      { name: 'big.mov', size: 1000, type: 'video/quicktime', uri: 'file:///big.mov' },
+    ]);
+    const onOversize = jest.fn();
+    const screen = renderRoot(
+      <UPUpload maxSize={50} onOversize={onOversize} uploadAdapter={uploadAdapter} />,
+    );
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('up-upload-add'));
+    });
+
+    expect(onOversize).toHaveBeenCalledWith(expect.objectContaining({
+      file: expect.arrayContaining([expect.objectContaining({ name: 'big.mov' })]),
+      index: 0,
+      name: 'file',
+    }));
+    expect(screen.queryByText('big.mov')).toBeNull();
+  });
+
+  it('emits clickPreview with source detail on every item tap', () => {
+    const uploadAdapter = adapter();
+    const onClickPreview = jest.fn();
+    const screen = renderRoot(
+      <UPUpload
+        defaultFileList={[{ name: 'old.jpg', uri: 'file:///old.jpg' }]}
+        name="avatar"
+        onClickPreview={onClickPreview}
+        uploadAdapter={uploadAdapter}
+      />,
+    );
+
+    fireEvent.press(screen.getByTestId('up-upload-preview-0'));
+    expect(onClickPreview).toHaveBeenCalledWith(expect.objectContaining({
+      index: 0,
+      name: 'avatar',
+      uri: 'file:///old.jpg',
+    }));
+  });
+
+  it('routes source upload config through the adapter request', async () => {
+    const uploadAdapter = adapter();
+    const screen = renderRoot(
+      <UPUpload
+        autoUploadApi="https://api.example/upload"
+        autoUploadAuthUrl="https://api.example/sign"
+        autoUploadDriver="local"
+        autoUploadHeader={{ 'X-Api-Key': 'k1' }}
+        header={{ 'X-Extra': 'e1' }}
+        uploadAdapter={uploadAdapter}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('up-upload-add'));
+    });
+
+    expect(uploadAdapter.uploadFile).toHaveBeenCalledWith(expect.objectContaining({
+      authUrl: 'https://api.example/sign',
+      driver: 'local',
+      header: { 'X-Api-Key': 'k1', 'X-Extra': 'e1' },
+      url: 'https://api.example/upload',
+    }));
+  });
+
+  it('resolves the success url through customAfterAutoUpload', async () => {
+    const uploadAdapter = adapter();
+    const onAfterAutoUpload = jest.fn(({ callback }) => callback({ url: 'https://cdn.example/ok.jpg' }));
+    const screen = renderRoot(
+      <UPUpload
+        customAfterAutoUpload
+        onAfterAutoUpload={onAfterAutoUpload as never}
+        uploadAdapter={uploadAdapter}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('up-upload-add'));
+    });
+
+    expect(onAfterAutoUpload).toHaveBeenCalledWith(expect.objectContaining({
+      callback: expect.any(Function),
+    }));
+    await waitFor(() => {
+      expect(uploadAdapter.uploadFile).toHaveBeenCalledTimes(1);
+    });
+    expect(screen.getByTestId('up-upload-file-0').props.accessibilityState).toEqual(
+      expect.objectContaining({ busy: false }),
+    );
+  });
 });

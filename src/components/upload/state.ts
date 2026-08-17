@@ -1,4 +1,5 @@
 import type {
+  UPUploadDetail,
   UPUploadFile,
   UPUploadRejectedFile,
   UPUploadTask,
@@ -11,6 +12,7 @@ type LooseSelectedFile = Partial<UPUploadFile> & {
   size?: number;
   type?: string;
   uri?: string;
+  url?: string;
 };
 
 export function clampUploadProgress(value: number): number {
@@ -19,14 +21,15 @@ export function clampUploadProgress(value: number): number {
 }
 
 export function normalizeUploadFile(input: LooseSelectedFile, fallbackId: string): UPUploadFile {
-  const uri = String(input.uri ?? '');
+  const uri = String(input.uri ?? input.url ?? '');
   const type = input.type;
   const name = input.name ?? input.fileName ?? uri.split('/').pop() ?? fallbackId;
   const size = input.size ?? input.fileSize;
-  const thumb = type?.startsWith('image/') || /\.(png|jpe?g|gif|webp|heic|heif)$/i.test(uri) ? uri : undefined;
+  const thumb = input.thumb ?? (type?.startsWith('image/') || /\.(png|jpe?g|gif|webp|heic|heif)$/i.test(uri) ? uri : undefined);
 
   return {
     id: input.id ?? fallbackId,
+    message: input.message,
     name,
     progress: clampUploadProgress(input.progress ?? 0),
     size,
@@ -34,8 +37,13 @@ export function normalizeUploadFile(input: LooseSelectedFile, fallbackId: string
     status: input.status ?? 'ready',
     thumb,
     type,
+    url: input.url,
     uri,
   };
+}
+
+export function buildUploadDetail(name: string, index: number): UPUploadDetail {
+  return { name, index };
 }
 
 export function filterUploadFiles(

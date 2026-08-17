@@ -1,10 +1,13 @@
 export type UPUploadFileStatus = 'ready' | 'uploading' | 'success' | 'error';
-export type UPUploadAccept = 'image' | 'file' | 'all';
-export type UPUploadCapture = boolean | 'camera' | 'album';
+export type UPUploadAccept = 'image' | 'file' | 'all' | 'media' | 'video';
+export type UPUploadCapture = boolean | 'camera' | 'album' | readonly string[];
+export type UPUploadDriver = '' | 'local' | 'oss' | 'cos' | 'kodo';
 
 export type UPUploadFile = {
+  deletable?: boolean;
   error?: unknown;
   id?: string;
+  message?: string;
   name?: string;
   progress?: number;
   response?: unknown;
@@ -13,7 +16,9 @@ export type UPUploadFile = {
   status?: UPUploadFileStatus;
   thumb?: string;
   type?: string;
-  uri: string;
+  url?: string;
+  /** Source-shaped items carry `url`; normalized items always have `uri`. */
+  uri?: string;
 };
 
 export type UPChooseFileOptions = {
@@ -21,6 +26,11 @@ export type UPChooseFileOptions = {
   capture?: UPUploadCapture;
   count: number;
   multiple: boolean;
+  compressed?: boolean;
+  camera?: string;
+  extension?: readonly string[];
+  maxDuration?: number;
+  sizeType?: readonly string[];
 };
 
 export type UPUploadRequest = {
@@ -31,6 +41,8 @@ export type UPUploadRequest = {
   name: string;
   onProgress: (progress: number) => void;
   url?: string;
+  driver?: UPUploadDriver;
+  authUrl?: string;
 };
 
 export type UPUploadTask = {
@@ -91,6 +103,26 @@ export type UPUploadChooseErrorPayload = {
   error: unknown;
   rejected?: readonly UPUploadRejectedFile[];
 };
+
+export type UPUploadDetail = {
+  name: string;
+  index: number;
+};
+
+export type UPUploadOversizePayload = UPUploadDetail & {
+  file: UPUploadFile | readonly UPUploadFile[];
+};
+
+export type UPUploadClickPreviewPayload = UPUploadFile & UPUploadDetail;
+
+export type UPUploadBeforeReadPayload = UPUploadDetail & {
+  file: UPUploadFile | readonly UPUploadFile[];
+  callback: (ok: boolean) => void;
+};
+
+export type UPUploadAfterAutoUploadPayload = {
+  callback: (result?: { url?: string; thumb?: string }) => void;
+} & Record<string, unknown>;
 
 export type UPUploadRef = {
   choose: () => Promise<void>;
