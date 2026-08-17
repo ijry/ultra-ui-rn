@@ -1,6 +1,7 @@
 import { sourceLightColors } from './colors';
 import { sourceZIndex } from './z-index';
 import type { UPCanvasAdapterComponent } from '../components/canvas';
+import type { NovelChapter, NovelBookmark, NovelProgress, NovelReaderError, NovelReaderSettings } from '../components/novel-reader';
 import type { UPDimension } from '../utils';
 
 const sourceNow = new Date();
@@ -538,6 +539,14 @@ export type UPOverlayDefaults = { show: boolean; zIndex: number; duration: numbe
 export type UPPopupDefaults = { show: boolean; overlay: boolean; mode: 'top' | 'bottom' | 'left' | 'right' | 'center'; duration: number; closeable: boolean; overlayStyle: Record<string, never>; closeOnClickOverlay: boolean; zIndex: number; safeAreaInsetBottom: boolean; safeAreaInsetTop: boolean; closeIconPos: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'; round: string; zoom: boolean; bgColor: string; overlayOpacity: number; pageInline: boolean; touchable: boolean; minHeight: string; maxHeight: string; };
 export type UPModalDefaults = { show: boolean; title: string; content: string; confirmText: string; cancelText: string; showConfirmButton: boolean; showCancelButton: boolean; confirmColor: string; cancelColor: string; buttonReverse: boolean; zoom: boolean; asyncClose: boolean; closeOnClickOverlay: boolean; negativeTop: number; width: string; confirmButtonShape: string; duration: number; contentTextAlign: 'left' | 'center' | 'right'; asyncCloseTip: string; asyncCancelClose: boolean; contentStyle: Record<string, never>; };
 export type UPActionSheetDefaults = { show: boolean; title: string; description: string; actions: readonly Record<string, unknown>[]; nameKey: string; subnameKey: string; index: string; cancelText: string; closeOnClickAction: boolean; safeAreaInsetBottom: boolean; openType: string; closeOnClickOverlay: boolean; round: number; wrapMaxHeight: string; };
+export type UPActionSheetDataDefaults = { modelValue: string | number; title: string; description: string; options: readonly Record<string, unknown>[]; valueKey: string; labelKey: string; };
+export type UPCouponDefaults = { amount: string | number; unit: string; unitPosition: 'left' | 'right'; limit: string; title: string; desc: string; time: string; actionText: string; shape: 'coupon' | 'circle'; size: 'small' | 'medium' | 'large'; circle: boolean; disabled: boolean; bgColor: string; color: string; type: string; };
+export type UPMessageInputDefaults = { maxlength: number; dotFill: boolean; mode: 'box' | 'bottomLine' | 'middleLine'; modelValue: string; breathe: boolean; focus: boolean; bold: boolean; fontSize: number; activeColor: string; inactiveColor: string; width: string | number; disabledKeyboard: boolean; };
+export type UPColorPickerDefaults = { modelValue: string; commonColors: readonly string[]; };
+export type UPGoodsSkuDefaults = { goodsInfo: Record<string, unknown>; skuTree: readonly { name: string; label?: string; children: readonly { id: string | number; name: string }[] }[]; skuList: readonly Record<string, unknown>[]; maxBuy: number; confirmText: string; closeable: boolean; pageInline: boolean; };
+export type UPMarkdownDefaults = { content: string; previewImg: boolean; copyLink: boolean | string; domain: string; showLineNumber: boolean; theme: 'light' | 'dark'; };
+export type UPParseDefaults = { containerStyle: string | null; content: string; copyLink: boolean; domain: string; errorImg: string; lazyLoad: boolean; loadingImg: string; pauseVideo: boolean; previewImg: boolean; scrollTable: boolean; selectable: boolean; setTitle: boolean; showImgMenu: boolean; tagStyle: Record<string, unknown>; useAnchor: boolean | null; };
+export type UPNovelReaderDefaults = { chapters: readonly NovelChapter[]; currentChapter: NovelChapter | null; loading: boolean; error: NovelReaderError | null; bookId: string | number; storageKey: string; persist: boolean; initialProgress: NovelProgress | null; progress: NovelProgress | null; initialBookmarks: readonly NovelBookmark[]; bookmarks: readonly NovelBookmark[] | null; defaultSettings: NovelReaderSettings; settings: Partial<NovelReaderSettings> | null; mode: 'scroll' | 'page'; showBack: boolean; autoBack: boolean; backIcon: string; safeAreaInsetTop: boolean; safeAreaInsetBottom: boolean; preloadThreshold: number; pageAnimation: boolean; controlsAutoHide: number; };
 export type UPLoadingIconDefaults = { show: boolean; color: string; textColor: string; vertical: boolean; mode: 'spinner' | 'circle' | 'semicircle'; size: number; textSize: number; text: string; timingFunction: string; duration: number; inactiveColor: string; };
 export type UPLoadingPageDefaults = { loadingText: string; image: string; loadingMode: 'spinner' | 'circle' | 'semicircle'; loading: boolean; bgColor: string; color: string; fontSize: number; iconSize: number; loadingColor: string; zIndex: number; };
 export type UPToastDefaults = { zIndex: number; loading: boolean; message: string; icon: string; type: string; loadingMode: string; show: boolean; overlay: boolean; position: 'top' | 'center' | 'bottom'; params: Record<string, never>; duration: number; isTab: boolean; url: string; back: boolean; };
@@ -774,6 +783,14 @@ export type UPProps = {
   popup: UPPopupDefaults;
   modal: UPModalDefaults;
   actionSheet: UPActionSheetDefaults;
+  actionSheetData: UPActionSheetDataDefaults;
+  coupon: UPCouponDefaults;
+  messageInput: UPMessageInputDefaults;
+  colorPicker: UPColorPickerDefaults;
+  goodsSku: UPGoodsSkuDefaults;
+  markdown: UPMarkdownDefaults;
+  parse: UPParseDefaults;
+  novelReader: UPNovelReaderDefaults;
   loadingIcon: UPLoadingIconDefaults;
   loadingPage: UPLoadingPageDefaults;
   toast: UPToastDefaults;
@@ -1356,6 +1373,14 @@ export const sourceDefaults: Readonly<{
     popup: Object.freeze({ show: false, overlay: true, mode: 'bottom' as const, duration: 300, closeable: false, overlayStyle: Object.freeze({}), closeOnClickOverlay: true, zIndex: 10075, safeAreaInsetBottom: true, safeAreaInsetTop: false, closeIconPos: 'top-right' as const, round: '20px', zoom: true, bgColor: '', overlayOpacity: 0.5, pageInline: false, touchable: false, minHeight: '200px', maxHeight: '600px' }),
     modal: Object.freeze({ show: false, title: '', content: '', confirmText: '确认', cancelText: '取消', showConfirmButton: true, showCancelButton: false, confirmColor: '#2979ff', cancelColor: '#606266', buttonReverse: false, zoom: true, asyncClose: false, closeOnClickOverlay: false, negativeTop: 0, width: '650rpx', confirmButtonShape: '', duration: 400, contentTextAlign: 'left' as const, asyncCloseTip: '操作中...', asyncCancelClose: false, contentStyle: Object.freeze({}) }),
     actionSheet: Object.freeze({ show: false, title: '', description: '', actions: Object.freeze([]), nameKey: 'name', subnameKey: 'subnameKey', index: '', cancelText: '', closeOnClickAction: true, safeAreaInsetBottom: true, openType: '', closeOnClickOverlay: true, round: 0, wrapMaxHeight: '600px' }),
+    actionSheetData: Object.freeze({ modelValue: '', title: '', description: '', options: Object.freeze([]), valueKey: 'value', labelKey: 'name' }),
+    coupon: Object.freeze({ amount: '', unit: '￥', unitPosition: 'left', limit: '', title: '优惠券', desc: '', time: '', actionText: '使用', shape: 'coupon', size: 'medium', circle: false, disabled: false, bgColor: '', color: '', type: '' }),
+    messageInput: Object.freeze({ maxlength: 4, dotFill: false, mode: 'box', modelValue: '', breathe: true, focus: false, bold: false, fontSize: 60, activeColor: '#2979ff', inactiveColor: '#606266', width: '80', disabledKeyboard: false }),
+    colorPicker: Object.freeze({ modelValue: '#ff0000', commonColors: Object.freeze([]) }),
+    goodsSku: Object.freeze({ goodsInfo: Object.freeze({}), skuTree: Object.freeze([]), skuList: Object.freeze([]), maxBuy: 999, confirmText: '确定', closeable: true, pageInline: false }),
+    markdown: Object.freeze({ content: '', previewImg: true, copyLink: true, domain: '', showLineNumber: false, theme: 'light' }),
+    parse: Object.freeze({ containerStyle: null, content: '', copyLink: true, domain: '', errorImg: '', lazyLoad: false, loadingImg: '', pauseVideo: true, previewImg: true, scrollTable: false, selectable: false, setTitle: true, showImgMenu: true, tagStyle: Object.freeze({}), useAnchor: null }),
+    novelReader: Object.freeze({ chapters: Object.freeze([]), currentChapter: null, loading: false, error: null, bookId: '', storageKey: '', persist: true, initialProgress: null, progress: null, initialBookmarks: Object.freeze([]), bookmarks: null, defaultSettings: Object.freeze({ theme: 'day', fontSize: 18, lineHeight: 1.8, paragraphSpacing: 16, contentWidth: '92%', fontFamily: 'system', fontWeight: 400, animation: true }), settings: null, mode: 'scroll', showBack: true, autoBack: false, backIcon: 'arrow-left', safeAreaInsetTop: true, safeAreaInsetBottom: true, preloadThreshold: 2, pageAnimation: true, controlsAutoHide: 0 }),
     loadingIcon: Object.freeze({ show: true, color: '#909399', textColor: '#909399', vertical: false, mode: 'spinner' as const, size: 24, textSize: 15, text: '', timingFunction: 'ease-in-out', duration: 1200, inactiveColor: '' }),
     loadingPage: Object.freeze({ loadingText: '加载中...', image: '', loadingMode: 'circle' as const, loading: false, bgColor: '', color: '#C8C8C8', fontSize: 19, iconSize: 28, loadingColor: '#C8C8C8', zIndex: 10 }),
     toast: Object.freeze({ zIndex: 10090, loading: false, message: '', icon: '', type: '', loadingMode: '', show: false, overlay: false, position: 'center' as const, params: Object.freeze({}), duration: 2000, isTab: false, url: '', back: false }),

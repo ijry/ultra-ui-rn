@@ -77,6 +77,14 @@ export type UPConfigOverrides = {
     popup?: Partial<UPProps['popup']>;
     modal?: Partial<UPProps['modal']>;
     actionSheet?: Partial<UPProps['actionSheet']>;
+    actionSheetData?: Partial<UPProps['actionSheetData']>;
+    coupon?: Partial<UPProps['coupon']>;
+    messageInput?: Partial<UPProps['messageInput']>;
+    colorPicker?: Partial<UPProps['colorPicker']>;
+    goodsSku?: Partial<UPProps['goodsSku']>;
+    markdown?: Partial<UPProps['markdown']>;
+    parse?: Partial<UPProps['parse']>;
+    novelReader?: Partial<UPProps['novelReader']>;
     loadingIcon?: Partial<UPProps['loadingIcon']>;
     loadingPage?: Partial<UPProps['loadingPage']>;
     toast?: Partial<UPProps['toast']>;
@@ -204,6 +212,14 @@ function createSourceState(): UPConfigState {
       popup: { ...sourceDefaults.props.popup },
       modal: { ...sourceDefaults.props.modal },
       actionSheet: { ...sourceDefaults.props.actionSheet },
+      actionSheetData: { ...sourceDefaults.props.actionSheetData },
+      coupon: { ...sourceDefaults.props.coupon },
+      messageInput: { ...sourceDefaults.props.messageInput },
+      colorPicker: { ...sourceDefaults.props.colorPicker },
+      goodsSku: { ...sourceDefaults.props.goodsSku },
+      markdown: { ...sourceDefaults.props.markdown },
+      parse: { ...sourceDefaults.props.parse },
+      novelReader: { ...sourceDefaults.props.novelReader },
       loadingIcon: { ...sourceDefaults.props.loadingIcon },
       loadingPage: { ...sourceDefaults.props.loadingPage },
       toast: { ...sourceDefaults.props.toast },
@@ -336,6 +352,14 @@ export function setUPConfig(overrides: UPConfigOverrides): void {
       popup: { ...state.props.popup, ...overrides.props?.popup },
       modal: { ...state.props.modal, ...overrides.props?.modal },
       actionSheet: { ...state.props.actionSheet, ...overrides.props?.actionSheet },
+      actionSheetData: { ...state.props.actionSheetData, ...overrides.props?.actionSheetData },
+      coupon: { ...state.props.coupon, ...overrides.props?.coupon },
+      messageInput: { ...state.props.messageInput, ...overrides.props?.messageInput },
+      colorPicker: { ...state.props.colorPicker, ...overrides.props?.colorPicker },
+      goodsSku: { ...state.props.goodsSku, ...overrides.props?.goodsSku },
+      markdown: { ...state.props.markdown, ...overrides.props?.markdown },
+      parse: { ...state.props.parse, ...overrides.props?.parse },
+      novelReader: { ...state.props.novelReader, ...overrides.props?.novelReader },
       loadingIcon: { ...state.props.loadingIcon, ...overrides.props?.loadingIcon },
       loadingPage: { ...state.props.loadingPage, ...overrides.props?.loadingPage },
       toast: { ...state.props.toast, ...overrides.props?.toast },
