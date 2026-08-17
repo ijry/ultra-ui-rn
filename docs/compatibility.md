@@ -1025,6 +1025,34 @@ visibility inputs. Use controlled `visible`, or pass `viewport` and
 `scrollOffset` from the screen that owns scrolling. `UPImage.lazyLoad` remains a
 retained compatibility prop and does not start global lazy loading.
 
+## P38 upload and lazy load dual surface
+
+P38 keeps the P32 adapter surface and adds the audited `u-upload` source
+props, event payloads, and explicit precedence rules on top. Source-shaped
+`fileList` items may use `url` instead of `uri`; normalization uses
+`uri ?? url` and retains `url`. The `accept` values `media` and `video` are
+typed, and video capture remains host-owned.
+
+Upload configuration routes through the existing adapter request:
+`autoUploadApi` takes precedence over `url`, `autoUploadHeader` merges under
+`header` (RN `header` wins), and `autoUploadDriver` / `autoUploadAuthUrl` are
+passed through so apps can implement signing. `customAfterAutoUpload`
+resolves the success URL through `onAfterAutoUpload({ ...response, callback })`.
+
+Source events: `onOversize` rejects an oversized batch with
+`{ file, name, index }`; `onClickPreview` fires on every item tap with
+`{ ...item, name, index }`; `useBeforeRead: true` turns `onBeforeRead` into
+the `{ file, name, index, callback }` gate; an explicitly supplied
+`autoDelete` switches delete to source semantics (`true` removes and emits
+only `update:fileList`, `false` emits `onDelete` without removing); otherwise
+the existing RN remove-and-emit behavior stays. `previewFullImage` wins over
+`previewImage` when both are supplied.
+
+`UPLazyLoad` keeps the explicit visibility model and gains source aliases
+(`image`, `imgMode`, `loadingImg`, `errorImg`, `index`, `onClick`). The
+source's implicit global scroll observation and `uni.*`/`wx.*` APIs remain
+documented boundaries; no `uni` runtime or Provider/global adapter is added.
+
 ## P33 tree
 
 `UPTree` maps the source tree component to a virtualized React Native row

@@ -355,6 +355,15 @@ Source: `uview-plus` 3.8.86. Status values: Supported, Emulated, No-op retained,
 | `u-lazy-load` | source lazy image visibility and placeholder behavior | `UPLazyLoad` | Explicit `visible` or host scroll/viewport inputs render placeholders before mounting `UPImage` or custom content | Emulated | `tests/components/UPLazyLoad.test.tsx` |
 | `u-image` lazy loading | `lazyLoad` prop | Use `UPLazyLoad` wrapper | `UPImage.lazyLoad` remains a typed compatibility prop; implicit global lazy loading is not provided | No-op retained | `src/components/image/UPImage.tsx` |
 
+## P38 Upload And Lazy Load Source Compatibility
+
+| Component | Source API | React Native API | Default / behavior | Status | Test |
+|---|---|---|---|---|---|
+| `u-upload` | source-shaped `fileList` (`url`/`thumb`/`size`/`name`/`type`/`message`), `accept` `media`/`video`, source events `oversize`/`clickPreview`/`beforeRead` (`useBeforeRead`)/`delete` (`autoDelete`)/`afterAutoUpload`, source upload config `autoUploadApi`/`autoUploadHeader`/`autoUploadDriver`/`autoUploadAuthUrl`, cell props `width`/`height`/`imageMode`/`uploadIcon`/`uploadIconColor` | `UPUpload` dual surface | Existing RN props/callbacks keep behavior; source props/events add explicit precedence (`previewFullImage` wins over `previewImage`, `autoUploadApi ?? url`, `{ ...autoUploadHeader, ...header }`, oversize batch rejection, autoDelete source delete) | Emulated | `tests/components/UPUpload.test.tsx`; `docs/upload-source-compatibility.md` |
+| `u-upload` | `uni.chooseImage`/`chooseFile`/`chooseVideo`, `uni.uploadFile`, `uni.previewImage`, bundled auth/signing, OSS/COS/Kodo drivers, background/resumable upload, video capture, `getVideoThumb`, `videoPreviewObjectFit` | Adapter-owned transport and `UPUploadRequest` (`driver`/`authUrl` passed through) | Applications own picker install, upload transport, auth, signing, retry, and provider formats; video props are typed boundaries | Host adapter / Deferred | `src/components/upload/types.ts`; `docs/upload-source-compatibility.md` |
+| `u-lazy-load` | source prop aliases `image`/`imgMode`/`loadingImg`/`errorImg`/`index`/`onClick`, explicit visibility props | `UPLazyLoad` | Source aliases map onto the RN surface; `src`/`mode` win; implicit scroll/intersection observation stays a documented boundary | Emulated / Boundary | `tests/components/UPLazyLoad.test.tsx`; `docs/upload-source-compatibility.md` |
+| P32 defaults | `maxCount` 52, `autoUpload` false, `uploadText` '', `capture` `['album','camera']`, `name` '' | P32 RN defaults retained | Source parity requires explicit props (`maxCount`, `autoUpload`, `uploadText`, `capture`, `name`) | Documented divergence | `src/config/defaults.ts` |
+
 ## P33 Tree
 
 | Component | Source API | React Native API | Default / behavior | Status | Test |

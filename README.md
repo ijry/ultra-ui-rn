@@ -42,8 +42,19 @@ const uploadAdapter = {
 <UPUpload uploadAdapter={uploadAdapter} />;
 ```
 
+Source-shaped `fileList` items (`url`, `thumb`, `size`, `name`, `type`) are
+accepted and normalized, so uview-plus upload code ports directly. Source
+props and events sit on top of the RN surface with explicit precedence:
+`autoUploadApi`/`autoUploadHeader`/`autoUploadDriver` configure the upload
+request, `onOversize` rejects an oversized batch, `onClickPreview` fires on
+every item tap, `useBeforeRead` gates through `onBeforeRead`, `autoDelete`
+switches delete to source semantics, and `customAfterAutoUpload` resolves the
+success URL through `onAfterAutoUpload`.
+
 `UPLazyLoad` is explicit. Pass `visible`, or provide scroll/viewport inputs
-from the screen that owns scrolling.
+from the screen that owns scrolling. Source aliases `image`/`imgMode`,
+`loadingImg`, `errorImg`, `index`, and `onClick` are supported; the source's
+implicit scroll observation remains an RN boundary.
 
 ```tsx
 <UPLazyLoad src={imageUrl} visible={isImageVisible} width="100%" height={180} />;
