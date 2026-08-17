@@ -272,4 +272,13 @@ P34 adds `UPTable2`, a FlashList-backed generic data grid with source-shaped
 columns, controlled selection/expansion/current-row state, tree flattening,
 sorting/filtering, callback or Promise lazy children, fixed headers, and a
 synchronized fixed-left overlay. The static `UPTable` family remains unchanged.
+P39 completes the interface audit: the full 91-component props + events
+comparison against uview-plus@3.8.86 is green. Source emit names are kept
+verbatim (`onScrolltolower`, `onTouchstart`, `onHeadClick`, `onUpdateModelValue`),
+existing RN callbacks are unchanged, and every remaining event gap is closed —
+number-box plus/minus/overlimit, card section clicks, popup click, modal
+cancelOnAsync, slider start, barcode rendered, canvas touch aliases, list
+scroll/refresher aliases, input/textarea keyboard and input events, plus the
+`onInput` v-model aliases across code-input, rate, switch, search,
+datetime-picker, and waterfall. `UPRadio.color` completes the prop surface.
 Remaining source components stay explicitly tracked in the gap matrix.

@@ -364,6 +364,26 @@ Source: `uview-plus` 3.8.86. Status values: Supported, Emulated, No-op retained,
 | `u-lazy-load` | source prop aliases `image`/`imgMode`/`loadingImg`/`errorImg`/`index`/`onClick`, explicit visibility props | `UPLazyLoad` | Source aliases map onto the RN surface; `src`/`mode` win; implicit scroll/intersection observation stays a documented boundary | Emulated / Boundary | `tests/components/UPLazyLoad.test.tsx`; `docs/upload-source-compatibility.md` |
 | P32 defaults | `maxCount` 52, `autoUpload` false, `uploadText` '', `capture` `['album','camera']`, `name` '' | P32 RN defaults retained | Source parity requires explicit props (`maxCount`, `autoUpload`, `uploadText`, `capture`, `name`) | Documented divergence | `src/config/defaults.ts` |
 
+## P39 Event Surface Compatibility
+
+Full-audit result: all 91 source components now expose their complete source prop surface, and the source event surface is covered. Source emit names are retained verbatim (`@scrolltolower` compiles to `onScrolltolower`, `@touchstart` to `onTouchstart`, `@head-click` to `onHeadClick`); RN-named callbacks continue to fire alongside.
+
+| Component | Source API | React Native API | Default / behavior | Status | Test |
+|---|---|---|---|---|---|
+| `u-radio` | `color` (icon/checkmark color) | `color` on `UPRadioProps` | `color` wins over `iconColor`, then group `iconColor`, then `#ffffff` | Supported | `tests/components/UPRadioColor.test.tsx` |
+| `u-number-box` | `focus`, `input`, `overlimit`, `minus`, `plus` events | `onFocus({value,name})`, `onInput(value)`, `onOverlimit(type)`, `onMinus`, `onPlus` | Boundary presses emit `overlimit` instead of `minus`/`plus`; `input` fires with `change` | Supported | `tests/components/UPNumberBoxEvents.test.tsx` |
+| `u-card` | `click`, `head-click`, `body-click`, `foot-click` events | `onClick`, `onHeadClick`, `onBodyClick`, `onFootClick` (index payload) | Whole-card and section presses emit the source index | Supported | `tests/components/UPCellCard.test.tsx` |
+| `u-popup` | `click` event | `onClick` on `UPPopupProps` | Fires when the panel content is pressed | Supported | `tests/components/UPPopupModal.test.tsx` |
+| `u-modal` | `cancelOnAsync` event | `onCancelOnAsync` | Cancel during a pending `asyncClose` confirm emits `cancelOnAsync` and never closes | Supported | `tests/components/UPPopupModal.test.tsx` |
+| `u-slider` | `input`, `start` events | `onInput(value)`, `onStart` | `input` fires with `change`; `start` fires on press-in | Supported | `tests/components/UPSliderEvents.test.tsx` |
+| `u-barcode` | `rendered` event | `onRendered({type,id,value,path})` | Fires after a successful canvas or image draw | Supported | `tests/components/UPBarcode.test.tsx` |
+| `u-canvas` | `touchstart`, `touchmove`, `touchend` events | `onTouchstart`, `onTouchmove`, `onTouchend` (lowercase source aliases) | Aliases fire together with `onTouchStart`/`onTouchMove`/`onTouchEnd` | Supported | `tests/components/UPCanvas.test.tsx` |
+| `u-list` | `scrolltolower`, `scrolltoupper`, `refresherrefresh` events | `onScrolltolower`, `onScrolltoupper`, `onRefresherrefresh` (source aliases) | Aliases fire with the RN callbacks; `refresherpulling/restore/abort` retained as lifecycle boundaries | Emulated / Boundary | `tests/components/UPList.test.tsx` |
+| `u-input` | `input`, `keyboardheightchange` events | `onInput(value)`, `onKeyboardheightchange({height})` | `input` fires with every change; keyboard show/hide mapped from RN `Keyboard` events; `nicknamereview`, `ignoreCompositionEvent` retained as boundaries | Emulated / Boundary | `tests/components/UPInputs.test.tsx` |
+| `u-textarea` | `input`, `linechange`, `keyboardheightchange` events | `onInput(value)`, `onLinechange({height,lineCount})`, `onKeyboardheightchange({height})` | Line count derived from line breaks; keyboard height from RN `Keyboard` events | Emulated | `tests/components/UPInputs.test.tsx` |
+| `u-code-input`, `u-rate`, `u-switch`, `u-search`, `u-datetime-picker`, `u-waterfall` | `input` event (v-model) | `onInput` value alias | Fires with the same value payload and timing as the retained `onChange` | Supported | `tests/components/UP*Input.test.tsx`, `UPInputs`, `UPDatetimePicker`, `UPWaterfall` |
+| Event naming rule | Source emit names (`scrolltolower`, `touchstart`, `head-click`, `update:modelValue`) | Callbacks keep the verbatim source casing (`onScrolltolower`, `onTouchstart`, `onHeadClick`, `onUpdateModelValue`) | Both RN-named and source-named callbacks fire; existing RN callbacks are unchanged | Supported | audit scripts; component rows above |
+
 ## P33 Tree
 
 | Component | Source API | React Native API | Default / behavior | Status | Test |

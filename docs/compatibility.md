@@ -59,6 +59,29 @@ UP.setConfig({
 
 `UP.rpx2px` and `UP.getPx('24rpx')` use the uview 750rpx design baseline against the current window width.
 
+## P39 event surface compatibility
+
+The full 91-component audit (props + events against uview-plus@3.8.86) is
+complete. Every source prop and every source emit now has a local counterpart.
+Source emit names are kept verbatim, so a Vue template like
+`@scrolltolower="loadMore"` migrates directly to `onScrolltolower={loadMore}`
+(and `@touchstart` to `onTouchstart`, `@head-click` to `onHeadClick`,
+`@update:modelValue` to `onUpdateModelValue`). Existing React Native callbacks
+(`onChange`, `onScrollToLower`, `onTouchStart`, ...) are unchanged and fire
+alongside their source-named aliases.
+
+Notable additions: `UPRadio.color`, `UPNumberBox` `onPlus`/`onMinus`/
+`onOverlimit`/`onFocus`/`onInput`, `UPCard` `onClick`/`onHeadClick`/
+`onBodyClick`/`onFootClick`, `UPPopup.onClick`, `UPModal.onCancelOnAsync`,
+`UPSlider.onStart`/`onInput`, `UPBarcode.onRendered`, `UPCanvas` touch aliases,
+`UPList` scroll/refresher source aliases, `UPInput`/`UPTextarea`
+`onInput`/`onKeyboardheightchange` (+`onLinechange`), and `onInput` v-model
+aliases on code-input, rate, switch, search, datetime-picker, and waterfall.
+
+Mini-program-only events (`nicknamereview`, `refresherpulling`/`restore`/`abort`
+lifecycles, IME `ignoreCompositionEvent`) remain accepted boundaries — declared
+and documented, never faked. See `docs/gap-matrix.md` for the full P39 rows.
+
 ## P1 display essentials
 
 The first P1 batch ports source-compatible text, tag, badge, spacing, divider,
