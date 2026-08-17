@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text } from 'react-native';
-import { act, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import { UP, UPLazyLoad, UPRoot } from '../../src';
 
 function renderRoot(node: React.ReactElement) {
@@ -100,4 +100,47 @@ it('merges UP.setConfig lazy-load defaults', () => {
   expect(screen.getByTestId('up-lazy-load').props.style).toEqual(
     expect.arrayContaining([expect.objectContaining({ height: 80, width: 120 })]),
   );
+});
+
+describe('P38 lazy-load source aliases', () => {
+  it('maps source image and imgMode aliases onto the RN surface', () => {
+    const screen = renderRoot(
+      <UPLazyLoad height={100} image="https://example.com/b.jpg" imgMode="widthFix" visible width={100} />,
+    );
+
+    expect(screen.getByTestId('up-lazy-load-content')).toBeTruthy();
+    expect(screen.getByTestId('up-image-native')).toBeTruthy();
+  });
+
+  it('renders a loading image placeholder from loadingImg', () => {
+    const screen = renderRoot(
+      <UPLazyLoad
+        height={100}
+        loadingImg="https://example.com/placeholder.png"
+        src="https://example.com/a.jpg"
+        visible={false}
+        width={100}
+      />,
+    );
+
+    expect(screen.getByTestId('up-image-native')).toBeTruthy();
+    expect(screen.queryByTestId('up-lazy-load-placeholder')).toBeNull();
+  });
+
+  it('emits click with the source index', () => {
+    const onClick = jest.fn();
+    const screen = renderRoot(
+      <UPLazyLoad
+        height={100}
+        index="card-1"
+        onClick={onClick}
+        src="https://example.com/a.jpg"
+        visible
+        width={100}
+      />,
+    );
+
+    fireEvent.press(screen.getByTestId('up-lazy-load-content'));
+    expect(onClick).toHaveBeenCalledWith('card-1');
+  });
 });
