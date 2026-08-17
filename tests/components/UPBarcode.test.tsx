@@ -140,3 +140,23 @@ it('rejects useCanvas=false when export is unsupported', async () => {
     await expect(ref.current?.toTempFilePath()).rejects.toThrow('Canvas export is not supported');
   });
 });
+
+it('emits source rendered payload after a successful draw', async () => {
+  const onRendered = jest.fn();
+  const screen = renderRoot(
+    <UPBarcode
+      canvasAdapter={createRecordingAdapter([], true)}
+      onRendered={onRendered}
+      useCanvas
+      value="ABC123"
+    />,
+  );
+  await waitFor(() =>
+    expect(onRendered).toHaveBeenCalledWith({
+      type: 'canvas',
+      id: expect.any(String),
+      value: 'ABC123',
+    }),
+  );
+  expect(screen.getByTestId('up-barcode')).toBeTruthy();
+});

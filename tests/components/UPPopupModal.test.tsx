@@ -1,4 +1,5 @@
 import React from 'react';
+import { Text } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 import { UP, UPModal, UPPopup, UPRoot } from '../../src';
 
@@ -42,4 +43,38 @@ it('uses source modal width and reverse button order', () => {
     expect.arrayContaining([expect.objectContaining({ width: UP.getPx('650rpx') })]),
   );
   expect(screen.getAllByText(/^(No|确认)$/).map((node) => node.props.children)).toEqual(['确认', 'No']);
+});
+
+it('emits popup click when the panel content is pressed', () => {
+  const onClick = jest.fn();
+  const screen = renderRoot(
+    <UPPopup onClick={onClick} show>
+      <Text>Panel</Text>
+    </UPPopup>,
+  );
+  fireEvent.press(screen.getByTestId('up-popup'));
+  expect(onClick).toHaveBeenCalledTimes(1);
+});
+
+it('emits modal cancelOnAsync when cancel is pressed during a pending async confirm', () => {
+  const onCancel = jest.fn();
+  const onCancelOnAsync = jest.fn();
+  const onChangeShow = jest.fn();
+  const screen = renderRoot(
+    <UPModal
+      asyncClose
+      onChangeShow={onChangeShow}
+      onCancel={onCancel}
+      onCancelOnAsync={onCancelOnAsync}
+      show
+      showCancelButton
+      showConfirmButton
+    />,
+  );
+  fireEvent.press(screen.getByTestId('up-modal-confirm'));
+  expect(onChangeShow).not.toHaveBeenCalled();
+  fireEvent.press(screen.getByTestId('up-modal-cancel'));
+  expect(onCancelOnAsync).toHaveBeenCalledTimes(1);
+  expect(onCancel).toHaveBeenCalledTimes(1);
+  expect(onChangeShow).not.toHaveBeenCalled();
 });

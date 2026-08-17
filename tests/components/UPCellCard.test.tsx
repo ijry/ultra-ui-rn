@@ -70,3 +70,31 @@ it('renders source card header/body/footer and named ReactNode overrides', () =>
     expect.objectContaining({ borderRadius: 8, margin: 15 }),
   );
 });
+
+it('emits source card click events with the card index', () => {
+  const onClick = jest.fn();
+  const onHeadClick = jest.fn();
+  const onBodyClick = jest.fn();
+  const onFootClick = jest.fn();
+  const screen = renderContent(
+    <UPCard
+      foot={<Text>Footer</Text>}
+      index={7}
+      onBodyClick={onBodyClick}
+      onClick={onClick}
+      onFootClick={onFootClick}
+      onHeadClick={onHeadClick}
+      showFoot
+      showHead
+      title="Head"
+    />,
+  );
+  fireEvent.press(screen.getByTestId('up-card'));
+  expect(onClick).toHaveBeenCalledWith(7);
+  fireEvent.press(screen.getByTestId('up-card-head'));
+  expect(onHeadClick).toHaveBeenCalledWith(7);
+  fireEvent.press(screen.getByTestId('up-card-body'));
+  expect(onBodyClick).toHaveBeenCalledWith(7);
+  fireEvent.press(screen.getByTestId('up-card-foot'));
+  expect(onFootClick).toHaveBeenCalledWith(7);
+});

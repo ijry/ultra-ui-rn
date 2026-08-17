@@ -63,3 +63,54 @@ it('emits source scroll offsets and threshold edge callbacks once per entry', ()
   fireEvent(screen.UNSAFE_getByType(RefreshControl), 'refresh');
   expect(onRefresh).toHaveBeenCalledTimes(1);
 });
+
+it('fires source-named scrolltolower/scrolltoupper aliases together with RN callbacks', () => {
+  const onLower = jest.fn();
+  const onUpper = jest.fn();
+  const onSourceLower = jest.fn();
+  const onSourceUpper = jest.fn();
+  const screen = renderRoot(
+    <UPList
+      height={200}
+      lowerThreshold={20}
+      onScrollToLower={onLower}
+      onScrollToUpper={onUpper}
+      onScrolltolower={onSourceLower}
+      onScrolltoupper={onSourceUpper}
+    >
+      <Text>Rows</Text>
+    </UPList>,
+  );
+
+  fireEvent.scroll(screen.getByTestId('up-list'), {
+    nativeEvent: {
+      contentOffset: { x: 0, y: 0 },
+      contentSize: { height: 1000, width: 320 },
+      layoutMeasurement: { height: 200, width: 320 },
+    },
+  });
+  expect(onUpper).toHaveBeenCalledTimes(1);
+  expect(onSourceUpper).toHaveBeenCalledTimes(1);
+  fireEvent.scroll(screen.getByTestId('up-list'), {
+    nativeEvent: {
+      contentOffset: { x: 0, y: 780 },
+      contentSize: { height: 1000, width: 320 },
+      layoutMeasurement: { height: 200, width: 320 },
+    },
+  });
+  expect(onLower).toHaveBeenCalledTimes(1);
+  expect(onSourceLower).toHaveBeenCalledTimes(1);
+});
+
+it('fires source refresherrefresh alias on pull refresh', () => {
+  const onRefresh = jest.fn();
+  const onSourceRefresh = jest.fn();
+  const screen = renderRoot(
+    <UPList onRefresherRefresh={onRefresh} onRefresherrefresh={onSourceRefresh} refresherEnabled>
+      <Text>Rows</Text>
+    </UPList>,
+  );
+  fireEvent(screen.UNSAFE_getByType(RefreshControl), 'refresh');
+  expect(onRefresh).toHaveBeenCalledTimes(1);
+  expect(onSourceRefresh).toHaveBeenCalledTimes(1);
+});

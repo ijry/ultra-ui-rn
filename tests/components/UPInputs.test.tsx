@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { Keyboard, StyleSheet, type KeyboardEvent } from 'react-native';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { UP, UPInput, UPRoot, UPSearch, UPTextarea } from '../../src';
 
@@ -70,4 +70,48 @@ it('maps source search defaults, action, clear, and change events', () => {
   expect(onChange).toHaveBeenCalledWith('');
   expect(onSearch).toHaveBeenCalledWith('');
   expect(onChange).toHaveBeenCalledWith('next');
+});
+
+it('fires source input alias and keyboard height change events', () => {
+  const onInput = jest.fn();
+  const onKeyboard = jest.fn();
+  const listeners: Record<string, (event: KeyboardEvent) => void> = {};
+  const keyboardSpy = jest
+    .spyOn(Keyboard, 'addListener')
+    .mockImplementation((type: string, callback: (event: KeyboardEvent) => void) => {
+      listeners[type] = callback;
+      return { remove: jest.fn() } as unknown as ReturnType<typeof Keyboard.addListener>;
+    });
+  const screen = renderInput(
+    <UPInput onInput={onInput} onKeyboardheightchange={onKeyboard} value="a" />,
+  );
+  fireEvent.changeText(screen.getByTestId('up-input-native'), 'abc');
+  expect(onInput).toHaveBeenCalledWith('abc');
+  act(() => {
+    listeners.keyboardDidShow?.({ duration: 0, easing: 'easeOut', endCoordinates: { height: 300, screenX: 0, screenY: 0, width: 0 } });
+    listeners.keyboardDidHide?.({ duration: 0, easing: 'easeOut', endCoordinates: { height: 0, screenX: 0, screenY: 0, width: 0 } });
+  });
+  expect(onKeyboard).toHaveBeenCalledWith({ height: 300 });
+  expect(onKeyboard).toHaveBeenCalledWith({ height: 0 });
+  keyboardSpy.mockRestore();
+});
+
+it('emits textarea source input and linechange events', () => {
+  const onInput = jest.fn();
+  const onLinechange = jest.fn();
+  const screen = renderInput(
+    <UPTextarea height={60} onInput={onInput} onLinechange={onLinechange} value="a" />,
+  );
+  fireEvent.changeText(screen.getByTestId('up-textarea-native'), 'a\nb');
+  expect(onInput).toHaveBeenCalledWith('a\nb');
+  expect(onLinechange).toHaveBeenCalledWith({ height: 60, lineCount: 2 });
+});
+
+it('emits search source input alias', () => {
+  const onInput = jest.fn();
+  const screen = renderInput(
+    <UPSearch onInput={onInput} />,
+  );
+  fireEvent.changeText(screen.getByTestId('up-search-native'), 'abc');
+  expect(onInput).toHaveBeenCalledWith('abc');
 });

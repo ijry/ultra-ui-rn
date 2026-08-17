@@ -148,3 +148,12 @@ it('keeps time source strings and forwards cancellation', () => {
   expect(onCancel).toHaveBeenCalledTimes(1);
   expect(onUpdateModelValue).not.toHaveBeenCalled();
 });
+
+it('fires source input alias with the selected value', () => {
+  const onInput = jest.fn();
+  const screen = renderRoot(
+    <UPDatetimePicker mode="date" onInput={onInput} show showToolbar />,
+  );
+  fireEvent.press(screen.getByTestId('up-picker-option-2-11'));
+  expect(onInput).toHaveBeenCalledWith(expect.any(Number));
+});

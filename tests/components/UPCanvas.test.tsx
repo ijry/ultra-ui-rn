@@ -224,3 +224,15 @@ it('rejects queued and later commands after unmount without executing them', asy
   await expect(api.fillRect(1, 1, 1, 1)).rejects.toThrow('Canvas has been unmounted');
   expect(commands).toEqual([]);
 });
+
+it('forwards source lowercase touch aliases together with RN touch callbacks', () => {
+  const onTouchStart = jest.fn();
+  const onTouchstart = jest.fn();
+  const screen = renderRoot(
+    <UPCanvas disableScroll onTouchStart={onTouchStart} onTouchstart={onTouchstart} />,
+  );
+  const event = { nativeEvent: { touches: [{ pageX: 1, pageY: 2 }] } };
+  fireEvent(screen.getByTestId(/up-canvas-/), 'touchStart', event);
+  expect(onTouchStart).toHaveBeenCalledWith(event);
+  expect(onTouchstart).toHaveBeenCalledWith(event);
+});

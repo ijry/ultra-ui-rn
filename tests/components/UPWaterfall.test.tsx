@@ -464,3 +464,21 @@ it('merges waterfall defaults through UP.setConfig', () => {
   );
   expect(screen.getByTestId('up-waterfall-list').props.numColumns).toBe(4);
 });
+
+it('fires source input alias with the composed data', () => {
+  const onInput = jest.fn();
+  const cards = [{ id: 1 }, { id: 2 }];
+  const ref = React.createRef<UPWaterfallRef<{ id: number }>>();
+  renderRoot(
+    <UPWaterfall
+      modelValue={cards}
+      onInput={onInput}
+      ref={ref}
+      renderItem={({ item }: { item: { id: number } }) => <Text>{String(item.id)}</Text>}
+    />,
+  );
+  act(() => {
+    expect(ref.current?.remove(1)).toBe(true);
+  });
+  expect(onInput).toHaveBeenCalledWith([{ id: 2 }]);
+});
