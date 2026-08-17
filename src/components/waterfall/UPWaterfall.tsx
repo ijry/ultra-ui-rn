@@ -127,8 +127,9 @@ function UPWaterfallInner<T = unknown>(
       setPending(pendingNext);
       input.onUpdateModelValue?.(next);
       input.onChange?.(next);
+      input.onInput?.(next);
     },
-    [input.onChange, input.onUpdateModelValue],
+    [input.onChange, input.onUpdateModelValue, input.onInput],
   );
 
   useEffect(() => {

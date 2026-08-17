@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import {
   Pressable,
   View,
+  type GestureResponderEvent,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -43,6 +44,8 @@ export type UPPopupProps = {
   onOpen?: () => void;
   onClose?: () => void;
   onChangeShow?: (show: boolean) => void;
+  /** Source `click` event: fires when the popup panel content is pressed. */
+  onClick?: (event: GestureResponderEvent) => void;
 };
 
 let popupSequence = 0;
@@ -87,7 +90,8 @@ function PopupLayer({ props, requestClose }: PopupLayerProps): React.JSX.Element
       ? { borderBottomLeftRadius: radius, borderBottomRightRadius: radius }
       : { borderRadius: radius };
   const panel = (
-    <View
+    <Pressable
+      onPress={props.onClick}
       style={[
         {
           backgroundColor: props.bgColor || '#ffffff',
@@ -107,7 +111,7 @@ function PopupLayer({ props, requestClose }: PopupLayerProps): React.JSX.Element
           <UPIcon color="#909399" name="close" size={18} />
         </Pressable>
       ) : null}
-    </View>
+    </Pressable>
   );
   return (
     <View pointerEvents="box-none" style={{ bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 }}>

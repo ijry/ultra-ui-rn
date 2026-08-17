@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Pressable, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import { useUPConfig } from '../../config/useUPConfig';
 import { getPx, type UPDimension } from '../../utils';
@@ -35,18 +35,26 @@ export type UPModalProps = {
   onCancel?: () => void;
   onClose?: () => void;
   onChangeShow?: (show: boolean) => void;
+  /** Source `cancelOnAsync` event: cancel pressed while an async confirm is pending. */
+  onCancelOnAsync?: () => void;
 };
 
 export function UPModal(input: UPModalProps): React.JSX.Element {
   const props = { ...useUPConfig().props.modal, ...input } as UPModalProps;
+  const [pendingAsync, setPendingAsync] = useState(false);
   const requestClose = () => input.onChangeShow?.(false);
   const confirm = () => {
     input.onConfirm?.();
-    if (!props.asyncClose) requestClose();
+    if (props.asyncClose) setPendingAsync(true);
+    else requestClose();
   };
   const cancel = () => {
+    if (props.asyncClose && pendingAsync) {
+      input.onCancelOnAsync?.();
+    } else if (!props.asyncCancelClose) {
+      requestClose();
+    }
     input.onCancel?.();
-    if (!props.asyncCancelClose) requestClose();
   };
   const cancelButton = props.showCancelButton && !props.confirmButtonShape ? (
     <Pressable key="cancel" onPress={cancel} style={buttonStyle} testID="up-modal-cancel"><Text style={{ color: props.cancelColor, fontSize: 16 }}>{props.cancelText}</Text></Pressable>

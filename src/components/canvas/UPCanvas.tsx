@@ -194,9 +194,9 @@ export const UPCanvas = forwardRef<UPCanvasRef, UPCanvasProps>(function UPCanvas
           height={height}
           onError={props.onError}
           onReady={handleReady}
-          onTouchEnd={props.onTouchEnd}
-          onTouchMove={props.onTouchMove}
-          onTouchStart={props.onTouchStart}
+          onTouchEnd={(event) => { props.onTouchEnd?.(event); props.onTouchend?.(event); }}
+          onTouchMove={(event) => { props.onTouchMove?.(event); props.onTouchmove?.(event); }}
+          onTouchStart={(event) => { props.onTouchStart?.(event); props.onTouchstart?.(event); }}
           testID={`up-canvas-${canvasId}`}
           width={width}
         />

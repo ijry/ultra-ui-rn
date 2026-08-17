@@ -52,6 +52,18 @@ export type UPListProps = {
   onRefresherRestore?: () => void;
   /** @deprecated Core RefreshControl does not expose source abort lifecycle events. */
   onRefresherAbort?: () => void;
+  /** Source `scrolltolower` event alias: fires together with `onScrollToLower`. */
+  onScrolltolower?: () => void;
+  /** Source `scrolltoupper` event alias: fires together with `onScrollToUpper`. */
+  onScrolltoupper?: () => void;
+  /** Source `refresherpulling` event alias: no RN lifecycle equivalent. */
+  onRefresherpulling?: () => void;
+  /** Source `refresherrefresh` event alias: fires together with `onRefresherRefresh`. */
+  onRefresherrefresh?: () => void;
+  /** Source `refresherrestore` event alias: no RN lifecycle equivalent. */
+  onRefresherrestore?: () => void;
+  /** Source `refresherabort` event alias: no RN lifecycle equivalent. */
+  onRefresherabort?: () => void;
 };
 
 function dimension(value: UPDimension | undefined): number | undefined {
@@ -75,7 +87,7 @@ export function UPList(input: UPListProps): React.JSX.Element {
   const width = dimension(props.width);
   const refreshControl = props.refresherEnabled ? (
     <RefreshControl
-      onRefresh={input.onRefresherRefresh}
+      onRefresh={() => { input.onRefresherRefresh?.(); input.onRefresherrefresh?.(); }}
       progressBackgroundColor={props.refresherBackground}
       refreshing={Boolean(props.refresherTriggered)}
       testID="up-list-refresh"
@@ -102,8 +114,8 @@ export function UPList(input: UPListProps): React.JSX.Element {
     const upper = offset <= upperThreshold;
     const lower = offset + layoutMeasurement.height >= contentSize.height - lowerThreshold;
     input.onScroll?.(offset);
-    if (upper && !edgeState.current.upper) input.onScrollToUpper?.();
-    if (lower && !edgeState.current.lower) input.onScrollToLower?.();
+    if (upper && !edgeState.current.upper) { input.onScrollToUpper?.(); input.onScrolltoupper?.(); }
+    if (lower && !edgeState.current.lower) { input.onScrollToLower?.(); input.onScrolltolower?.(); }
     edgeState.current = { lower, upper };
   };
 

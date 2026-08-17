@@ -66,6 +66,7 @@ export function UPDatetimePicker(input: UPDatetimePickerProps): React.JSX.Elemen
     draftRef.current = next;
     setDraft(next);
     input.onChange?.({ mode: dataOptions.mode ?? 'datetime', value: next.value });
+    input.onInput?.(next.value);
   }, [dataOptions, input]);
 
   const handleConfirm = useCallback(() => {

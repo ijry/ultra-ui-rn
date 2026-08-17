@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   Image,
+  Pressable,
   Text,
   View,
   type StyleProp,
@@ -46,6 +47,14 @@ export type UPCardProps = {
   head?: React.ReactNode;
   children?: React.ReactNode;
   foot?: React.ReactNode;
+  /** Source `click` event: whole-card press with the card index. */
+  onClick?: (index: string | number | object | undefined) => void;
+  /** Source `head-click` event: head press with the card index. */
+  onHeadClick?: (index: string | number | object | undefined) => void;
+  /** Source `body-click` event: body press with the card index. */
+  onBodyClick?: (index: string | number | object | undefined) => void;
+  /** Source `foot-click` event: foot press with the card index. */
+  onFootClick?: (index: string | number | object | undefined) => void;
 };
 
 function padding(value: UPDimension, fallback: UPDimension): ViewStyle {
@@ -59,8 +68,10 @@ export function UPCard(input: UPCardProps): React.JSX.Element {
   const hasFoot = props.showFoot && Boolean(input.foot);
   const titleStyle: TextStyle = { color: props.titleColor, fontSize: getPx(props.titleSize), fontWeight: '500' };
   const subTitleStyle: TextStyle = { color: props.subTitleColor, fontSize: getPx(props.subTitleSize) };
+  const emitIndex = () => props.index;
   return (
-    <View
+    <Pressable
+      onPress={() => input.onClick?.(emitIndex())}
       style={[
         {
           backgroundColor: '#ffffff',
@@ -74,7 +85,8 @@ export function UPCard(input: UPCardProps): React.JSX.Element {
       testID="up-card"
     >
       {hasHead ? (
-        <View
+        <Pressable
+          onPress={() => input.onHeadClick?.(emitIndex())}
           style={[
             {
               alignItems: 'center',
@@ -107,13 +119,14 @@ export function UPCard(input: UPCardProps): React.JSX.Element {
               {props.subTitle ? <Text style={subTitleStyle}>{props.subTitle}</Text> : null}
             </>
           )}
-        </View>
+        </Pressable>
       ) : null}
-      <View style={[padding(props.paddingBody, props.padding), input.bodyStyle]} testID="up-card-body">
+      <Pressable onPress={() => input.onBodyClick?.(emitIndex())} style={[padding(props.paddingBody, props.padding), input.bodyStyle]} testID="up-card-body">
         {input.children}
-      </View>
+      </Pressable>
       {hasFoot ? (
-        <View
+        <Pressable
+          onPress={() => input.onFootClick?.(emitIndex())}
           style={[
             {
               borderTopColor: colors.borderColor,
@@ -125,8 +138,8 @@ export function UPCard(input: UPCardProps): React.JSX.Element {
           testID="up-card-foot"
         >
           {input.foot}
-        </View>
+        </Pressable>
       ) : null}
-    </View>
+    </Pressable>
   );
 }

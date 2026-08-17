@@ -25,6 +25,13 @@ export type UPBarcodeRef = {
   toTempFilePath: () => Promise<UPCanvasExportResult>;
 };
 
+export type UPBarcodeRenderedPayload = {
+  type: 'canvas' | 'image';
+  id?: string;
+  value?: string | number;
+  path?: string | null;
+};
+
 export type UPBarcodeProps = {
   value?: string | number;
   format?: UPBarcodeFormat;
@@ -51,6 +58,8 @@ export type UPBarcodeProps = {
   canvasAdapter?: UPCanvasAdapterComponent;
   onResult?: (result: UPBarcodeResult) => void;
   onError?: (error: Error) => void;
+  /** Source `rendered` event: fires after a successful draw (canvas or image export). */
+  onRendered?: (payload: UPBarcodeRenderedPayload) => void;
 };
 
 type RequiredBarcodeProps = {
@@ -273,6 +282,11 @@ export const UPBarcode = forwardRef<UPBarcodeRef, UPBarcodeProps>(function UPBar
       };
       resultRef.current = result;
       props.onResult?.(result);
+      props.onRendered?.(
+        props.useCanvas
+          ? { type: 'canvas', id: canvasId, value: props.value }
+          : { type: 'image', id: canvasId, value: props.value, path: tempFilePath },
+      );
       return result;
     } catch (caught) {
       const normalized = reportError(caught);
@@ -284,6 +298,7 @@ export const UPBarcode = forwardRef<UPBarcodeRef, UPBarcodeProps>(function UPBar
     exportCanvas,
     options,
     props.format,
+    props.onRendered,
     props.onResult,
     props.useCanvas,
     props.value,
