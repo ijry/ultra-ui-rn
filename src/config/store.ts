@@ -85,6 +85,10 @@ export type UPConfigOverrides = {
     markdown?: Partial<UPProps['markdown']>;
     parse?: Partial<UPProps['parse']>;
     novelReader?: Partial<UPProps['novelReader']>;
+    cropper?: Partial<UPProps['cropper']>;
+    poster?: Partial<UPProps['poster']>;
+    pdfReader?: Partial<UPProps['pdfReader']>;
+    shortVideo?: Partial<UPProps['shortVideo']>;
     loadingIcon?: Partial<UPProps['loadingIcon']>;
     loadingPage?: Partial<UPProps['loadingPage']>;
     toast?: Partial<UPProps['toast']>;
@@ -220,6 +224,10 @@ function createSourceState(): UPConfigState {
       markdown: { ...sourceDefaults.props.markdown },
       parse: { ...sourceDefaults.props.parse },
       novelReader: { ...sourceDefaults.props.novelReader },
+      cropper: { ...sourceDefaults.props.cropper },
+      poster: { ...sourceDefaults.props.poster },
+      pdfReader: { ...sourceDefaults.props.pdfReader },
+      shortVideo: { ...sourceDefaults.props.shortVideo },
       loadingIcon: { ...sourceDefaults.props.loadingIcon },
       loadingPage: { ...sourceDefaults.props.loadingPage },
       toast: { ...sourceDefaults.props.toast },
@@ -360,6 +368,10 @@ export function setUPConfig(overrides: UPConfigOverrides): void {
       markdown: { ...state.props.markdown, ...overrides.props?.markdown },
       parse: { ...state.props.parse, ...overrides.props?.parse },
       novelReader: { ...state.props.novelReader, ...overrides.props?.novelReader },
+      cropper: { ...state.props.cropper, ...overrides.props?.cropper },
+      poster: { ...state.props.poster, ...overrides.props?.poster },
+      pdfReader: { ...state.props.pdfReader, ...overrides.props?.pdfReader },
+      shortVideo: { ...state.props.shortVideo, ...overrides.props?.shortVideo },
       loadingIcon: { ...state.props.loadingIcon, ...overrides.props?.loadingIcon },
       loadingPage: { ...state.props.loadingPage, ...overrides.props?.loadingPage },
       toast: { ...state.props.toast, ...overrides.props?.toast },

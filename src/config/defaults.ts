@@ -547,6 +547,10 @@ export type UPGoodsSkuDefaults = { goodsInfo: Record<string, unknown>; skuTree: 
 export type UPMarkdownDefaults = { content: string; previewImg: boolean; copyLink: boolean | string; domain: string; showLineNumber: boolean; theme: 'light' | 'dark'; };
 export type UPParseDefaults = { containerStyle: string | null; content: string; copyLink: boolean; domain: string; errorImg: string; lazyLoad: boolean; loadingImg: string; pauseVideo: boolean; previewImg: boolean; scrollTable: boolean; selectable: boolean; setTitle: boolean; showImgMenu: boolean; tagStyle: Record<string, unknown>; useAnchor: boolean | null; };
 export type UPNovelReaderDefaults = { chapters: readonly NovelChapter[]; currentChapter: NovelChapter | null; loading: boolean; error: NovelReaderError | null; bookId: string | number; storageKey: string; persist: boolean; initialProgress: NovelProgress | null; progress: NovelProgress | null; initialBookmarks: readonly NovelBookmark[]; bookmarks: readonly NovelBookmark[] | null; defaultSettings: NovelReaderSettings; settings: Partial<NovelReaderSettings> | null; mode: 'scroll' | 'page'; showBack: boolean; autoBack: boolean; backIcon: string; safeAreaInsetTop: boolean; safeAreaInsetBottom: boolean; preloadThreshold: number; pageAnimation: boolean; controlsAutoHide: number; };
+export type UPCropperDefaults = { imageSrc: string; minScale: number; maxScale: number; canScale: boolean; canRotate: boolean; lockWidth: string; lockHeight: string; stretch: string; lock: string; noTab: boolean; inner: boolean; quality: number; index: string | number; canChangeSize: boolean; areaWidth: string; areaHeight: string; exportWidth: string; exportHeight: string; fillColor: string; };
+export type UPPosterDefaults = { json: Record<string, unknown>; };
+export type UPPdfReaderDefaults = { src: string; height: string; baseUrl: string; };
+export type UPShortVideoDefaults = { tabsList: readonly { name: string }[]; videoList: readonly Record<string, unknown>[]; currentTab: number; currentVideo: number; };
 export type UPLoadingIconDefaults = { show: boolean; color: string; textColor: string; vertical: boolean; mode: 'spinner' | 'circle' | 'semicircle'; size: number; textSize: number; text: string; timingFunction: string; duration: number; inactiveColor: string; };
 export type UPLoadingPageDefaults = { loadingText: string; image: string; loadingMode: 'spinner' | 'circle' | 'semicircle'; loading: boolean; bgColor: string; color: string; fontSize: number; iconSize: number; loadingColor: string; zIndex: number; };
 export type UPToastDefaults = { zIndex: number; loading: boolean; message: string; icon: string; type: string; loadingMode: string; show: boolean; overlay: boolean; position: 'top' | 'center' | 'bottom'; params: Record<string, never>; duration: number; isTab: boolean; url: string; back: boolean; };
@@ -791,6 +795,10 @@ export type UPProps = {
   markdown: UPMarkdownDefaults;
   parse: UPParseDefaults;
   novelReader: UPNovelReaderDefaults;
+  cropper: UPCropperDefaults;
+  poster: UPPosterDefaults;
+  pdfReader: UPPdfReaderDefaults;
+  shortVideo: UPShortVideoDefaults;
   loadingIcon: UPLoadingIconDefaults;
   loadingPage: UPLoadingPageDefaults;
   toast: UPToastDefaults;
@@ -1381,6 +1389,10 @@ export const sourceDefaults: Readonly<{
     markdown: Object.freeze({ content: '', previewImg: true, copyLink: true, domain: '', showLineNumber: false, theme: 'light' }),
     parse: Object.freeze({ containerStyle: null, content: '', copyLink: true, domain: '', errorImg: '', lazyLoad: false, loadingImg: '', pauseVideo: true, previewImg: true, scrollTable: false, selectable: false, setTitle: true, showImgMenu: true, tagStyle: Object.freeze({}), useAnchor: null }),
     novelReader: Object.freeze({ chapters: Object.freeze([]), currentChapter: null, loading: false, error: null, bookId: '', storageKey: '', persist: true, initialProgress: null, progress: null, initialBookmarks: Object.freeze([]), bookmarks: null, defaultSettings: Object.freeze({ theme: 'day', fontSize: 18, lineHeight: 1.8, paragraphSpacing: 16, contentWidth: '92%', fontFamily: 'system', fontWeight: 400, animation: true }), settings: null, mode: 'scroll', showBack: true, autoBack: false, backIcon: 'arrow-left', safeAreaInsetTop: true, safeAreaInsetBottom: true, preloadThreshold: 2, pageAnimation: true, controlsAutoHide: 0 }),
+    cropper: Object.freeze({ imageSrc: '', minScale: 0.3, maxScale: 4, canScale: true, canRotate: true, lockWidth: '', lockHeight: '', stretch: '', lock: '', noTab: true, inner: false, quality: 0.9, index: '', canChangeSize: false, areaWidth: '300rpx', areaHeight: '300rpx', exportWidth: '260rpx', exportHeight: '260rpx', fillColor: 'transparent' }),
+    poster: Object.freeze({ json: Object.freeze({}) }),
+    pdfReader: Object.freeze({ src: '', height: '500px', baseUrl: 'https://uview-plus.jiangruyi.com/h5' }),
+    shortVideo: Object.freeze({ tabsList: Object.freeze([{ name: '推荐' }, { name: '关注' }, { name: '朋友' }, { name: '本地' }]), videoList: Object.freeze([]), currentTab: 0, currentVideo: 0 }),
     loadingIcon: Object.freeze({ show: true, color: '#909399', textColor: '#909399', vertical: false, mode: 'spinner' as const, size: 24, textSize: 15, text: '', timingFunction: 'ease-in-out', duration: 1200, inactiveColor: '' }),
     loadingPage: Object.freeze({ loadingText: '加载中...', image: '', loadingMode: 'circle' as const, loading: false, bgColor: '', color: '#C8C8C8', fontSize: 19, iconSize: 28, loadingColor: '#C8C8C8', zIndex: 10 }),
     toast: Object.freeze({ zIndex: 10090, loading: false, message: '', icon: '', type: '', loadingMode: '', show: false, overlay: false, position: 'center' as const, params: Object.freeze({}), duration: 2000, isTab: false, url: '', back: false }),

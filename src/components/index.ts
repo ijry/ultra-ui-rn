@@ -114,3 +114,7 @@ export * from './goods-sku';
 export * from './markdown';
 export * from './parse';
 export * from './novel-reader';
+export * from './cropper';
+export * from './poster';
+export * from './pdf-reader';
+export * from './short-video';
