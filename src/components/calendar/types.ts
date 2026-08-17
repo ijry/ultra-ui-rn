@@ -1,0 +1,81 @@
+import type React from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
+import type { UPDimension } from '../../utils';
+import type { UPCalendarDateInput } from '../../utils/calendar';
+
+export type { UPCalendarDateInput } from '../../utils/calendar';
+
+export type UPCalendarMode = 'single' | 'multiple' | 'range';
+export type UPCalendarRangeResultMode = 'all' | 'boundary';
+export type UPCalendarTimePrecision = 'hour' | 'minute' | 'second';
+
+export type UPCalendarDay = {
+  date: Date;
+  day: number;
+  week: number;
+  month: number;
+  disabled: boolean;
+  bottomInfo: string;
+  dot: boolean;
+  [key: string]: unknown;
+};
+
+export type UPCalendarFormatter = (day: UPCalendarDay) => UPCalendarDay;
+export type UPCalendarDayCustom = Omit<Partial<UPCalendarDay>, 'date'> & { date: UPCalendarDateInput };
+
+export type UPCalendarProps = {
+  title?: string;
+  showTitle?: boolean;
+  showSubtitle?: boolean;
+  mode?: UPCalendarMode;
+  startText?: string;
+  endText?: string;
+  customList?: readonly UPCalendarDayCustom[];
+  color?: string;
+  minDate?: UPCalendarDateInput | null;
+  maxDate?: UPCalendarDateInput | null;
+  defaultDate?: UPCalendarDateInput | readonly UPCalendarDateInput[] | null;
+  maxCount?: number | string;
+  rowHeight?: UPDimension;
+  formatter?: UPCalendarFormatter | null;
+  showLunar?: boolean;
+  showMark?: boolean;
+  confirmText?: string;
+  confirmDisabledText?: string;
+  show?: boolean;
+  overlay?: boolean;
+  duration?: UPDimension;
+  overlayStyle?: StyleProp<ViewStyle> | string;
+  overlayOpacity?: number | string;
+  zIndex?: number | string;
+  safeAreaInsetBottom?: boolean;
+  safeAreaInsetTop?: boolean;
+  bgColor?: string;
+  closeOnClickOverlay?: boolean;
+  readonly?: boolean;
+  showConfirm?: boolean;
+  maxRange?: number | string;
+  rangePrompt?: string;
+  showRangePrompt?: boolean;
+  allowSameDay?: boolean;
+  rangeResultMode?: UPCalendarRangeResultMode;
+  enableTime?: boolean;
+  timePrecision?: UPCalendarTimePrecision;
+  defaultTime?: string;
+  round?: boolean | UPDimension;
+  monthNum?: number | string;
+  monthSwitch?: boolean;
+  showToday?: boolean;
+  todayColor?: string;
+  weekText?: readonly string[];
+  forbidDays?: readonly UPCalendarDateInput[];
+  forbidDaysToast?: string;
+  monthFormat?: string;
+  pageInline?: boolean;
+  footer?: React.ReactNode;
+  customStyle?: StyleProp<ViewStyle>;
+  customClass?: string;
+  onConfirm?: (dates: string[]) => void;
+  onClose?: () => void;
+  onChangeShow?: (show: boolean) => void;
+};
