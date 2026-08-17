@@ -17,19 +17,27 @@ import { useUPConfig } from '../../config/useUPConfig';
 import { UPIcon } from '../icon';
 import { UPImage } from '../image';
 import {
+  buildUploadDetail,
   clampUploadProgress,
   filterUploadFiles,
   normalizeUploadFile,
   normalizeUploadTask,
   updateUploadFile,
 } from './state';
+import { getPx, type UPDimension } from '../../utils';
 import type {
   UPUploadAccept,
   UPUploadAdapter,
+  UPUploadAfterAutoUploadPayload,
+  UPUploadBeforeReadPayload,
   UPUploadChooseErrorPayload,
+  UPUploadClickPreviewPayload,
+  UPUploadDetail,
+  UPUploadDriver,
   UPUploadErrorPayload,
   UPUploadEventPayload,
   UPUploadFile,
+  UPUploadOversizePayload,
   UPUploadProgressPayload,
   UPUploadRef,
   UPUploadRenderPayload,
@@ -41,34 +49,57 @@ import type {
 export type UPUploadProps = {
   accept?: UPUploadAccept;
   afterRead?: (files: readonly UPUploadFile[]) => void | Promise<void>;
+  autoDelete?: boolean;
   autoUpload?: boolean;
+  autoUploadApi?: string;
+  autoUploadAuthUrl?: string;
+  autoUploadDriver?: UPUploadDriver;
+  autoUploadHeader?: Record<string, string>;
   beforeRead?: (files: readonly UPUploadFile[]) => boolean | void | Promise<boolean | void>;
-  capture?: boolean | 'camera' | 'album';
+  camera?: string;
+  capture?: boolean | 'camera' | 'album' | readonly string[];
+  compressed?: boolean;
+  customAfterAutoUpload?: boolean;
   customClass?: string;
   customStyle?: StyleProp<ViewStyle>;
   defaultFileList?: readonly UPUploadFile[];
   deletable?: boolean;
   disabled?: boolean;
+  extension?: readonly string[];
   fileList?: readonly UPUploadFile[];
   formData?: Record<string, unknown>;
+  getVideoThumb?: boolean;
   header?: Record<string, string>;
+  height?: UPDimension;
+  imageMode?: string;
   maxCount?: number;
+  maxDuration?: number;
   maxSize?: number;
   multiple?: boolean;
   name?: string;
+  previewFullImage?: boolean;
   previewImage?: boolean;
   renderFile?: (payload: UPUploadRenderPayload) => React.ReactNode;
   renderUpload?: (payload: UPUploadRenderUploadPayload) => React.ReactNode;
+  sizeType?: readonly string[];
   uploadAdapter?: UPUploadAdapter;
+  uploadIcon?: string;
+  uploadIconColor?: string;
   uploadText?: string;
   url?: string;
+  useBeforeRead?: boolean;
+  videoPreviewObjectFit?: string;
+  width?: UPDimension;
+  onAfterAutoUpload?: (payload: UPUploadAfterAutoUploadPayload) => void;
   onAfterRead?: (files: readonly UPUploadFile[]) => void;
-  onBeforeRead?: (files: readonly UPUploadFile[]) => void;
+  onBeforeRead?: (payload: UPUploadBeforeReadPayload | readonly UPUploadFile[]) => void;
   onChange?: (files: readonly UPUploadFile[]) => void;
   onChooseError?: (payload: UPUploadChooseErrorPayload) => void;
-  onDelete?: (payload: UPUploadEventPayload) => void;
+  onClickPreview?: (payload: UPUploadClickPreviewPayload) => void;
+  onDelete?: (payload: UPUploadEventPayload & UPUploadDetail) => void;
   onError?: (payload: UPUploadErrorPayload) => void;
-  onPreview?: (payload: UPUploadEventPayload) => void;
+  onOversize?: (payload: UPUploadOversizePayload) => void;
+  onPreview?: (payload: UPUploadEventPayload & UPUploadDetail) => void;
   onProgress?: (payload: UPUploadProgressPayload) => void;
   onSuccess?: (payload: UPUploadSuccessPayload) => void;
   onUpdateFileList?: (files: readonly UPUploadFile[]) => void;
@@ -77,15 +108,24 @@ export type UPUploadProps = {
 
 type ResolvedUPUploadProps = Omit<UPUploadProps, 'defaultFileList' | 'fileList'> &
   Required<Pick<UPUploadProps,
-    'accept' | 'autoUpload' | 'capture' | 'deletable' | 'disabled' | 'formData' |
-    'header' | 'maxCount' | 'maxSize' | 'multiple' | 'name' | 'previewImage' |
-    'uploadText' | 'url'
+    'accept' | 'autoDelete' | 'autoUpload' | 'autoUploadApi' | 'autoUploadAuthUrl' |
+    'autoUploadDriver' | 'autoUploadHeader' | 'camera' | 'capture' | 'compressed' |
+    'customAfterAutoUpload' | 'deletable' | 'disabled' | 'extension' | 'formData' |
+    'header' | 'height' | 'imageMode' | 'maxCount' | 'maxDuration' | 'maxSize' |
+    'multiple' | 'name' | 'previewFullImage' | 'previewImage' | 'sizeType' |
+    'uploadIcon' | 'uploadIconColor' | 'uploadText' | 'url' | 'useBeforeRead' | 'width'
   >> & {
     fileList: readonly UPUploadFile[];
   };
 
 function isImageFile(file: UPUploadFile): boolean {
-  return Boolean(file.type?.startsWith('image/') || file.thumb || /\.(png|jpe?g|gif|webp|heic|heif)$/i.test(file.uri));
+  const src = file.uri || file.url || '';
+  return Boolean(
+    file.type === 'image' ||
+    file.type?.startsWith('image/') ||
+    file.thumb ||
+    /\.(png|jpe?g|gif|webp|heic|heif)$/i.test(src),
+  );
 }
 
 function normalizeInitialFiles(files: readonly UPUploadFile[]): UPUploadFile[] {
@@ -95,6 +135,9 @@ function normalizeInitialFiles(files: readonly UPUploadFile[]): UPUploadFile[] {
 export const UPUpload = forwardRef<UPUploadRef, UPUploadProps>(function UPUpload(input, ref) {
   const config = useUPConfig();
   const props = { ...config.props.upload, ...input } as ResolvedUPUploadProps;
+  const previewEnabled = input.previewFullImage ?? props.previewImage;
+  const sourceDeleteMode = input.autoDelete !== undefined;
+  const uploadUrl = props.autoUploadApi || props.url;
   const controlled = input.fileList !== undefined;
   const initialFiles = normalizeInitialFiles(input.defaultFileList ?? props.fileList);
   const [localFiles, setLocalFiles] = useState<UPUploadFile[]>(() => initialFiles);
@@ -137,9 +180,11 @@ export const UPUpload = forwardRef<UPUploadRef, UPUploadProps>(function UPUpload
         file,
         fileList: uploading,
         formData: props.formData,
-        header: props.header,
+        header: { ...props.autoUploadHeader, ...props.header },
         name: props.name,
-        url: props.url,
+        url: uploadUrl,
+        driver: props.autoUploadDriver,
+        authUrl: props.autoUploadAuthUrl,
         onProgress: (progress) => {
           const clamped = clampUploadProgress(progress);
           const next = patchFile(index, { progress: clamped, status: 'uploading' });
@@ -149,14 +194,24 @@ export const UPUpload = forwardRef<UPUploadRef, UPUploadProps>(function UPUpload
       tasks.current.set(index, task);
       const response = await task.promise;
       tasks.current.delete(index);
-      const next = patchFile(index, { progress: 100, response, status: 'success' });
+
+      let successUrl: string | undefined;
+      if (props.customAfterAutoUpload && input.onAfterAutoUpload) {
+        const result = await new Promise<{ url?: string; thumb?: string } | undefined>((resolve) => {
+          input.onAfterAutoUpload?.({ ...(response as Record<string, unknown>), callback: resolve });
+        });
+        if (typeof result?.url === 'string' && result.url.length > 0) successUrl = result.url;
+      }
+      const next = patchFile(index, successUrl
+        ? { progress: 100, response, status: 'success', url: successUrl, uri: successUrl }
+        : { progress: 100, response, status: 'success' });
       input.onSuccess?.({ file: next[index] ?? file, fileList: next, index, response });
     } catch (error) {
       tasks.current.delete(index);
       const next = patchFile(index, { error, status: 'error' });
       input.onError?.({ error, file: next[index] ?? file, fileList: next, index });
     }
-  }, [emitFiles, input, patchFile, props]);
+  }, [emitFiles, input, patchFile, props, uploadUrl]);
 
   const choose = useCallback(async () => {
     if (props.disabled) return;
@@ -173,11 +228,35 @@ export const UPUpload = forwardRef<UPUploadRef, UPUploadProps>(function UPUpload
         capture: props.capture,
         count: remaining,
         multiple: props.multiple,
+        compressed: props.compressed,
+        camera: props.camera,
+        extension: props.extension,
+        maxDuration: props.maxDuration,
+        sizeType: props.sizeType,
       });
       const normalized = chosen.map((file, index) => normalizeUploadFile(file, file.id ?? `chosen-${Date.now()}-${index}`));
-      input.onBeforeRead?.(normalized);
-      const beforeResult = await input.beforeRead?.(normalized);
-      if (beforeResult === false) return;
+
+      if (props.useBeforeRead) {
+        if (input.onBeforeRead) {
+          const detail = buildUploadDetail(props.name, currentFiles.length);
+          const ok = await new Promise<boolean>((resolve) => {
+            input.onBeforeRead?.({ file: normalized, ...detail, callback: (pass) => resolve(pass) });
+          });
+          if (!ok) return;
+        }
+      } else {
+        input.onBeforeRead?.(normalized);
+        const beforeResult = await input.beforeRead?.(normalized);
+        if (beforeResult === false) return;
+      }
+
+      const anyOversize = normalized.some((file) => (
+        file.size !== undefined && file.size > Number(props.maxSize)
+      ));
+      if (anyOversize && input.onOversize) {
+        input.onOversize?.({ file: normalized, ...buildUploadDetail(props.name, currentFiles.length) });
+        return;
+      }
 
       const filtered = filterUploadFiles(normalized, {
         currentCount: currentFiles.length,
@@ -191,10 +270,13 @@ export const UPUpload = forwardRef<UPUploadRef, UPUploadProps>(function UPUpload
 
       await input.afterRead?.(filtered.accepted);
       input.onAfterRead?.(filtered.accepted);
-      const next = [...currentFiles, ...filtered.accepted];
+      const inserted = props.autoUpload
+        ? filtered.accepted.map((file) => ({ ...file, message: '上传中', progress: 0, status: 'uploading' as const }))
+        : filtered.accepted;
+      const next = [...currentFiles, ...inserted];
       emitFiles(next);
       if (props.autoUpload) {
-        await Promise.all(filtered.accepted.map((_file, offset) => uploadOne(currentFiles.length + offset, next)));
+        await Promise.all(inserted.map((_file, offset) => uploadOne(currentFiles.length + offset, next)));
       }
     } catch (error) {
       input.onChooseError?.({ error });
@@ -221,8 +303,26 @@ export const UPUpload = forwardRef<UPUploadRef, UPUploadProps>(function UPUpload
     tasks.current.delete(index);
     const next = currentFiles.filter((_item, currentIndex) => currentIndex !== index);
     emitFiles(next);
-    input.onDelete?.({ file, fileList: next, index });
-  }, [emitFiles, input]);
+    input.onDelete?.({ file, fileList: next, ...buildUploadDetail(props.name, index) });
+  }, [emitFiles, input, props.name]);
+
+  const handleDelete = useCallback((index: number) => {
+    const currentFiles = filesRef.current;
+    const file = currentFiles[index];
+    if (!file) return;
+    if (sourceDeleteMode) {
+      if (props.autoDelete) {
+        tasks.current.get(index)?.abort?.();
+        tasks.current.delete(index);
+        const next = currentFiles.filter((_item, currentIndex) => currentIndex !== index);
+        emitFiles(next);
+      } else {
+        input.onDelete?.({ file, fileList: currentFiles, ...buildUploadDetail(props.name, index) });
+      }
+      return;
+    }
+    remove(index);
+  }, [emitFiles, input, props.autoDelete, props.name, remove, sourceDeleteMode]);
 
   const clear = useCallback(() => {
     tasks.current.forEach((task) => task.abort?.());
@@ -233,10 +333,13 @@ export const UPUpload = forwardRef<UPUploadRef, UPUploadProps>(function UPUpload
   const preview = useCallback((index: number) => {
     const currentFiles = filesRef.current;
     const file = currentFiles[index];
-    if (!file || !props.previewImage) return;
-    input.onPreview?.({ file, fileList: currentFiles, index });
+    if (!file) return;
+    const detail = buildUploadDetail(props.name, index);
+    input.onClickPreview?.({ ...file, ...detail });
+    if (!previewEnabled) return;
+    input.onPreview?.({ file, fileList: currentFiles, ...detail });
     void props.uploadAdapter?.previewFile?.(file, currentFiles);
-  }, [input, props.previewImage, props.uploadAdapter]);
+  }, [input, previewEnabled, props.name, props.uploadAdapter]);
 
   useImperativeHandle(ref, () => ({
     choose,
@@ -255,20 +358,21 @@ export const UPUpload = forwardRef<UPUploadRef, UPUploadProps>(function UPUpload
       {files.map((file, index) => {
         const payload = { actions, file, index };
         const busy = file.status === 'uploading';
+        const itemDeletable = typeof file.deletable === 'boolean' ? file.deletable : props.deletable;
         const content = input.renderFile?.(payload) ?? (
-          <View style={{ borderColor: '#e5e6eb', borderRadius: 4, borderWidth: 1, minHeight: 88, padding: 8, width: 88 }}>
-            <Pressable disabled={!props.previewImage} onPress={() => preview(index)} testID={`up-upload-preview-${index}`}>
+          <View style={{ borderColor: '#e5e6eb', borderRadius: 4, borderWidth: 1, minHeight: getPx(props.height), padding: 8, width: getPx(props.width) }}>
+            <Pressable disabled={!previewEnabled} onPress={() => preview(index)} testID={`up-upload-preview-${index}`}>
               {isImageFile(file) ? (
-                <UPImage height={56} mode="aspectFill" src={file.thumb ?? file.uri} width={56} />
+                <UPImage height={56} mode={props.imageMode} src={file.thumb ?? file.url ?? file.uri} width={56} />
               ) : (
                 <UPIcon name="file-text" size={28} />
               )}
-              <Text numberOfLines={1}>{file.name ?? file.uri}</Text>
+              <Text numberOfLines={1}>{file.name ?? file.url ?? file.uri}</Text>
             </Pressable>
             {file.status === 'uploading' ? <Text>{`${file.progress ?? 0}%`}</Text> : null}
             {file.status === 'error' ? <Text>上传失败</Text> : null}
-            {props.deletable && !props.disabled ? (
-              <Pressable accessibilityRole="button" onPress={() => remove(index)} testID={`up-upload-delete-${index}`}>
+            {itemDeletable && !props.disabled ? (
+              <Pressable accessibilityRole="button" onPress={() => handleDelete(index)} testID={`up-upload-delete-${index}`}>
                 <Text>删除</Text>
               </Pressable>
             ) : null}
@@ -278,7 +382,7 @@ export const UPUpload = forwardRef<UPUploadRef, UPUploadProps>(function UPUpload
         return (
           <View
             accessibilityState={{ busy }}
-            key={file.id ?? `${file.uri}-${index}`}
+            key={file.id ?? `${file.uri || file.url}-${index}`}
             testID={`up-upload-file-${index}`}
           >
             {content}
@@ -291,10 +395,10 @@ export const UPUpload = forwardRef<UPUploadRef, UPUploadProps>(function UPUpload
             accessibilityRole="button"
             disabled={props.disabled}
             onPress={choose}
-            style={{ alignItems: 'center', borderColor: '#e5e6eb', borderRadius: 4, borderWidth: 1, height: 88, justifyContent: 'center', width: 88 }}
+            style={{ alignItems: 'center', borderColor: '#e5e6eb', borderRadius: 4, borderWidth: 1, height: getPx(props.height), justifyContent: 'center', width: getPx(props.width) }}
             testID="up-upload-add"
           >
-            <UPIcon name="plus" size={24} />
+            <UPIcon color={props.uploadIconColor} name={props.uploadIcon} size={24} />
             <Text>{props.uploadText}</Text>
           </Pressable>
         )
