@@ -68,6 +68,12 @@ export type UPCanvasProps = {
   onTouchStart?: (event: GestureResponderEvent) => void;
   onTouchMove?: (event: GestureResponderEvent) => void;
   onTouchEnd?: (event: GestureResponderEvent) => void;
+  /** Source `touchstart` event alias: fires together with `onTouchStart`. */
+  onTouchstart?: (event: GestureResponderEvent) => void;
+  /** Source `touchmove` event alias: fires together with `onTouchMove`. */
+  onTouchmove?: (event: GestureResponderEvent) => void;
+  /** Source `touchend` event alias: fires together with `onTouchEnd`. */
+  onTouchend?: (event: GestureResponderEvent) => void;
 };
 
 export type UPCanvasRef = {

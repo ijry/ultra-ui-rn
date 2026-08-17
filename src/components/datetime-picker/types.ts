@@ -94,6 +94,8 @@ export type UPDatetimePickerProps = UPDatetimePickerDataOptions & {
   /** @deprecated React Native has no CSS class runtime. */
   customClass?: string;
   onChange?: (payload: UPDatetimePickerPayload) => void;
+  /** Source `input` event: fires on value change (same timing as `onChange`). */
+  onInput?: (value: UPDatetimePickerValue) => void;
   onCancel?: () => void;
   onClose?: () => void;
   onConfirm?: (payload: UPDatetimePickerPayload) => void;

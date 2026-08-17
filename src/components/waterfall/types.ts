@@ -42,6 +42,8 @@ export type UPWaterfallProps<T = unknown> = {
   renderItem?: (payload: UPWaterfallRenderPayload<T>) => React.ReactNode;
   empty?: React.ReactNode;
   onChange?: (value: readonly T[]) => void;
+  /** Source `input` event: fires on value change (same timing as `onChange`). */
+  onInput?: (value: readonly T[]) => void;
   onUpdateModelValue?: (value: readonly T[]) => void;
   onAfterAddOne?: (payload: UPWaterfallAfterAddOnePayload<T>) => void;
   onAfterAddAll?: (payload: UPWaterfallAfterAddAllPayload<T>) => void;
