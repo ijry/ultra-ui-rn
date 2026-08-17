@@ -1,0 +1,17 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "node_modules/ultra-ui-rn/src/icons/index.ts",
+      "sha1": "85b7af82de95765a9e60632abb02dfed3b644fd5"
+    },
+    {
+      "path": "node_modules/ultra-ui-rn/src/icons/uicon-iconfont.ttf",
+      "sha1": "e87c1130c27fa42d822c198f5ea8b633b5118b94"
+    },
+    {
+      "path": "node_modules/ultra-ui-rn/src/icons/upicon-map.ts",
+      "sha1": "34a19b89458b7c67e809f1649dcc413260f499f7"
+    }
+  ]
+}
