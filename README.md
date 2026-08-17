@@ -282,3 +282,19 @@ scroll/refresher aliases, input/textarea keyboard and input events, plus the
 `onInput` v-model aliases across code-input, rate, switch, search,
 datetime-picker, and waterfall. `UPRadio.color` completes the prop surface.
 Remaining source components stay explicitly tracked in the gap matrix.
+
+P40 ports the last 8 pure-JS source components that had no local equivalent:
+`UPActionSheetData`, `UPColorPicker`, `UPCoupon`, `UPGoodsSku`, `UPMarkdown`,
+`UPMessageInput`, `UPParse`, `UPNovelReader`. All follow the source contract
+(props, defaults, events) with zero new runtime dependencies — markdown and
+HTML parsing are built in, SKU availability is pure logic, and the novel
+reader ships scroll reading, catalog, settings, bookmarks, and injectable
+storage (`setUPNovelStorage`). Native-dependent source components
+(cropper/poster/pdf-reader/short-video) remain documented React Native
+boundaries. The example app demos all 8 new components.
+
+P41 ships the final 4 source components as interface skeletons with native
+boundaries: `UPCropper` (crop box interaction, export injected),
+`UPPoster` (json layout, export adapter), `UPPdfReader` (`renderPdf` slot),
+and `UPShortVideo` (tabs/pager/action rail, `renderVideo` slot). Source
+coverage is now 140/140 components.

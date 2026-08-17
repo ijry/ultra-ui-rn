@@ -1152,3 +1152,36 @@ behavior are retained as native truncation or no-op-compatible boundaries.
 The component does not mutate caller data, row objects, nested child arrays, or
 incoming key arrays. P35 verification is recorded in
 `docs/table2-source-compatibility.md`.
+
+## P40 remaining pure-JS components
+
+The 8 source components that were never ported are now available: `UPActionSheetData`, `UPColorPicker`, `UPCoupon`, `UPGoodsSku`, `UPMarkdown`, `UPMessageInput`, `UPParse`, `UPNovelReader`. They follow the same conversion rules as the rest of the library: camelCase source props kept verbatim (`maxlength`, `modelValue` + `value` alias), v-model becomes `value`/`onChange` (plus the source `onInput` alias), slots become `children`/`render*` functions (`renderTrigger`, `renderHeader`), and every source emit is exposed as a typed `onXxx` closure with the source name retained (`onFinish`, `onConfirm`, `onLinktap`, `onImgtap`, `onChapterRequest`, …).
+
+### P40 divergences (React Native boundaries)
+
+| Area | Source (uni-app) | React Native |
+|---|---|---|
+| Image preview (`u-markdown`, `u-parse`) | `uni.previewImage` built-in preview on `imgtap` | No implicit previewer; `onImgtap` hands the src back to the caller |
+| `u-markdown` parser | Bundles `marked` | Built-in lightweight parser (headings/bold/italic/code/lists/quotes/tables); `play` (audio/video) is a no-op boundary |
+| `u-parse` media | Video/audio nodes render natively | Video/audio are a documented boundary (WebView or caller-owned) |
+| `u-coupon` cutouts | CSS mask锯齿/圆孔 true cutouts | Visual approximation with background dots (no true clipping) |
+| `u-color-picker` gradient | Full multi-stop gradient editor | Two-stop linear gradient with 4 directions; multi-stop retained as interface |
+| `u-novel-reader` persistence | uni storage | Caller injects AsyncStorage-compatible storage via `setUPNovelStorage(storage)`; defaults to in-memory |
+| `u-novel-reader` page mode | Precise on-layout pagination | Paragraph-sliced pages; `layout-ready` carries estimated page count |
+
+## P41 native-boundary components
+
+`UPCropper`, `UPPoster`, `UPPdfReader`, and `UPShortVideo` complete the source component set (140/140). All four keep the source contract (props, events, slots, methods) but declare their native capability as an injection point:
+
+| Capability | Source (uni-app) | React Native injection |
+|---|---|---|
+| Crop export | `uni.canvasToTempFilePath` | `onConfirm` returns crop params with `path: null`; caller renders via react-native-canvas / native module |
+| Poster export | canvas → temp image | `exportImageAdapter` prop (e.g. react-native-view-shot); default returns `{path:null,width,height}` |
+| PDF rendering | web-view + pdf.js | `renderPdf` slot (react-native-pdf / WebView) |
+| Video playback | `<video>` | `renderVideo` slot (react-native-video); `onVideoPlay`/`onVideoPause`/`onVideoEnded`/`onTimeUpdate`/`onLoadedMetadata` forwarded from the injected player |
+
+Everything else — cropper crop-box interaction, poster json layout, short-video tabs/pager/action rail/progress — is implemented in pure React Native.
+
+## P42 example coverage
+
+`example/App.tsx` now demos every local component, including the previously missing 12 (keyboards, loading icon, overlay, popover, rate, read-more, search, slider, textarea, toast, transition). The example compiles against the published build and is the canonical smoke test for the 140/140 source component set.

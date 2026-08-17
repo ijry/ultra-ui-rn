@@ -126,6 +126,31 @@ import {
   UPVirtualList,
   UPView,
   UPWaterfall,
+  UPActionSheetData,
+  UPCoupon,
+  UPMessageInput,
+  UPColorPicker,
+  UPGoodsSku,
+  UPMarkdown,
+  UPParse,
+  UPNovelReader,
+  UPCropper,
+  UPPoster,
+  type UPPosterHandle,
+  UPPdfReader,
+  UPShortVideo,
+  UPCarKeyboard,
+  UPLoadingIcon,
+  UPNumberKeyboard,
+  UPOverlay,
+  UPPopover,
+  UPRate,
+  UPReadMore,
+  UPSearch,
+  UPSlider,
+  UPTextarea,
+  UPToast,
+  UPTransition,
 } from 'ultra-ui-rn';
 
 const demoCascaderData = [
@@ -279,6 +304,15 @@ function App() {
   const [copiedValue, setCopiedValue] = useState('');
   const [guideVisible, setGuideVisible] = useState(false);
   const [table2SelectedKeys, setTable2SelectedKeys] = useState<readonly string[]>([]);
+  const [rateValue, setRateValue] = useState(3);
+  const [searchValue, setSearchValue] = useState('');
+  const [sliderValue, setSliderValue] = useState(40);
+  const [textareaValue, setTextareaValue] = useState('');
+  const [toastOpen, setToastOpen] = useState(false);
+  const [overlayOpen, setOverlayOpen] = useState(false);
+  const [transitionOpen, setTransitionOpen] = useState(false);
+  const [carPlate, setCarPlate] = useState('');
+  const [numberValue, setNumberValue] = useState('');
   const formRef = useRef<UPFormRef>(null);
   const agreementRef = useRef<UPAgreementRef>(null);
   const codeRef = useRef<UPCodeRef>(null);
@@ -927,6 +961,137 @@ function App() {
             onLoadmore={() => setLoadStatus('loading')}
             status={loadStatus}
           />
+          <Text style={styles.section}>P40: ActionSheetData</Text>
+          <UPActionSheetData
+            options={[
+              { value: 'sh', name: '上海' },
+              { value: 'bj', name: '北京' },
+              { value: 'gz', name: '广州' },
+            ]}
+            title="选择城市"
+          />
+          <Text style={styles.section}>P40: Coupon</Text>
+          <UPCoupon amount={50} limit="满100可用" title="新人券" time="2026-12-31" />
+          <UPCoupon disabled amount={30} title="已过期券" type="primary" />
+          <Text style={styles.section}>P40: MessageInput</Text>
+          <UPMessageInput maxlength={4} />
+          <Text style={styles.section}>P40: ColorPicker</Text>
+          <UPColorPicker commonColors={['#ff0000', '#00ff00', '#0000ff', '#2979ff']} />
+          <Text style={styles.section}>P40: GoodsSku</Text>
+          <UPGoodsSku
+            goodsInfo={{ image: 'https://picsum.photos/seed/sku/160', price: 100 }}
+            renderTrigger={() => <UPButton text="选择规格" type="primary" />}
+            skuList={[
+              { color: 1, size: 3, price: 100, stock: 5 },
+              { color: 2, size: 3, price: 120, stock: 3 },
+            ]}
+            skuTree={[
+              { name: 'color', label: '颜色', children: [{ id: 1, name: '红' }, { id: 2, name: '蓝' }] },
+              { name: 'size', label: '尺寸', children: [{ id: 3, name: '大' }, { id: 4, name: '小' }] },
+            ]}
+          />
+          <Text style={styles.section}>P40: Markdown</Text>
+          <UPMarkdown
+            content={'# Hello\n\n**bold** and `code`\n\n- a\n- b\n\n[uview](https://uviewui.com)'}
+          />
+          <Text style={styles.section}>P40: Parse</Text>
+          <UPParse
+            content={'<h2>富文本</h2><p><a href="https://uviewui.com">链接</a>与 <strong>加粗</strong></p><img src="https://picsum.photos/seed/parse/200" />'}
+          />
+          <Text style={styles.section}>P40: NovelReader</Text>
+          <UPNovelReader
+            chapters={[
+              { id: 1, title: '第一章', content: '第一段内容。\n第二段内容。' },
+              { id: 2, title: '第二章', content: '第二章节内容。' },
+            ]}
+            customStyle={{ height: 320 }}
+          />
+          <Text style={styles.section}>P41: Cropper (native boundary)</Text>
+          <UPCropper imageSrc="https://picsum.photos/seed/cropper/400" />
+          <Text style={styles.section}>P41: Poster (native boundary)</Text>
+          <UPPoster
+            json={{
+              css: { width: 300, height: 200, backgroundColor: '#f5f5f5' },
+              views: [
+                { type: 'text', text: 'Hello poster', css: { left: 20, top: 20, fontSize: 18, color: '#333333' } },
+                { type: 'image', src: 'https://picsum.photos/seed/poster/120', css: { left: 20, top: 60, width: 80, height: 80 } },
+                { type: 'view', css: { left: 20, top: 150, width: 100, height: 30, backgroundColor: '#2979ff' } },
+              ],
+            }}
+          />
+          <Text style={styles.section}>P41: PdfReader (native boundary)</Text>
+          <UPPdfReader height="160px" src="https://example.com/doc.pdf" />
+          <Text style={styles.section}>P41: ShortVideo (native boundary)</Text>
+          <UPShortVideo
+            videoList={[
+              { id: 1, title: 'Video 1', url: 'https://example.com/1.mp4' },
+              { id: 2, title: 'Video 2', url: 'https://example.com/2.mp4' },
+            ]}
+          />
+          <Text style={styles.section}>P42: Example Coverage</Text>
+          <UPLoadingIcon color="#2979ff" show size={28} text="Loading…" vertical />
+          <View style={styles.row}>
+            <UPRate count={5} value={rateValue} onChange={setRateValue} />
+            <Text>Rate: {rateValue}</Text>
+          </View>
+          <UPSearch
+            actionText="Go"
+            onChange={setSearchValue}
+            onClear={() => setSearchValue('')}
+            onCustom={(value) => UP.toast.default(`Custom: ${value}`)}
+            onSearch={(value) => UP.toast.primary(`Search: ${value}`)}
+            placeholder="Search the demo…"
+            showAction
+            value={searchValue}
+          />
+          <Text>Search: {searchValue || '—'}</Text>
+          <UPSlider max={100} min={0} step={5} value={sliderValue} onChange={setSliderValue} />
+          <Text>Slider: {sliderValue}</Text>
+          <UPTextarea
+            count
+            maxlength={60}
+            onChange={setTextareaValue}
+            placeholder="Type feedback…"
+            value={textareaValue}
+          />
+          <Text>Textarea: {textareaValue.length} chars</Text>
+          <UPReadMore onOpen={() => UP.toast.default('Expanded')} onClose={() => UP.toast.default('Collapsed')} showHeight="80px" toggle>
+            <UPText text="UPReadMore collapses long content and toggles visibility with open/close text. Keep reading to see the collapse in action." />
+          </UPReadMore>
+          <View style={styles.row}>
+            <UPButton text="Toast" onClick={() => setToastOpen(true)} />
+            <UPButton text="Overlay" type="primary" onClick={() => setOverlayOpen(true)} />
+            <UPButton text="Transition" type="success" onClick={() => setTransitionOpen(true)} />
+          </View>
+          <UPToast message="Declarative toast" onChangeShow={setToastOpen} show={toastOpen} type="success" />
+          <UPOverlay onClick={() => setOverlayOpen(false)} show={overlayOpen}>
+            <View style={styles.popoverBox}>
+              <UPText text="UPOverlay covers the screen — tap anywhere to dismiss." />
+              <UPButton text="Close" onClick={() => setOverlayOpen(false)} />
+            </View>
+          </UPOverlay>
+          <UPTransition mode="fade" show={transitionOpen}>
+            <View style={styles.popoverBox}>
+              <UPText text="UPTransition animates content in and out." />
+              <UPButton text="Close" onClick={() => setTransitionOpen(false)} />
+            </View>
+          </UPTransition>
+          <UPPopover
+            content={<UPText text="Popover actions rendered above the trigger." />}
+            onClick={(index) => UP.toast.default(`Popover action ${index}`)}
+            trigger={<UPButton text="Popover" type="warning" />}
+            triggerMode="click"
+          />
+          <UPNumberKeyboard
+            onBackspace={() => setNumberValue((current) => current.slice(0, -1))}
+            onChange={(value) => setNumberValue((current) => `${current}${value}`)}
+          />
+          <Text>Number keyboard value: {numberValue || '—'}</Text>
+          <UPCarKeyboard
+            onBackspace={() => setCarPlate((current) => current.slice(0, -1))}
+            onChange={(value) => setCarPlate((current) => `${current}${value}`)}
+          />
+          <Text>Plate: {carPlate || '—'}</Text>
         </UPScrollHost>
         <UPTabbar fixed={false} onChange={setActiveTab} value={activeTab}>
           <UPTabbarItem activeIcon="home-fill" icon="home" name="home" text="Home" />
@@ -970,6 +1135,14 @@ const styles = StyleSheet.create({
   },
   popupContent: {
     padding: 24,
+  },
+  popoverBox: {
+    alignSelf: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    marginTop: 120,
+    padding: 16,
+    width: 280,
   },
   section: {
     color: '#606266',
