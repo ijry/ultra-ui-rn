@@ -152,6 +152,7 @@ import {
   UPToast,
   UPTransition,
 } from 'ultra-ui-rn';
+import { DemoPagesHost } from './pages';
 
 const demoCascaderData = [
   {
@@ -351,6 +352,9 @@ function App() {
       <StatusBar barStyle="dark-content" />
       <View style={styles.page}>
         <UPStatusBar bgColor="#f3f4f6" />
+        {activeTab === 'pages' ? (
+          <DemoPagesHost />
+        ) : (
         <UPScrollHost
           contentContainerStyle={styles.content}
           overlay={<UPBackTop top={160} />}
@@ -1093,10 +1097,11 @@ function App() {
           />
           <Text>Plate: {carPlate || '—'}</Text>
         </UPScrollHost>
+        )}
         <UPTabbar fixed={false} onChange={setActiveTab} value={activeTab}>
           <UPTabbarItem activeIcon="home-fill" icon="home" name="home" text="Home" />
           <UPTabbarItem badge={2} icon="star" name="favorites" text="Favorites" />
-          <UPTabbarItem icon="plus" mode="midButton" name="create" text="Create" />
+          <UPTabbarItem activeIcon="grid-fill" icon="grid" name="pages" text="Pages" />
         </UPTabbar>
         <Text>Active tab: {activeTab}</Text>
         <UPSafeBottom />
