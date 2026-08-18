@@ -342,13 +342,16 @@ export const UPUpload = forwardRef<UPUploadRef, UPUploadProps>(function UPUpload
   }, [input, previewEnabled, props.name, props.uploadAdapter]);
 
   useImperativeHandle(ref, () => ({
+    afterRead: (file, lists) => input.onAfterRead?.(lists ?? [file]),
+    beforeRead: (file, lists, name) => input.onBeforeRead?.({ callback: () => true, file, index: 0, name: name ?? '' }),
     choose,
+    chooseFile: choose,
     clear,
     getFiles: () => filesRef.current,
     remove,
     retry,
     upload,
-  }), [choose, clear, remove, retry, upload]);
+  }), [choose, clear, input.onAfterRead, input.onBeforeRead, remove, retry, upload]);
 
   const actions = useMemo(() => ({ choose, preview, remove, retry, upload }), [choose, preview, remove, retry, upload]);
   const remaining = Math.max(0, Number(props.maxCount) - files.length);

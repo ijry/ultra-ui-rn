@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react';
 import { Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useUPConfig } from '../../config/useUPConfig';
 import { useUPTheme } from '../../theme';
@@ -44,15 +44,27 @@ const typeIcons: Record<Exclude<UPToastType, '' | 'default' | 'loading'>, string
   warning: 'error-circle',
 };
 
-export function UPToast(input: UPToastProps): React.JSX.Element | null {
+export type UPToastRef = {
+  /** Imperatively show a toast with options (source `show`). */
+  show: (options: UPToastOptions) => void;
+};
+
+export const UPToast = forwardRef<UPToastRef, UPToastProps>(function UPToast(input, ref) {
   const props = { ...useUPConfig().props.toast, ...input } as UPToastProps;
   const { colors } = useUPTheme();
+  const [imperative, setImperative] = useState<UPToastOptions | null>(null);
   const duration = getPx(props.duration ?? 2000);
-  const showing = Boolean(props.show);
+  const showing = Boolean(props.show) || imperative !== null;
+  const show = useCallback((options: UPToastOptions) => {
+    setImperative(options);
+    input.onChangeShow?.(true);
+  }, [input]);
+  useImperativeHandle(ref, () => ({ show }), [show]);
 
   useEffect(() => {
     if (!showing || duration <= 0) return;
     const timer = setTimeout(() => {
+      setImperative(null);
       input.onChangeShow?.(false);
       input.complete?.();
     }, duration);
@@ -60,24 +72,25 @@ export function UPToast(input: UPToastProps): React.JSX.Element | null {
   }, [duration, input, showing]);
 
   if (!showing) return null;
-  const type = props.type ?? '';
-  const loading = Boolean(props.loading || type === 'loading');
-  const iconName = typeof props.icon === 'string'
-    ? props.icon
-    : props.icon === false
+  const effective = { ...props, ...imperative } as UPToastProps;
+  const type = effective.type ?? '';
+  const loading = Boolean(effective.loading || type === 'loading');
+  const iconName = typeof effective.icon === 'string'
+    ? effective.icon
+    : effective.icon === false
       ? ''
       : typeIcons[type as keyof typeof typeIcons] ?? '';
   const typeColor = type && type in colors ? colors[type as keyof typeof colors] : '#ffffff';
-  const offset = props.position === 'top' ? -140 : props.position === 'bottom' ? 140 : 0;
+  const offset = effective.position === 'top' ? -140 : effective.position === 'bottom' ? 140 : 0;
   return (
-    <View pointerEvents={props.overlay ? 'auto' : 'box-none'} style={{ bottom: 0, left: 0, position: 'absolute', right: 0, top: 0, zIndex: props.zIndex }} testID="up-toast">
-      {props.overlay ? <UPOverlay opacity={0} show zIndex={props.zIndex} /> : null}
+    <View pointerEvents={effective.overlay ? 'auto' : 'box-none'} style={{ bottom: 0, left: 0, position: 'absolute', right: 0, top: 0, zIndex: effective.zIndex }} testID="up-toast">
+      {effective.overlay ? <UPOverlay opacity={0} show zIndex={effective.zIndex} /> : null}
       <View pointerEvents="box-none" style={{ alignItems: 'center', flex: 1, justifyContent: 'center', transform: [{ translateY: offset }] }}>
-        <View style={[{ alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.78)', borderRadius: 6, flexDirection: loading ? 'column' : 'row', maxWidth: '78%', paddingHorizontal: 16, paddingVertical: 12 }, input.customStyle]}>
+        <View style={[{ alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.78)', borderRadius: 6, flexDirection: loading ? 'column' : 'row', maxWidth: '78%', paddingHorizontal: 16, paddingVertical: 12 }, effective.customStyle]}>
           {loading ? <UPLoadingIcon color="#ffffff" show size={25} /> : iconName ? <UPIcon color={typeColor} name={iconName} size={18} /> : null}
-          {props.message !== '' ? <Text style={{ color: '#ffffff', fontSize: 14, marginLeft: loading || !iconName ? 0 : 5, marginTop: loading ? 8 : 0, textAlign: 'center' }}>{props.message}</Text> : null}
+          {effective.message !== '' ? <Text style={{ color: '#ffffff', fontSize: 14, marginLeft: loading || !iconName ? 0 : 5, marginTop: loading ? 8 : 0, textAlign: 'center' }}>{effective.message}</Text> : null}
         </View>
       </View>
     </View>
   );
-}
+});

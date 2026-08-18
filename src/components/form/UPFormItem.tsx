@@ -5,7 +5,7 @@ import { useUPConfig } from '../../config/useUPConfig';
 import { useUPTheme } from '../../theme';
 import { getPx, type UPDimension } from '../../utils';
 import { UPIcon } from '../icon';
-import { getProperty, setProperty } from './UPForm';
+import { getProperty, setProperty } from '../../utils/data';
 import { type UPFormRule, useUPFormContext } from './context';
 
 export type UPFormItemProps = {

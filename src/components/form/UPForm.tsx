@@ -1,8 +1,9 @@
-import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import type { PropsWithChildren } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { View } from 'react-native';
 import { useUPConfig } from '../../config/useUPConfig';
+import { getProperty } from '../../utils/data';
 import {
   UPFormContext,
   type UPFormError,
@@ -19,6 +20,8 @@ export type UPFormValidateOptions = {
 export type UPFormRef = {
   clearValidate: (props?: string | string[]) => void;
   resetFields: () => void;
+  /** Imperatively replace the form rules (source `setRules`). */
+  setRules: (rules: UPFormRules) => void;
   validate: (options?: UPFormValidateOptions) => Promise<true>;
   validateField: (
     props: string | string[],
@@ -51,26 +54,6 @@ function cloneModel<T>(value: T): T {
   return value;
 }
 
-function getProperty(model: Record<string, unknown>, path: string): unknown {
-  return path.split('.').reduce<unknown>((current, key) => {
-    if (current && typeof current === 'object') {
-      return (current as Record<string, unknown>)[key];
-    }
-    return undefined;
-  }, model);
-}
-
-function setProperty(model: Record<string, unknown>, path: string, value: unknown): void {
-  const keys = path.split('.').filter(Boolean);
-  const lastKey = keys.pop();
-  if (!lastKey) return;
-  const target = keys.reduce<Record<string, unknown>>((current, key) => {
-    const existing = current[key];
-    if (!existing || typeof existing !== 'object') current[key] = {};
-    return current[key] as Record<string, unknown>;
-  }, model);
-  target[lastKey] = cloneModel(value);
-}
 
 function isEmpty(value: unknown): boolean {
   return value === undefined || value === null || value === '' || (Array.isArray(value) && !value.length);
@@ -122,6 +105,7 @@ export const UPForm = forwardRef<UPFormRef, UPFormProps>(function UPForm(input, 
   const model = (input.model ?? props.model) as Record<string, unknown>;
   const items = useRef(new Map<string, UPRegisteredFormItem>());
   const originalModel = useRef<Record<string, unknown>>(cloneModel(model));
+  const [imperativeRules, setImperativeRules] = useState<UPFormRules | undefined>(undefined);
 
   useEffect(() => {
     if (items.current.size === 0) originalModel.current = cloneModel(model);
@@ -141,7 +125,7 @@ export const UPForm = forwardRef<UPFormRef, UPFormProps>(function UPForm(input, 
     for (const prop of Array.isArray(fields) ? fields : [fields]) {
       const item = items.current.get(prop);
       if (!item) continue;
-      const formRules = props.rules?.[prop];
+      const formRules = (imperativeRules ?? props.rules)?.[prop];
       const rules = item.rules.length ? item.rules : formRules ? (Array.isArray(formRules) ? formRules : [formRules]) : [];
       let itemMessage = '';
       for (const rule of rules) {
@@ -175,7 +159,10 @@ export const UPForm = forwardRef<UPFormRef, UPFormProps>(function UPForm(input, 
     validateField(fields, trigger = null, options = {}) {
       return validateField(fields, trigger, options);
     },
-  }), [model, props.rules]);
+    setRules(rules) {
+      setImperativeRules(rules);
+    },
+  }), [imperativeRules, model, props.rules]);
 
   const value = useMemo(() => ({
     borderBottom: props.borderBottom,
@@ -192,4 +179,3 @@ export const UPForm = forwardRef<UPFormRef, UPFormProps>(function UPForm(input, 
   return <UPFormContext.Provider value={value}><View style={input.customStyle} testID="up-form">{input.children}</View></UPFormContext.Provider>;
 });
 
-export { getProperty, setProperty };

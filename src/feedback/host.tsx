@@ -4,7 +4,7 @@ import { UPNotify, type UPNotifyOptions } from '../components/notify';
 import { UPToast, type UPToastOptions } from '../components/toast';
 import { useUPOverlay } from '../overlay';
 
-export type UPToastRef = {
+export type UPToastApi = {
   show: (options: UPToastOptions) => void;
   hide: () => void;
   primary: (message: string) => void;
@@ -15,7 +15,7 @@ export type UPToastRef = {
   loading: (message: string) => void;
 };
 
-export type UPNotifyRef = {
+export type UPNotifyApi = {
   show: (options: UPNotifyOptions) => void;
   hide: () => void;
   primary: (message: string) => void;
@@ -25,8 +25,8 @@ export type UPNotifyRef = {
 };
 
 type UPFeedbackApi = {
-  notify: UPNotifyRef;
-  toast: UPToastRef;
+  notify: UPNotifyApi;
+  toast: UPToastApi;
 };
 
 let feedbackApi: UPFeedbackApi | null = null;
@@ -39,7 +39,7 @@ function callNotify(type: NonNullable<UPNotifyOptions['type']>, message: string)
   feedbackApi?.notify.show({ message, type });
 }
 
-export const toast: UPToastRef = {
+export const toast: UPToastApi = {
   default: (message) => callToast('default', message),
   error: (message) => callToast('error', message),
   hide: () => feedbackApi?.toast.hide(),
@@ -50,7 +50,7 @@ export const toast: UPToastRef = {
   warning: (message) => callToast('warning', message),
 };
 
-export const notify: UPNotifyRef = {
+export const notify: UPNotifyApi = {
   error: (message) => callNotify('error', message),
   hide: () => feedbackApi?.notify.hide(),
   primary: (message) => callNotify('primary', message),

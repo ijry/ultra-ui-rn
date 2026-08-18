@@ -15,6 +15,10 @@ export type UPCountToRef = {
   pause: () => void;
   resume: () => void;
   reset: () => void;
+  /** Source name for `resume` (restart from the paused value). */
+  reStart: () => void;
+  /** Source name for `pause`. */
+  paused: () => void;
 };
 
 export type UPCountToProps = {
@@ -133,7 +137,7 @@ export const UPCountTo = forwardRef<UPCountToRef, UPCountToProps>(function UPCou
     setCurrent(number(propsRef.current.startVal));
   }, [clearTimer, setCurrent]);
 
-  useImperativeHandle(ref, () => ({ pause, reset, resume, start }), [pause, reset, resume, start]);
+  useImperativeHandle(ref, () => ({ pause, paused: pause, reStart: resume, reset, resume, start }), [pause, reset, resume, start]);
 
   useEffect(() => {
     reset();

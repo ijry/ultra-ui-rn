@@ -125,7 +125,13 @@ export type UPUploadAfterAutoUploadPayload = {
 } & Record<string, unknown>;
 
 export type UPUploadRef = {
+  /** Source name for `choose` (triggers the file picker). */
+  chooseFile: () => Promise<void>;
   choose: () => Promise<void>;
+  /** Source `afterRead(file, lists, name)` — forwards to `onAfterRead`. */
+  afterRead: (file: UPUploadFile, lists?: readonly UPUploadFile[], name?: string) => void;
+  /** Source `beforeRead(file, lists, name)` — forwards to `onBeforeRead`. */
+  beforeRead: (file: UPUploadFile | readonly UPUploadFile[], lists?: readonly UPUploadFile[], name?: string) => void;
   clear: () => void;
   getFiles: () => readonly UPUploadFile[];
   remove: (index: number) => void;

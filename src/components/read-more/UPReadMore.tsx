@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
 import {
   Pressable,
   Text,
@@ -31,7 +31,12 @@ export type UPReadMoreProps = {
   onClose?: (name: string | number) => void;
 };
 
-export function UPReadMore(input: UPReadMoreProps): React.JSX.Element {
+export type UPReadMoreRef = {
+  /** Re-measure the content height (source `init`), e.g. after async content loads. */
+  init: () => void;
+};
+
+export const UPReadMore = forwardRef<UPReadMoreRef, UPReadMoreProps>(function UPReadMore(input, ref) {
   const props = { ...useUPConfig().props.readMore, ...input } as UPReadMoreProps;
   const [contentHeight, setContentHeight] = useState(0);
   const [open, setOpen] = useState(false);
@@ -43,6 +48,11 @@ export function UPReadMore(input: UPReadMoreProps): React.JSX.Element {
   const onLayout = (event: LayoutChangeEvent) => {
     setContentHeight(event.nativeEvent.layout.height);
   };
+  const init = useCallback(() => {
+    setHideToggle(false);
+    setContentHeight(0);
+  }, []);
+  useImperativeHandle(ref, () => ({ init }), [init]);
   const toggle = () => {
     const nextOpen = !open;
     setOpen(nextOpen);
@@ -85,4 +95,4 @@ export function UPReadMore(input: UPReadMoreProps): React.JSX.Element {
       ) : null}
     </View>
   );
-}
+});

@@ -1,4 +1,4 @@
-import React, { Children, isValidElement, useEffect, useMemo, useState } from 'react';
+import React, { Children, forwardRef, isValidElement, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { useUPConfig } from '../../config/useUPConfig';
 import { UPLine } from '../line';
@@ -44,10 +44,20 @@ function selectionFromValue(
   return [value];
 }
 
-export function UPCollapse(input: UPCollapseProps): React.JSX.Element {
+export type UPCollapseRef = {
+  /** Re-sync item names after async children change (source `init`). */
+  init: () => void;
+};
+
+export const UPCollapse = forwardRef<UPCollapseRef, UPCollapseProps>(function UPCollapse(input, ref) {
   const props = { ...useUPConfig().props.collapse, ...input } as UPCollapseProps;
   const external = input.value ?? input.modelValue;
-  const names = useMemo(() => namesFromChildren(input.children), [input.children]);
+  const [version, setVersion] = useState(0);
+  const names = useMemo(() => namesFromChildren(input.children), [input.children, version]);
+  const init = useCallback(() => {
+    setVersion((value) => value + 1);
+  }, []);
+  useImperativeHandle(ref, () => ({ init }), [init]);
   const initial = selectionFromValue(external ?? props.value, Boolean(props.accordion));
   const [selected, setSelected] = useState<UPCollapseName[]>(initial);
 
@@ -92,4 +102,4 @@ export function UPCollapse(input: UPCollapseProps): React.JSX.Element {
       </View>
     </UPCollapseContext.Provider>
   );
-}
+});

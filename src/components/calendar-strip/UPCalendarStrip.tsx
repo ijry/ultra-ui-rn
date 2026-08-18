@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import {
   PanResponder,
   Pressable,
@@ -79,7 +79,13 @@ function daysForStrip(selectedDate: Date): Date[] {
   return Array.from({ length: 7 }, (_, index) => addCalendarDays(monday, index));
 }
 
-export function UPCalendarStrip(input: UPCalendarStripProps): React.JSX.Element | null {
+export type UPCalendarStripRef = {
+  prevMonth: () => void;
+  nextMonth: () => void;
+  toggleFull: () => void;
+};
+
+export const UPCalendarStrip = forwardRef<UPCalendarStripRef, UPCalendarStripProps>(function UPCalendarStrip(input, ref) {
   const config = useUPConfig();
   const props = { ...config.props.calendarStrip, ...input } as UPCalendarStripProps;
   const minDate = optionalDate(props.minDate);
@@ -116,6 +122,20 @@ export function UPCalendarStrip(input: UPCalendarStripProps): React.JSX.Element 
     setShowFull(show);
     input.onToggleFull?.({ show, source });
   };
+  const previousMonthDate = selectedDate ? clampCalendarDate(addCalendarMonths(selectedDate, -1), minDate, maxDate) : null;
+  const nextMonthDate = selectedDate ? clampCalendarDate(addCalendarMonths(selectedDate, 1), minDate, maxDate) : null;
+  const previousDisabled = previousMonthDate !== null && selectedDate !== null && compareCalendarDates(previousMonthDate, selectedDate) === 0;
+  const nextDisabled = nextMonthDate !== null && selectedDate !== null && compareCalendarDates(nextMonthDate, selectedDate) === 0;
+  const prevMonth = useCallback(() => {
+    if (previousMonthDate && !previousDisabled) emitSelection(previousMonthDate, 'switch');
+  }, [emitSelection, previousDisabled, previousMonthDate]);
+  const nextMonth = useCallback(() => {
+    if (nextMonthDate && !nextDisabled) emitSelection(nextMonthDate, 'switch');
+  }, [emitSelection, nextDisabled, nextMonthDate]);
+  const toggleFull = useCallback(() => {
+    changeFull(!showFull, 'button');
+  }, [changeFull, showFull]);
+  useImperativeHandle(ref, () => ({ nextMonth, prevMonth, toggleFull }), [nextMonth, prevMonth, toggleFull]);
   const responder = useMemo(() => PanResponder.create({
     onMoveShouldSetPanResponder: (_event, gesture) => Math.abs(gesture.dy) > 2 && Math.abs(gesture.dy) >= Math.abs(gesture.dx),
     onPanResponderRelease: (_event, gesture) => {
@@ -125,17 +145,13 @@ export function UPCalendarStrip(input: UPCalendarStripProps): React.JSX.Element 
   }), [threshold, showFull, props.fullCalendar]);
 
   if (!selectedDate) return null;
-  const previousMonthDate = clampCalendarDate(addCalendarMonths(selectedDate, -1), minDate, maxDate);
-  const nextMonthDate = clampCalendarDate(addCalendarMonths(selectedDate, 1), minDate, maxDate);
-  const previousDisabled = compareCalendarDates(previousMonthDate, selectedDate) === 0;
-  const nextDisabled = compareCalendarDates(nextMonthDate, selectedDate) === 0;
 
   return (
     <View {...responder.panHandlers} style={[{ backgroundColor: '#ffffff', paddingVertical: 8 }, input.customStyle]} testID="up-calendar-strip">
       <View style={{ alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 12 }}>
-        <Pressable accessibilityRole="button" accessibilityState={{ disabled: previousDisabled }} disabled={previousDisabled} onPress={() => emitSelection(previousMonthDate, 'switch')} style={{ padding: 8 }} testID="up-calendar-strip-prev"><Text style={{ color: previousDisabled ? '#c8c9cc' : props.color }}>上月</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityState={{ disabled: previousDisabled }} disabled={previousDisabled} onPress={() => emitSelection(previousMonthDate!, 'switch')} style={{ padding: 8 }} testID="up-calendar-strip-prev"><Text style={{ color: previousDisabled ? '#c8c9cc' : props.color }}>上月</Text></Pressable>
         <Text style={{ color: '#303133', fontSize: 16, fontWeight: '600' }}>{formatCalendarMonth(selectedDate).replace('-', '年')}月</Text>
-        <Pressable accessibilityRole="button" accessibilityState={{ disabled: nextDisabled }} disabled={nextDisabled} onPress={() => emitSelection(nextMonthDate, 'switch')} style={{ padding: 8 }} testID="up-calendar-strip-next"><Text style={{ color: nextDisabled ? '#c8c9cc' : props.color }}>下月</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityState={{ disabled: nextDisabled }} disabled={nextDisabled} onPress={() => emitSelection(nextMonthDate!, 'switch')} style={{ padding: 8 }} testID="up-calendar-strip-next"><Text style={{ color: nextDisabled ? '#c8c9cc' : props.color }}>下月</Text></Pressable>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }} testID="up-calendar-strip-scroll">
         {days.map((date, index) => {
@@ -192,4 +208,4 @@ export function UPCalendarStrip(input: UPCalendarStripProps): React.JSX.Element 
       ) : null}
     </View>
   );
-}
+});
