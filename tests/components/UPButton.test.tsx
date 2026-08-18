@@ -22,7 +22,7 @@ it('uses source normal-info metrics and dispatches clicks', () => {
   expect(getButtonStyle(screen)).toEqual(
     expect.objectContaining({
       backgroundColor: '#ffffff',
-      borderColor: '#dadbde',
+      borderColor: '#e4e7ed',
       height: 40,
       paddingHorizontal: 12,
     }),

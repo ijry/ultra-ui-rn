@@ -4,6 +4,8 @@ export type UPColorTokens = {
   warning: string;
   error: string;
   info: string;
+  /** Alias of `info` (source `color.default`). */
+  default: string;
   mainColor: string;
   contentColor: string;
   tipsColor: string;
@@ -19,11 +21,12 @@ export const sourceLightColors: Readonly<UPColorTokens> = Object.freeze({
   warning: '#f9ae3d',
   error: '#f56c6c',
   info: '#909399',
+  default: '#909399',
   mainColor: '#303133',
   contentColor: '#606266',
   tipsColor: '#909399',
   lightColor: '#c0c4cc',
-  borderColor: '#dadbde',
+  borderColor: '#e4e7ed',
   bgColor: '#f3f4f6',
   disabledColor: '#c8c9cc',
 });
