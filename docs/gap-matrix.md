@@ -443,3 +443,19 @@ Source coverage is now **140/140 components** (139 fully ported + 4 boundary ske
 ## P42 Example Coverage
 
 Every local component now has a runnable demo in `example/App.tsx` (the remaining 12 were added: `UPCarKeyboard`, `UPLoadingIcon`, `UPNumberKeyboard`, `UPOverlay`, `UPPopover`, `UPRate`, `UPReadMore`, `UPSearch`, `UPSlider`, `UPTextarea`, `UPToast`, `UPTransition`). The single-page demo exercises 107/107 local component directories and compiles against the published `ultra-ui-rn` build (`cd example && npx tsc --noEmit`).
+
+## P43–P55 Full Surface Parity
+
+The remaining surfaces were audited against uview-plus@3.8.86 and closed:
+
+| Phase | Surface | Result |
+|---|---|---|
+| P43 | Audit tooling | `scripts/audit-source-compat.mjs` — props / events / defaults / refs dimensions, `--dump` fixture mode, `--fail` gate. 138 source components, 0 gaps |
+| P44 | Default values | Resolved factory defaults (`defProps.x.y`, cross-component refs, i18n `t()`); fixed `picker.hasInput`, `slider.innerStyle`, `upload.videoPreviewObjectFit` |
+| P45 | Ref methods | Added `reStart`/`paused` (count-to), `setRules` (form), `chooseFile`/`afterRead`/`beforeRead` (upload), `prevMonth`/`nextMonth`/`toggleFull` (calendar-strip), `init` (read-more/collapse), `show`/`close` (toast/notify). `setFormatter` on input/textarea/calendar/datetime-picker documented as 微信 boundary (formatter prop is the RN surface) |
+| P46 | Source-contract lock | `tests/fixtures/source-contract.json` + `tests/source-contract.test.ts` lock props/events/refs against uview-plus@3.8.86; regenerate via `--dump` |
+| P52 | `$u` utility library | Ported 27 missing functions: `format.ts` (timeFormat/timeFrom/priceFormat/padZero/getDuration/trim/queryParams/type2icon), `data.ts` (deepClone/deepMerge/shallowMerge/getProperty/setProperty/getValueByPath/guid/random/randomArray/addUnit/addStyle/error), `calc.ts` (float-safe plus/minus/times/divide/round), `system.ts` (os/sys/getWindowInfo/getDeviceInfo/page/pages with `setUPNavigationStack`), `validation.ts` (+16 validators), `color.ts` (genLightColor). Exposed as `UP.<fn>` and named exports |
+| P53 | Theme alignment | `borderColor` aligned `#e4e7ed`; added `default` color token; zIndex already exact |
+| P54 | Export surface | 138/138 source components → local dirs; every component dir exports through `components/index.ts` and the main index |
+
+Remaining documented boundaries: `setFormatter` refs (微信 workaround — formatter prop works), `formValidate`/`$parent`/`toast` (Vue-instance / uni-app APIs with RN equivalents `UPForm`/`UP.toast`), `page`/`pages` (navigation-stack provider injection).

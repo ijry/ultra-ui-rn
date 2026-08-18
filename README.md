@@ -298,3 +298,11 @@ boundaries: `UPCropper` (crop box interaction, export injected),
 `UPPoster` (json layout, export adapter), `UPPdfReader` (`renderPdf` slot),
 and `UPShortVideo` (tabs/pager/action rail, `renderVideo` slot). Source
 coverage is now 140/140 components.
+
+P43–P55 close the remaining surfaces against uview-plus@3.8.86:
+`scripts/audit-source-compat.mjs` audits props/events/defaults/refs with a
+source-contract regression test; the `$u` utility library is fully ported
+(`timeFormat`, `deepMerge`, float-safe `plus/minus/times/divide`, 16 extra
+validators, `os`/`sys`/`getWindowInfo`, …) and exposed as `UP.<fn>`;
+ref methods match the source `.d.ts` `_XxxRef` interfaces; theme colors
+(`borderColor` `#e4e7ed`, `default` token) and zIndex align with source.

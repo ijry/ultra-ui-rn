@@ -1185,3 +1185,20 @@ Everything else — cropper crop-box interaction, poster json layout, short-vide
 ## P42 example coverage
 
 `example/App.tsx` now demos every local component, including the previously missing 12 (keyboards, loading icon, overlay, popover, rate, read-more, search, slider, textarea, toast, transition). The example compiles against the published build and is the canonical smoke test for the 140/140 source component set.
+
+## P43–P55 full-surface parity
+
+Beyond components, the full uview-plus surface is now mirrored:
+
+- **`$u` utility library** — every `uni.$u.*` function is available as a named export and on the `UP` namespace: formatting (timeFormat/timeFrom/priceFormat/queryParams/trim/padZero/getDuration/type2icon), data (deepClone/deepMerge/shallowMerge/getProperty/setProperty/getValueByPath/guid/random/randomArray/addUnit/addStyle), float-safe arithmetic (plus/minus/times/divide/round), validators (16 added to `test`), and system info (os/sys/getWindowInfo/getDeviceInfo).
+- **Ref methods** — the documented `_XxxRef` interfaces from the source `.d.ts` are implemented (`start/pause/reset`, `validate/setRules/resetFields/clearValidate`, `chooseFile`, `prevMonth/nextMonth/toggleFull`, `init`, toast/notify `show`/`close`).
+- **Audit + regression tooling** — `scripts/audit-source-compat.mjs` re-runs the four-dimension audit against any uview-plus checkout; `tests/source-contract.test.ts` locks the fixture so upgrades or refactors cannot silently drop source props/events/refs.
+
+### Remaining boundaries
+
+| Source API | Why it is a boundary | RN equivalent |
+|---|---|---|
+| `setFormatter` refs (input/textarea/calendar/datetime-picker) | Exposed only for WeChat mini-program formatter workarounds | `formatter` prop works directly |
+| `formValidate(instance, event)` / `$parent()` | Vue instance traversal | `UPForm` context validation |
+| `$u.toast(title, duration)` | Calls `uni.showToast` | `UP.toast.default(title)` |
+| `page()` / `pages()` | Reads uni-app `getCurrentPages` | `setUPNavigationStack(provider)` injection |
