@@ -142,6 +142,8 @@ export type UPTable2Props<T extends object = Record<string, unknown>> = {
   onCellClick?: (payload: UPTable2CellPayload<T>) => void;
   onRowClick?: (row: T, payload: UPTable2RowPayload<T>) => void;
   onRowDoubleClick?: (row: T, payload: UPTable2RowPayload<T>) => void;
+  /** Source name for `row-dblclick` (`onRowDoubleClick` is the RN alias). */
+  onRowDblclick?: (row: T, payload: UPTable2RowPayload<T>) => void;
   onHeaderClick?: (column: UPTable2Column<T>, columnIndex: number) => void;
   onSortChange?: (conditions: readonly UPTable2SortCondition<T>[]) => void;
   onFilterChange?: (filters: Readonly<Record<string, unknown>>) => void;

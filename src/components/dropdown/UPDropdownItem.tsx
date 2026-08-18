@@ -33,6 +33,7 @@ export type UPDropdownItemProps = {
   children?: React.ReactNode;
   onUpdateModelValue?: (value: UPDropdownValue) => void;
   onChange?: (value: UPDropdownValue) => void;
+  onInput?: (value: UPDropdownValue) => void;
   itemIndex?: number;
 };
 
@@ -80,6 +81,7 @@ export function UPDropdownItem(input: UPDropdownItemProps): React.JSX.Element | 
                   if (controlledValue === undefined) setLocalValue(option.value);
                   input.onUpdateModelValue?.(option.value);
                   input.onChange?.(option.value);
+                  input.onInput?.(option.value);
                   close();
                 }}
                 style={{
@@ -110,6 +112,7 @@ export function UPDropdownItem(input: UPDropdownItemProps): React.JSX.Element | 
     input.children,
     input.customStyle,
     input.onChange,
+    input.onInput,
     input.onUpdateModelValue,
     itemIndex,
     inactiveColor,

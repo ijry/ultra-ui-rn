@@ -42,6 +42,7 @@ export type UPTabbarItemProps = {
   /** @deprecated React Native has no CSS class runtime. */
   customClass?: string;
   itemIndex?: number;
+  onClick?: (name: UPTabbarName) => void;
 };
 
 function itemRadius(styleType: string, itemShape: string): number {
@@ -221,7 +222,10 @@ export function UPTabbarItem(input: UPTabbarItemProps): React.JSX.Element {
     <Pressable
       accessibilityRole="tab"
       accessibilityState={{ selected: active }}
-      onPress={() => context.select(name)}
+      onPress={() => {
+        context.select(name);
+        input.onClick?.(name);
+      }}
       style={[itemStyle, input.customStyle]}
       testID={`up-tabbar-item-${itemIndex}`}
     >

@@ -326,6 +326,7 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
     const previousPress = lastRowPressRef.current;
     if (previousPress?.key === row.key && now - previousPress.time < 350) {
       props.onRowDoubleClick?.(row.row, payload);
+      props.onRowDblclick?.(row.row, payload);
     }
     lastRowPressRef.current = { key: row.key, time: now };
     if (!props.highlightCurrentRow) return;
