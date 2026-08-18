@@ -1202,3 +1202,14 @@ Beyond components, the full uview-plus surface is now mirrored:
 | `formValidate(instance, event)` / `$parent()` | Vue instance traversal | `UPForm` context validation |
 | `$u.toast(title, duration)` | Calls `uni.showToast` | `UP.toast.default(title)` |
 | `page()` / `pages()` | Reads uni-app `getCurrentPages` | `setUPNavigationStack(provider)` injection |
+
+## P47 — Source demo pages
+
+The official demo app's 29 navigable pages are ported to `example/pages/` and
+reached from the example app's `Pages` tab (`DemoPagesHost`). Mapping rules:
+`up-*` tags → `UP*` components, `v-model` → `value`/`modelValue` + update
+events, `@event` → `onXxx`, `uni.navigateTo` → `open(pageId)` in the host's
+stack, `swiper` paging → `UPSwiper` `renderItem`, region cascading →
+`UPPicker` columns + `setColumnValues`. `template/citySelect/u-city-select.vue`
+is a helper component of the citySelect page, not a separate page (29 pages
+total).

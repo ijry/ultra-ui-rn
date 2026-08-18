@@ -306,3 +306,13 @@ source-contract regression test; the `$u` utility library is fully ported
 validators, `os`/`sys`/`getWindowInfo`, …) and exposed as `UP.<fn>`;
 ref methods match the source `.d.ts` `_XxxRef` interfaces; theme colors
 (`borderColor` `#e4e7ed`, `default` token) and zIndex align with source.
+
+P47 ports the official demo app's 29 navigable pages (`src/pages/` of
+`ijry/uview-plus@3.x`) into `example/pages/`: a grouped index with in-app
+navigation (`DemoPagesHost`, opened from the example app's `Pages` tab) that
+exercises the ported components the way the source demos do — card/tabbar/
+steps/tooltip variants, guide, cate-tab, dragsort, pull-refresh, select, and
+14 business templates (address, region picker, comments, coupons, pay
+keyboard, login + sms code, mall menus, order list with tabs+swiper, submit
+bar, profile). See `docs/compatibility-report.md` for the full cross-surface
+consistency report.

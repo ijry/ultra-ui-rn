@@ -459,3 +459,5 @@ The remaining surfaces were audited against uview-plus@3.8.86 and closed:
 | P54 | Export surface | 138/138 source components → local dirs; every component dir exports through `components/index.ts` and the main index |
 
 Remaining documented boundaries: `setFormatter` refs (微信 workaround — formatter prop works), `formValidate`/`$parent`/`toast` (Vue-instance / uni-app APIs with RN equivalents `UPForm`/`UP.toast`), `page`/`pages` (navigation-stack provider injection).
+
+| P47 | Source demo pages | Ported all 29 navigable pages of the official demo app (`ijry/uview-plus@3.x` `src/pages/`) into `example/pages/` — grouped index + in-app stack navigation (`DemoPagesHost`), 6 groups (componentsA–D 12, example 3, template 14). Includes a cascading region picker (`RegionPicker` on `UPPicker.setColumnValues`) and a UPTabs+UPSwiper-linked order list. `example/__tests__/Pages.test.tsx` locks the 29-entry registry and navigation |
