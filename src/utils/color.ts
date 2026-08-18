@@ -85,3 +85,73 @@ export function colorGradient(
     );
   });
 }
+
+/**
+ * Generate a light background color from a text color.
+ * Mirrors `uni.$u.genLightColor`.
+ */
+export function genLightColor(textColor: string, lightness = 95): string {
+  const rgb = parseColor(textColor);
+  const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+  return hslToHex(hsl.h, hsl.s, Math.min(lightness, 95));
+}
+
+function parseColor(colorStr: string): { r: number; g: number; b: number } {
+  const str = colorStr.toLowerCase().trim();
+  if (str.startsWith('#')) {
+    const hex = str.replace('#', '');
+    const fullHex = hex.length === 3
+      ? hex.split('').map((c) => c + c).join('')
+      : hex;
+    return {
+      r: parseInt(fullHex.substring(0, 2), 16),
+      g: parseInt(fullHex.substring(2, 4), 16),
+      b: parseInt(fullHex.substring(4, 6), 16),
+    };
+  }
+  const rgbMatch = str.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  if (rgbMatch) {
+    return { r: +rgbMatch[1], g: +rgbMatch[2], b: +rgbMatch[3] };
+  }
+  throw new Error('Invalid color format');
+}
+
+function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: number } {
+  const red = r / 255;
+  const green = g / 255;
+  const blue = b / 255;
+  const max = Math.max(red, green, blue);
+  const min = Math.min(red, green, blue);
+  let h: number;
+  let s: number;
+  const l = (max + min) / 2;
+  if (max === min) {
+    h = s = 0;
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case red:
+        h = (green - blue) / d + (green < blue ? 6 : 0);
+        break;
+      case green:
+        h = (blue - red) / d + 2;
+        break;
+      default:
+        h = (red - green) / d + 4;
+    }
+    h *= 60;
+  }
+  return { h: Math.round(h), s: Math.round(s * 100), l: Math.round(l * 100) };
+}
+
+function hslToHex(h: number, s: number, l: number): string {
+  const light = l / 100;
+  const a = (s * Math.min(light, 1 - light)) / 100;
+  const f = (n: number): string => {
+    const k = (n + h / 30) % 12;
+    const color = light - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
