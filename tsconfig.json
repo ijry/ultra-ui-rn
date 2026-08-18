@@ -3,7 +3,8 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "noEmit": true,
-    "strict": true
+    "strict": true,
+    "types": ["jest", "node"]
   },
   "include": ["src", "tests"]
 }

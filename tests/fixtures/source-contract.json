@@ -1,0 +1,974 @@
+{
+  "version": "uview-plus@3.8.86",
+  "contract": {
+    "action-sheet": {
+      "events": [
+        "close",
+        "select"
+      ]
+    },
+    "agreement": {
+      "events": [
+        "confirm"
+      ]
+    },
+    "album": {
+      "events": [
+        "albumWidth",
+        "preview"
+      ]
+    },
+    "alert": {
+      "events": [
+        "click",
+        "close",
+        "closed"
+      ]
+    },
+    "avatar": {
+      "events": [
+        "click"
+      ]
+    },
+    "avatar-group": {
+      "events": [
+        "showMore"
+      ]
+    },
+    "back-top": {
+      "events": [
+        "click"
+      ]
+    },
+    "barcode": {
+      "events": [
+        "error",
+        "rendered"
+      ]
+    },
+    "button": {
+      "events": [
+        "agreeprivacyauthorization",
+        "click",
+        "error",
+        "getphonenumber",
+        "getuserinfo",
+        "launchapp",
+        "opensetting"
+      ]
+    },
+    "calendar": {
+      "props": [
+        "forbidDays",
+        "forbidDaysToast",
+        "monthFormat"
+      ],
+      "defaults": {
+        "forbidDays": "__array_or_object__",
+        "monthFormat": ""
+      },
+      "events": [
+        "close",
+        "confirm"
+      ],
+      "refs": [
+        "setFormatter"
+      ]
+    },
+    "calendar-strip": {
+      "props": [
+        "collapseAfterSelect",
+        "collapseHint",
+        "color",
+        "expandHint",
+        "fullCalendar",
+        "fullCalendarProps",
+        "fullMonthNum",
+        "maxDate",
+        "minDate",
+        "modelValue",
+        "monthFormat",
+        "pullDownThreshold",
+        "readonly",
+        "showToday",
+        "weekText"
+      ],
+      "defaults": {
+        "modelValue": null,
+        "minDate": 0,
+        "maxDate": 0,
+        "color": "#3c9cff",
+        "weekText": "__array_or_object__",
+        "fullCalendar": true,
+        "fullCalendarProps": "__array_or_object__",
+        "fullMonthNum": 24,
+        "pullDownThreshold": 40,
+        "collapseAfterSelect": true,
+        "readonly": false,
+        "showToday": true,
+        "monthFormat": "",
+        "expandHint": "下拉展开月历",
+        "collapseHint": "上拉收起月历"
+      },
+      "events": [
+        "change",
+        "confirm",
+        "monthChange",
+        "toggleFull"
+      ],
+      "refs": [
+        "nextMonth",
+        "prevMonth",
+        "toggleFull"
+      ]
+    },
+    "canvas": {
+      "events": [
+        "ready",
+        "touchend",
+        "touchmove",
+        "touchstart"
+      ]
+    },
+    "car-keyboard": {
+      "events": [
+        "backspace",
+        "change"
+      ]
+    },
+    "card": {
+      "props": [
+        "paddingBody",
+        "paddingFoot",
+        "paddingHead"
+      ],
+      "defaults": {
+        "paddingHead": "",
+        "paddingBody": "",
+        "paddingFoot": ""
+      },
+      "events": [
+        "body-click",
+        "click",
+        "foot-click",
+        "head-click"
+      ]
+    },
+    "cascader": {
+      "events": [
+        "cancel",
+        "change",
+        "confirm"
+      ]
+    },
+    "cell": {
+      "events": [
+        "click"
+      ]
+    },
+    "checkbox": {
+      "events": [
+        "change"
+      ]
+    },
+    "checkbox-group": {
+      "events": [
+        "change",
+        "input"
+      ]
+    },
+    "choose": {
+      "events": [
+        "custom-click"
+      ]
+    },
+    "circle-progress": {
+      "props": [
+        "percentage"
+      ],
+      "defaults": {
+        "percentage": 30
+      }
+    },
+    "city-locate": {
+      "events": [
+        "location-success",
+        "select-city"
+      ]
+    },
+    "code": {
+      "events": [
+        "change",
+        "end",
+        "start"
+      ],
+      "refs": [
+        "reset",
+        "start"
+      ]
+    },
+    "code-input": {
+      "events": [
+        "change",
+        "finish",
+        "input"
+      ]
+    },
+    "col": {
+      "events": [
+        "click"
+      ]
+    },
+    "collapse": {
+      "events": [
+        "change",
+        "close",
+        "open"
+      ],
+      "refs": [
+        "init"
+      ]
+    },
+    "collapse-item": {
+      "props": [
+        "cellCustomClass",
+        "cellCustomStyle"
+      ],
+      "defaults": {
+        "cellCustomClass": ""
+      }
+    },
+    "color-picker": {
+      "events": [
+        "close",
+        "confirm"
+      ]
+    },
+    "column-notice": {
+      "props": [
+        "justifyContent"
+      ],
+      "defaults": {
+        "justifyContent": "flex-start"
+      },
+      "events": [
+        "click",
+        "close"
+      ]
+    },
+    "copy": {
+      "events": [
+        "success"
+      ]
+    },
+    "count-down": {
+      "events": [
+        "change",
+        "finish"
+      ],
+      "refs": [
+        "pause",
+        "reset",
+        "start"
+      ]
+    },
+    "count-to": {
+      "events": [
+        "end"
+      ],
+      "refs": [
+        "paused",
+        "reStart",
+        "start"
+      ]
+    },
+    "coupon": {
+      "events": [
+        "click"
+      ]
+    },
+    "cropper": {
+      "events": [
+        "avtinit",
+        "cancel",
+        "confirm"
+      ]
+    },
+    "datetime-picker": {
+      "props": [
+        "disabled",
+        "disabledColor",
+        "format",
+        "inputBorder",
+        "inputProps",
+        "placeholder"
+      ],
+      "events": [
+        "cancel",
+        "change",
+        "close",
+        "confirm",
+        "input"
+      ],
+      "refs": [
+        "setFormatter"
+      ]
+    },
+    "divider": {
+      "events": [
+        "click"
+      ]
+    },
+    "dragsort": {
+      "events": [
+        "drag-end"
+      ]
+    },
+    "dropdown": {
+      "events": [
+        "close",
+        "open"
+      ]
+    },
+    "dropdown-item": {
+      "events": [
+        "change",
+        "input"
+      ]
+    },
+    "float-button": {
+      "events": [
+        "click",
+        "item-click"
+      ]
+    },
+    "form": {
+      "refs": [
+        "clearValidate",
+        "resetFields",
+        "setRules",
+        "validate",
+        "validateField"
+      ]
+    },
+    "form-item": {
+      "props": [
+        "leftIconStyle"
+      ],
+      "defaults": {
+        "leftIconStyle": ""
+      },
+      "events": [
+        "click"
+      ]
+    },
+    "goods-sku": {
+      "events": [
+        "close",
+        "confirm",
+        "open"
+      ]
+    },
+    "grid": {
+      "events": [
+        "click"
+      ]
+    },
+    "grid-item": {
+      "events": [
+        "click"
+      ]
+    },
+    "guide": {
+      "props": [
+        "bgColor",
+        "finishText",
+        "indicator",
+        "list",
+        "nextText",
+        "once",
+        "show",
+        "showSkip",
+        "skipText",
+        "storageKey",
+        "zIndex"
+      ],
+      "defaults": {
+        "show": false,
+        "list": "__array_or_object__",
+        "storageKey": "up-guide-default",
+        "once": true,
+        "showSkip": true,
+        "skipText": "跳过",
+        "nextText": "下一步",
+        "finishText": "立即体验",
+        "indicator": true,
+        "bgColor": "#111111",
+        "zIndex": 10075
+      },
+      "events": [
+        "change",
+        "close",
+        "finish",
+        "skip"
+      ],
+      "refs": [
+        "close",
+        "open",
+        "reset"
+      ]
+    },
+    "icon": {
+      "events": [
+        "click"
+      ]
+    },
+    "image": {
+      "events": [
+        "click",
+        "error",
+        "load"
+      ]
+    },
+    "index-list": {
+      "events": [
+        "select"
+      ]
+    },
+    "input": {
+      "events": [
+        "blur",
+        "change",
+        "clear",
+        "confirm",
+        "focus",
+        "input",
+        "keyboardheightchange",
+        "nicknamereview"
+      ],
+      "refs": [
+        "setFormatter"
+      ]
+    },
+    "keyboard": {
+      "events": [
+        "backspace",
+        "cancel",
+        "change",
+        "close",
+        "confirm"
+      ]
+    },
+    "lazy-load": {
+      "events": [
+        "click",
+        "error",
+        "load"
+      ]
+    },
+    "line": {
+      "props": [
+        "color"
+      ],
+      "defaults": {
+        "color": "#d6d7d9"
+      }
+    },
+    "line-progress": {
+      "props": [
+        "inactiveColor"
+      ],
+      "defaults": {
+        "inactiveColor": "#ececec"
+      }
+    },
+    "link": {
+      "events": [
+        "click"
+      ]
+    },
+    "list": {
+      "events": [
+        "refresherabort",
+        "refresherpulling",
+        "refresherrefresh",
+        "refresherrestore",
+        "scroll",
+        "scroll-to-lower",
+        "scroll-to-upper",
+        "scrolltolower",
+        "scrolltoupper"
+      ]
+    },
+    "loadmore": {
+      "events": [
+        "loadmore"
+      ]
+    },
+    "markdown": {
+      "events": [
+        "error",
+        "imgtap",
+        "linktap",
+        "load",
+        "play",
+        "ready"
+      ]
+    },
+    "message-input": {
+      "events": [
+        "change",
+        "finish"
+      ]
+    },
+    "modal": {
+      "events": [
+        "cancel",
+        "cancelOnAsync",
+        "close",
+        "confirm"
+      ]
+    },
+    "navbar": {
+      "events": [
+        "leftClick",
+        "rightClick"
+      ]
+    },
+    "navbar-mini": {
+      "events": [
+        "homeClick",
+        "leftClick"
+      ]
+    },
+    "no-network": {
+      "events": [
+        "connected",
+        "disconnected",
+        "retry"
+      ]
+    },
+    "notice-bar": {
+      "props": [
+        "justifyContent"
+      ],
+      "defaults": {
+        "justifyContent": "flex-start"
+      },
+      "events": [
+        "click",
+        "close"
+      ]
+    },
+    "notify": {
+      "refs": [
+        "close",
+        "show"
+      ]
+    },
+    "number-box": {
+      "events": [
+        "blur",
+        "change",
+        "focus",
+        "input",
+        "minus",
+        "overlimit",
+        "plus"
+      ]
+    },
+    "number-keyboard": {
+      "events": [
+        "backspace",
+        "change"
+      ]
+    },
+    "overlay": {
+      "events": [
+        "click"
+      ]
+    },
+    "pagination": {
+      "events": [
+        "current-change",
+        "size-change"
+      ]
+    },
+    "parse": {
+      "props": [
+        "containerStyle",
+        "content",
+        "copyLink",
+        "domain",
+        "errorImg",
+        "lazyLoad",
+        "loadingImg",
+        "pauseVideo",
+        "previewImg",
+        "scrollTable",
+        "selectable",
+        "setTitle",
+        "showImgMenu",
+        "tagStyle",
+        "useAnchor"
+      ],
+      "defaults": {
+        "containerStyle": null,
+        "copyLink": true,
+        "errorImg": "",
+        "lazyLoad": false,
+        "loadingImg": "",
+        "pauseVideo": true,
+        "previewImg": true,
+        "setTitle": true,
+        "showImgMenu": true,
+        "useAnchor": null
+      },
+      "events": [
+        "click",
+        "error",
+        "imgtap",
+        "linktap",
+        "load",
+        "play",
+        "ready",
+        "tap"
+      ]
+    },
+    "picker": {
+      "props": [
+        "disabled",
+        "disabledColor",
+        "hasInput",
+        "inputBorder",
+        "inputProps",
+        "modelValue",
+        "placeholder"
+      ],
+      "defaults": {
+        "hasInput": false,
+        "disabled": false,
+        "disabledColor": ""
+      },
+      "events": [
+        "cancel",
+        "change",
+        "close",
+        "confirm"
+      ],
+      "refs": [
+        "setColumnValues",
+        "setIndexs"
+      ]
+    },
+    "picker-data": {
+      "events": [
+        "cancel",
+        "close",
+        "confirm"
+      ]
+    },
+    "popover": {
+      "events": [
+        "click",
+        "close",
+        "open"
+      ]
+    },
+    "popup": {
+      "events": [
+        "click",
+        "close",
+        "open"
+      ]
+    },
+    "pull-refresh": {
+      "events": [
+        "loadmore",
+        "refresh",
+        "scroll"
+      ]
+    },
+    "qrcode": {
+      "events": [
+        "longpressCallback",
+        "preview",
+        "result"
+      ]
+    },
+    "radio": {
+      "events": [
+        "change"
+      ]
+    },
+    "radio-group": {
+      "events": [
+        "change",
+        "input"
+      ]
+    },
+    "rate": {
+      "events": [
+        "change",
+        "input"
+      ]
+    },
+    "read-more": {
+      "events": [
+        "close",
+        "open"
+      ],
+      "refs": [
+        "init"
+      ]
+    },
+    "refresh-virtual-list": {
+      "events": [
+        "refresh",
+        "scroll"
+      ]
+    },
+    "row": {
+      "events": [
+        "click"
+      ]
+    },
+    "row-notice": {
+      "events": [
+        "click",
+        "close"
+      ]
+    },
+    "scroll-list": {
+      "events": [
+        "left",
+        "right"
+      ]
+    },
+    "search": {
+      "events": [
+        "blur",
+        "change",
+        "clear",
+        "click",
+        "clickIcon",
+        "custom",
+        "focus",
+        "input",
+        "search"
+      ]
+    },
+    "select": {
+      "events": [
+        "select"
+      ]
+    },
+    "short-video": {
+      "events": [
+        "collect",
+        "comment",
+        "like",
+        "loadedMetadata",
+        "progressChange",
+        "progressChanging",
+        "share",
+        "tabChange",
+        "timeUpdate",
+        "videoChange",
+        "videoEnded",
+        "videoPause",
+        "videoPlay"
+      ]
+    },
+    "signature": {
+      "events": [
+        "clear",
+        "confirm",
+        "error"
+      ]
+    },
+    "slider": {
+      "props": [
+        "innerStyle"
+      ],
+      "defaults": {
+        "innerStyle": "__array_or_object__"
+      },
+      "events": [
+        "change",
+        "changing",
+        "input",
+        "start"
+      ]
+    },
+    "status-bar": {
+      "props": [
+        "bgColor"
+      ],
+      "defaults": {
+        "bgColor": "transparent"
+      }
+    },
+    "subsection": {
+      "events": [
+        "change"
+      ]
+    },
+    "swipe-action-item": {
+      "props": [
+        "closeOnClick"
+      ],
+      "defaults": {
+        "closeOnClick": true
+      },
+      "events": [
+        "click"
+      ]
+    },
+    "swiper": {
+      "events": [
+        "change",
+        "click"
+      ]
+    },
+    "switch": {
+      "events": [
+        "change",
+        "input"
+      ]
+    },
+    "tabbar-item": {
+      "events": [
+        "change",
+        "click"
+      ]
+    },
+    "table2": {
+      "events": [
+        "cell-click",
+        "current-change",
+        "expand-change",
+        "filter-change",
+        "header-click",
+        "row-click",
+        "row-dblclick",
+        "select",
+        "select-all",
+        "selection-change",
+        "sort-change"
+      ]
+    },
+    "tabs": {
+      "events": [
+        "change",
+        "click",
+        "longPress"
+      ]
+    },
+    "tag": {
+      "events": [
+        "click",
+        "close"
+      ]
+    },
+    "text": {
+      "events": [
+        "click"
+      ]
+    },
+    "textarea": {
+      "events": [
+        "blur",
+        "change",
+        "confirm",
+        "focus",
+        "input",
+        "keyboardheightchange",
+        "linechange"
+      ],
+      "refs": [
+        "setFormatter"
+      ]
+    },
+    "toast": {
+      "refs": [
+        "show"
+      ]
+    },
+    "toolbar": {
+      "events": [
+        "cancel",
+        "confirm"
+      ]
+    },
+    "tooltip": {
+      "events": [
+        "click",
+        "close",
+        "open"
+      ]
+    },
+    "transition": {
+      "events": [
+        "afterEnter",
+        "afterLeave",
+        "beforeEnter",
+        "beforeLeave",
+        "click",
+        "enter",
+        "leave"
+      ]
+    },
+    "tree": {
+      "events": [
+        "check",
+        "check-change",
+        "current-change",
+        "node-click",
+        "node-collapse",
+        "node-expand"
+      ]
+    },
+    "upload": {
+      "props": [
+        "extension",
+        "videoPreviewObjectFit"
+      ],
+      "defaults": {
+        "extension": "__array_or_object__",
+        "videoPreviewObjectFit": "cover"
+      },
+      "events": [
+        "afterAutoUpload",
+        "afterRead",
+        "beforeRead",
+        "clickPreview",
+        "delete",
+        "error",
+        "oversize"
+      ],
+      "refs": [
+        "afterRead",
+        "beforeRead",
+        "chooseFile"
+      ]
+    },
+    "view": {
+      "events": [
+        "click"
+      ]
+    },
+    "virtual-list": {
+      "events": [
+        "scroll"
+      ]
+    },
+    "waterfall": {
+      "events": [
+        "after-add-all",
+        "after-add-one",
+        "input"
+      ]
+    }
+  }
+}
