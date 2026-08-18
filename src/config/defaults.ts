@@ -398,6 +398,7 @@ export type UPPickerDefaults = {
   duration: number;
   overlayOpacity: number;
   pageInline: boolean;
+  hasInput: boolean;
 };
 
 export type UPDatetimePickerDefaults = {
@@ -1212,6 +1213,7 @@ export const sourceDefaults: Readonly<{
       duration: 300,
       overlayOpacity: 0.5,
       pageInline: false,
+      hasInput: false,
     }),
     datetimePicker: Object.freeze({
       show: false,
@@ -1316,7 +1318,7 @@ export const sourceDefaults: Readonly<{
     radio: Object.freeze({ name: '', shape: '', disabled: '', labelDisabled: '', activeColor: '', inactiveColor: '', iconSize: '', labelSize: '', label: '', labelColor: '', size: '', iconColor: '', placement: '' }),
     radioGroup: Object.freeze({ value: '', disabled: false, shape: 'circle' as const, activeColor: '#2979ff', inactiveColor: '#c8c9cc', name: '', size: 18, placement: 'row' as const, label: '', labelColor: '#303133', labelSize: 14, labelDisabled: false, iconColor: '#ffffff', iconSize: 12, borderBottom: false, iconPlacement: 'left' as const, gap: '10px' }),
     rate: Object.freeze({ value: 1, count: 5, disabled: false, size: 18, inactiveColor: '', activeColor: '', gutter: 4, minCount: 1, allowHalf: false, activeIcon: 'star-fill', inactiveIcon: 'star', touchable: true }),
-    slider: Object.freeze({ value: 0, blockSize: 18, min: 0, max: 100, step: 1, activeColor: '#2979ff', inactiveColor: '#c0c4cc', blockColor: '#ffffff', showValue: false, disabled: false, useNative: false, height: '', size: '2px', length: 'auto', vertical: false }),
+    slider: Object.freeze({ value: 0, blockSize: 18, min: 0, max: 100, step: 1, activeColor: '#2979ff', inactiveColor: '#c0c4cc', blockColor: '#ffffff', showValue: false, disabled: false, useNative: false, height: '', size: '2px', length: 'auto', vertical: false, innerStyle: Object.freeze({}) }),
     numberBox: Object.freeze({ name: '', value: 0, min: 1, max: Number.MAX_SAFE_INTEGER, step: 1, integer: false, disabled: false, disabledInput: false, asyncChange: false, inputWidth: 35, showMinus: true, showPlus: true, decimalLength: null, longPress: true, color: '', buttonWidth: 30, buttonSize: 30, buttonRadius: '0px', bgColor: '', disabledBgColor: '', inputBgColor: '', cursorSpacing: 100, disableMinus: false, disablePlus: false, iconStyle: '', miniMode: false }),
     codeInput: Object.freeze({ adjustPosition: true, maxlength: 6, dot: false, mode: 'box' as const, hairline: false, space: 10, value: '', focus: false, bold: false, color: '#606266', fontSize: 18, size: 35, disabledKeyboard: false, borderColor: '#c9cacc', disabledDot: true }),
     code: Object.freeze({ seconds: 60, startText: '获取验证码', changeText: 'X秒重新获取', endText: '重新获取', keepRunning: false, uniqueKey: '' }),
@@ -1417,7 +1419,7 @@ export const sourceDefaults: Readonly<{
     alert: Object.freeze({ title: '', type: 'warning' as const, description: '', closable: false, showIcon: false, effect: 'light' as const, center: false, fontSize: 14, transitionMode: 'fade', duration: 0, icon: '', value: true }),
     avatarGroup: Object.freeze({ urls: Object.freeze([]) as readonly unknown[], maxCount: 5, shape: 'circle' as const, mode: 'scaleToFill', showMore: true, size: 40, keyName: '', gap: 0.5, extraValue: 0 }),
     album: Object.freeze({ urls: Object.freeze([]) as readonly unknown[], keyName: '', singleSize: 180, multipleSize: 70, space: 6, singleMode: 'scaleToFill', multipleMode: 'aspectFill', maxCount: 9, previewFullImage: true, rowCount: 3, showMore: true, autoWrap: false, unit: 'px', stop: true }),
-    upload: Object.freeze({ accept: 'image' as const, autoDelete: false, autoUpload: true, autoUploadApi: '', autoUploadAuthUrl: '', autoUploadDriver: '' as const, autoUploadHeader: Object.freeze({}) as Record<string, string>, camera: 'back', capture: false as const, compressed: true, customAfterAutoUpload: false, deletable: true, disabled: false, extension: Object.freeze([]) as readonly string[], fileList: Object.freeze([]) as readonly unknown[], formData: Object.freeze({}) as Record<string, unknown>, header: Object.freeze({}) as Record<string, string>, height: 80, imageMode: 'aspectFill', maxCount: 9, maxDuration: 60, maxSize: Number.POSITIVE_INFINITY, multiple: false, name: 'file', previewFullImage: true, previewImage: true, sizeType: Object.freeze(['original', 'compressed']) as readonly string[], uploadIcon: 'camera-fill', uploadIconColor: '#D3D4D6', uploadText: '上传图片', url: '', useBeforeRead: false, width: 80 }),
+    upload: Object.freeze({ accept: 'image' as const, autoDelete: false, autoUpload: true, autoUploadApi: '', autoUploadAuthUrl: '', autoUploadDriver: '' as const, autoUploadHeader: Object.freeze({}) as Record<string, string>, camera: 'back', capture: false as const, compressed: true, customAfterAutoUpload: false, deletable: true, disabled: false, extension: Object.freeze([]) as readonly string[], fileList: Object.freeze([]) as readonly unknown[], formData: Object.freeze({}) as Record<string, unknown>, header: Object.freeze({}) as Record<string, string>, height: 80, imageMode: 'aspectFill', maxCount: 9, maxDuration: 60, maxSize: Number.POSITIVE_INFINITY, multiple: false, name: 'file', previewFullImage: true, previewImage: true, sizeType: Object.freeze(['original', 'compressed']) as readonly string[], uploadIcon: 'camera-fill', uploadIconColor: '#D3D4D6', uploadText: '上传图片', url: '', useBeforeRead: false, videoPreviewObjectFit: 'cover', width: 80 }),
     lazyLoad: Object.freeze({ height: 100, mode: 'aspectFill', once: true, threshold: 0, width: 100 }),
     tree: Object.freeze({
       accordion: false,

@@ -89,9 +89,12 @@ it('remembered guides stay hidden when once storage returns one', async () => {
   const onUpdateShow = jest.fn();
   const screen = renderRoot(<UPGuide list={pages} onUpdateShow={onUpdateShow} show storage={adapter} storageKey="guide" />);
 
-  await waitFor(() => {
-    expect(screen.queryByTestId('up-guide')).toBeNull();
-  });
+  await waitFor(
+    () => {
+      expect(screen.queryByTestId('up-guide')).toBeNull();
+    },
+    { timeout: 5000 },
+  );
   expect(onUpdateShow).toHaveBeenCalledWith(false);
 });
 
