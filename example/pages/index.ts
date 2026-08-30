@@ -1,3 +1,5 @@
+/**
+ * 示例页索引
+ */
 export { DemoPagesHost } from './host';
-export { DEMO_GROUPS, DEMO_PAGES } from './registry';
-export type { DemoPageId, DemoPageMeta } from './registry';
+export { CATEGORIES, COMPONENTS, type ComponentCategory, type ComponentMeta } from './registry';

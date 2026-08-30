@@ -91,7 +91,7 @@ export function MinePage(_props: DemoPageProps) {
 /* example/template — template page entry index                        */
 /* ------------------------------------------------------------------ */
 
-const TEMPLATE_LINKS: readonly { group: string; items: readonly { id: Parameters<DemoPageProps['open']>[0]; title: string }[] }[] = [
+const TEMPLATE_LINKS: readonly { group: string; items: readonly { id: string; title: string }[] }[] = [
   {
     group: '地址',
     items: [
@@ -133,7 +133,7 @@ const TEMPLATE_LINKS: readonly { group: string; items: readonly { id: Parameters
   },
 ];
 
-export function TemplateIndexPage({ open }: DemoPageProps) {
+export function TemplateIndexPage({ onBack }: DemoPageProps) {
   return (
     <View>
       <Text style={styles.templateDesc}>
@@ -148,7 +148,7 @@ export function TemplateIndexPage({ open }: DemoPageProps) {
                 clickable
                 isLink
                 key={item.id}
-                onClick={() => open(item.id)}
+                onClick={() => onBack?.()}
                 title={item.title}
               />
             ))}

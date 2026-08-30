@@ -45,7 +45,7 @@ const MONEY = '￥';
 /* template/address/index — address list                               */
 /* ------------------------------------------------------------------ */
 
-export function AddressIndexPage({ open }: DemoPageProps) {
+export function AddressIndexPage({ onBack }: DemoPageProps) {
   return (
     <View>
       {DEMO_ADDRESSES.map((item) => (
@@ -74,7 +74,7 @@ export function AddressIndexPage({ open }: DemoPageProps) {
         plain
         text="新建收货地址"
         type="primary"
-        onClick={() => open('address-addSite')}
+        onClick={() => onBack?.()}
       />
     </View>
   );
@@ -185,7 +185,7 @@ export function CitySelectPage(_props: DemoPageProps) {
 /* template/comment/index — comment list                               */
 /* ------------------------------------------------------------------ */
 
-export function CommentIndexPage({ open }: DemoPageProps) {
+export function CommentIndexPage({ onBack }: DemoPageProps) {
   const [comments, setComments] = useState<DemoComment[]>(DEMO_COMMENTS.map((c) => ({ ...c })));
 
   const toggleLike = (index: number) => {
@@ -228,7 +228,7 @@ export function CommentIndexPage({ open }: DemoPageProps) {
                       <Text style={styles.replyText}>{reply.contentStr}</Text>
                     </View>
                   ))}
-                  <Text style={styles.allReply} onPress={() => open('comment-reply')}>
+                  <Text style={styles.allReply} onPress={() => onBack?.()}>
                     共{comment.allReply}条回复 <UPIcon name="arrow-right" size={13} />
                   </Text>
                 </View>
@@ -439,7 +439,7 @@ export function KeyboardPayPage(_props: DemoPageProps) {
 /* template/login/index — phone login                                  */
 /* ------------------------------------------------------------------ */
 
-export function LoginIndexPage({ open }: DemoPageProps) {
+export function LoginIndexPage({ onBack }: DemoPageProps) {
   const [tel, setTel] = useState('');
   const valid = UP.test.mobile(tel);
 
@@ -461,7 +461,7 @@ export function LoginIndexPage({ open }: DemoPageProps) {
         text="获取短信验证码"
         type={valid ? 'warning' : undefined}
         onClick={() => {
-          if (valid) open('login-code');
+          if (valid) onBack?.();
           else UP.toast.default('请输入正确的手机号');
         }}
       />

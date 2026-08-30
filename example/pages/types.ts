@@ -1,12 +1,10 @@
 /**
- * P47 — Shared page props and demo data for the source demo page ports.
- * Data mirrors what the uview-plus demo pages hard-code in their <script>.
+ * Shared page props and demo data for the component demo pages.
  */
-import type { DemoPageId } from './registry';
 
 export interface DemoPageProps {
-  /** Navigate to another page of the set (mirrors uni.navigateTo). */
-  open: (id: DemoPageId) => void;
+  /** Back button handler */
+  onBack?: () => void;
 }
 
 export interface DemoAddress {
@@ -78,7 +76,7 @@ export const DEMO_COMMENTS: readonly DemoComment[] = [
   },
 ];
 
-/** Province / city / area columns for the region picker (address + citySelect). */
+/** Province / city / area columns for the region picker */
 export const DEMO_REGION: readonly { label: string; children: readonly { label: string; children: readonly string[] }[] }[] = [
   {
     label: '广东省',
