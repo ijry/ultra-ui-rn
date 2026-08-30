@@ -7,34 +7,18 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Pressable,
-  type TextStyle,
   type ViewStyle,
 } from 'react-native';
-
-export interface DemoProps {
-  onBack?: () => void;
-}
 
 /* ─── Layout ─── */
 
 export function DemoPage({
-  title,
-  onBack,
   children,
 }: {
-  title: string;
-  onBack?: () => void;
   children: React.ReactNode;
 }) {
   return (
     <ScrollView style={s.container}>
-      <View style={s.header}>
-        <Pressable onPress={onBack} style={s.backBtn}>
-          <Text style={s.backText}>← 返回</Text>
-        </Pressable>
-        <Text style={s.title}>{title}</Text>
-      </View>
       {children}
     </ScrollView>
   );
@@ -48,9 +32,9 @@ export function Section({
   children: React.ReactNode;
 }) {
   return (
-    <View style={s.section}>
-      <Text style={s.sectionTitle}>{title}</Text>
-      <View style={s.demoBox}>{children}</View>
+    <View style={s.demoBlock}>
+      <Text style={s.demoBlockTitle}>{title}</Text>
+      <View style={s.demoBlockContent}>{children}</View>
     </View>
   );
 }
@@ -118,7 +102,7 @@ export function EventLog({ events }: { events: string[] }) {
   return (
     <View style={s.section}>
       <Text style={s.sectionTitle}>事件日志</Text>
-      <View style={s.demoBox}>
+      <View style={s.demoBlockContent}>
         {events.slice(-5).map((e, i) => (
           <Text key={i} style={s.eventText}>{e}</Text>
         ))}
@@ -130,8 +114,6 @@ export function EventLog({ events }: { events: string[] }) {
 /* ─── Styles ─── */
 
 const s = StyleSheet.create({
-  backBtn: { paddingRight: 12 },
-  backText: { color: '#3c9cff', fontSize: 14 },
   cell: {
     borderColor: '#ebeef5',
     borderWidth: StyleSheet.hairlineWidth,
@@ -142,17 +124,21 @@ const s = StyleSheet.create({
     flex: 1,
   },
   container: { backgroundColor: '#f7f8fa', flex: 1 },
-  demoBox: { backgroundColor: '#fff', borderRadius: 8, padding: 12 },
-  eventText: { color: '#67c23a', fontSize: 12, fontFamily: 'monospace', marginBottom: 2 },
-  header: {
+  demoBlock: { marginBottom: 16, paddingHorizontal: 12 },
+  demoBlockContent: {
     backgroundColor: '#fff',
-    borderBottomColor: '#ebeef5',
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderRadius: 8,
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    flexWrap: 'wrap',
+    padding: 12,
   },
+  demoBlockTitle: {
+    color: '#303133',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  eventText: { color: '#67c23a', fontSize: 12, fontFamily: 'monospace', marginBottom: 2 },
   headerCell: {
     backgroundColor: '#f5f7fa',
     color: '#303133',
@@ -169,7 +155,6 @@ const s = StyleSheet.create({
   table: { backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' },
   tableHeader: { flexDirection: 'row' },
   tableRow: { flexDirection: 'row' },
-  title: { color: '#303133', fontSize: 16, fontWeight: '600', flex: 1, textAlign: 'center' },
   typeCell: { color: '#e6a23c', fontFamily: 'monospace' },
   valueLabel: { color: '#909399', fontSize: 12, width: 60 },
   valueRow: { alignItems: 'center', flexDirection: 'row', marginBottom: 4 },

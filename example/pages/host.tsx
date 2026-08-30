@@ -1,6 +1,6 @@
 /**
- * DemoPagesHost - 两级导航：分类 → 组件 → 演示页
- * 按 uview-plus 风格
+ * DemoPagesHost - uview-plus 风格两级导航
+ * 分类列表用 UPCellGroup/UPCell，图标用 UPIcon
  */
 import React, { Suspense, useState } from 'react';
 import {
@@ -11,6 +11,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { UPCell, UPCellGroup, UPIcon } from 'ultra-ui-rn';
 import {
   CATEGORIES,
   COMPONENTS,
@@ -28,12 +29,10 @@ type ViewState =
 // 预加载所有演示组件
 const DEMO_MODULES: Record<string, React.LazyExoticComponent<any>> = {};
 
-// 创建懒加载组件
 function createLazyDemo(componentId: string, category: ComponentCategory) {
   const key = `${category}/${componentId}`;
   if (!DEMO_MODULES[key]) {
     DEMO_MODULES[key] = React.lazy(() => {
-      // 使用 switch 确保 Vite 能静态分析
       switch (category) {
         case 'basic':
           return import(`./components/basic/${componentId}Demo`);
@@ -57,12 +56,11 @@ function createLazyDemo(componentId: string, category: ComponentCategory) {
   return DEMO_MODULES[key];
 }
 
-// 加载状态
 function LoadingFallback() {
   return (
-    <View style={styles.loadingContainer}>
+    <View style={s.loadingContainer}>
       <ActivityIndicator size="large" color="#3c9cff" />
-      <Text style={styles.loadingText}>加载中...</Text>
+      <Text style={s.loadingText}>加载中...</Text>
     </View>
   );
 }
@@ -70,7 +68,6 @@ function LoadingFallback() {
 export function DemoPagesHost() {
   const [view, setView] = useState<ViewState>({ type: 'categories' });
 
-  // 返回上一级
   const goBack = () => {
     if (view.type === 'demo') {
       setView({ type: 'components', category: (view as any).category });
@@ -79,118 +76,83 @@ export function DemoPagesHost() {
     }
   };
 
-  // 渲染分类列表
+  // 分类列表（uview-plus cell-group 风格）
   if (view.type === 'categories') {
     return (
-      <ScrollView contentContainerStyle={styles.indexBody} style={styles.fill}>
-        <Text style={styles.indexTitle}>组件示例</Text>
-        <Text style={styles.indexHint}>
-          共 {COMPONENTS.length} 个组件，分 {CATEGORIES.length} 个分类
-        </Text>
-
-        {CATEGORIES.map(cat => {
-          const count = COMPONENTS.filter(c => c.category === cat.id).length;
-          return (
-            <Pressable
-              key={cat.id}
-              accessibilityRole="button"
-              onPress={() => setView({ type: 'components', category: cat })}
-              style={styles.groupCard}
-              testID={`category-${cat.id}`}
-            >
-              <View style={styles.groupHeader}>
-                <Text style={styles.groupIcon}>{cat.icon}</Text>
-                <View style={styles.groupInfo}>
-                  <Text style={styles.groupTitle}>{cat.title}</Text>
-                  <Text style={styles.groupDescription} numberOfLines={2}>
-                    {cat.description}
-                  </Text>
-                </View>
-                <Text style={styles.groupArrow}>›</Text>
-              </View>
-              <View style={styles.componentList}>
-                {COMPONENTS.filter(c => c.category === cat.id)
-                  .slice(0, 6)
-                  .map(comp => (
-                    <Text key={comp.id} style={styles.componentTag}>
-                      {comp.title.split(' ')[0]}
-                    </Text>
-                  ))}
-                {count > 6 && (
-                  <Text style={styles.moreTag}>+{count - 6}</Text>
-                )}
-              </View>
-            </Pressable>
-          );
-        })}
+      <ScrollView style={s.fill} contentContainerStyle={s.page}>
+        <Text style={s.pageTitle}>组件示例</Text>
+        <UPCellGroup border>
+          {CATEGORIES.map((cat) => {
+            const count = COMPONENTS.filter((c) => c.category === cat.id).length;
+            return (
+              <UPCell
+                key={cat.id}
+                title={cat.title}
+                label={`${count} 个组件`}
+                icon={cat.icon}
+                isLink
+                onClick={() => setView({ type: 'components', category: cat })}
+              />
+            );
+          })}
+        </UPCellGroup>
       </ScrollView>
     );
   }
 
-  // 渲染组件列表
+  // 组件列表
   if (view.type === 'components') {
     const category = view.category;
-    const components = COMPONENTS.filter(c => c.category === category.id);
+    const components = COMPONENTS.filter((c) => c.category === category.id);
 
     return (
-      <View style={styles.fill}>
-        {/* 顶栏 */}
-        <View style={styles.topBar}>
-          <Pressable onPress={goBack} style={styles.backBtn}>
-            <Text style={styles.backText}>← 返回</Text>
+      <View style={s.fill}>
+        <View style={s.topBar}>
+          <Pressable onPress={goBack} style={s.backBtn}>
+            <UPIcon name="arrow-left" customPrefix="uicon" size={16} color="#3c9cff" />
           </Pressable>
-          <Text style={styles.topTitle} numberOfLines={1}>
+          <Text style={s.topTitle} numberOfLines={1}>
             {category.title}
           </Text>
-          <Text style={styles.topHint}>{components.length} 个组件</Text>
+          <Text style={s.topHint}>{components.length}</Text>
         </View>
 
-        {/* 组件列表 */}
-        <ScrollView contentContainerStyle={styles.componentGrid} style={styles.fill}>
-          {components.map(comp => (
-            <Pressable
-              key={comp.id}
-              accessibilityRole="button"
-              onPress={() => setView({ type: 'demo', component: comp })}
-              style={styles.componentCard}
-              testID={`component-${comp.id}`}
-            >
-              <Text style={styles.componentName}>{comp.title.split(' ')[0]}</Text>
-              <Text style={styles.componentNameCn} numberOfLines={1}>
-                {comp.title.split(' ')[1] || ''}
-              </Text>
-              <Text style={styles.componentDesc} numberOfLines={2}>
-                {comp.description}
-              </Text>
-            </Pressable>
-          ))}
+        <ScrollView style={s.fill}>
+          <UPCellGroup border>
+            {components.map((comp) => (
+              <UPCell
+                key={comp.id}
+                title={comp.title.split(' ')[0]}
+                label={comp.title.split(' ')[1] || ''}
+                isLink
+                onClick={() => setView({ type: 'demo', component: comp })}
+              />
+            ))}
+          </UPCellGroup>
         </ScrollView>
       </View>
     );
   }
 
-  // 渲染组件演示
+  // 演示页
   if (view.type === 'demo') {
     const component = view.component;
     const Demo = createLazyDemo(component.id, component.category);
 
     return (
-      <View style={styles.fill}>
-        {/* 顶栏 */}
-        <View style={styles.topBar}>
-          <Pressable onPress={goBack} style={styles.backBtn}>
-            <Text style={styles.backText}>← 返回</Text>
+      <View style={s.fill}>
+        <View style={s.topBar}>
+          <Pressable onPress={goBack} style={s.backBtn}>
+            <UPIcon name="arrow-left" customPrefix="uicon" size={16} color="#3c9cff" />
           </Pressable>
-          <Text style={styles.topTitle} numberOfLines={1}>
+          <Text style={s.topTitle} numberOfLines={1}>
             {component.title}
           </Text>
-          <Text style={styles.topHint}>Props / Events</Text>
         </View>
 
-        {/* 演示内容 */}
-        <ScrollView contentContainerStyle={styles.demoBody} style={styles.fill}>
+        <ScrollView contentContainerStyle={s.demoBody} style={s.fill}>
           <Suspense fallback={<LoadingFallback />}>
-            <Demo {...{ onBack: goBack } as any} />
+            <Demo />
           </Suspense>
         </ScrollView>
       </View>
@@ -200,124 +162,27 @@ export function DemoPagesHost() {
   return null;
 }
 
-const styles = StyleSheet.create({
-  backBtn: { paddingRight: 12 },
-  backText: { color: '#3c9cff', fontSize: 14 },
-  componentCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    padding: 12,
-    width: '48%',
-  },
-  componentDesc: {
-    color: '#909399',
-    fontSize: 11,
-    marginTop: 4,
-  },
-  componentGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    padding: 12,
-  },
-  componentList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 8,
-  },
-  componentTag: {
-    backgroundColor: '#f0f2f5',
-    borderRadius: 3,
-    color: '#606266',
-    fontSize: 10,
-    marginRight: 4,
-    marginBottom: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
+const s = StyleSheet.create({
+  backBtn: { paddingHorizontal: 12, paddingVertical: 8 },
   demoBody: {
     backgroundColor: '#f7f8fa',
-    padding: 16,
     paddingBottom: 56,
   },
   fill: { flex: 1 },
-  groupArrow: {
-    color: '#909399',
-    fontSize: 20,
-  },
-  groupCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    marginHorizontal: 12,
-    marginTop: 12,
-    padding: 12,
-  },
-  groupDescription: {
-    color: '#909399',
-    fontSize: 12,
-    marginTop: 2,
-  },
-  groupHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  groupIcon: {
-    color: '#3c9cff',
-    fontSize: 24,
-    marginRight: 12,
-    width: 32,
-    textAlign: 'center',
-  },
-  groupInfo: { flex: 1 },
-  groupTitle: {
-    color: '#303133',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  indexBody: {
-    backgroundColor: '#f5f7fa',
-    paddingBottom: 48,
-  },
-  indexHint: {
-    color: '#909399',
-    fontSize: 12,
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-  },
-  indexTitle: {
-    color: '#303133',
-    fontSize: 22,
-    fontWeight: '700',
-    padding: 16,
-    paddingBottom: 4,
-  },
   loadingContainer: {
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
     padding: 32,
   },
-  loadingText: {
-    color: '#909399',
-    marginTop: 8,
-  },
-  moreTag: {
-    backgroundColor: '#e4e7ed',
-    borderRadius: 3,
-    color: '#909399',
-    fontSize: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  componentName: {
+  loadingText: { color: '#909399', marginTop: 8 },
+  page: { backgroundColor: '#f5f7fa', paddingBottom: 48 },
+  pageTitle: {
     color: '#303133',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  componentNameCn: {
-    color: '#606266',
-    fontSize: 12,
-    marginTop: 2,
+    fontSize: 22,
+    fontWeight: '700',
+    padding: 16,
+    paddingBottom: 8,
   },
   topBar: {
     alignItems: 'center',
@@ -325,18 +190,18 @@ const styles = StyleSheet.create({
     borderBottomColor: '#ebeef5',
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: 4,
+    paddingVertical: 6,
   },
   topHint: {
     color: '#909399',
-    fontSize: 11,
-    maxWidth: 80,
+    fontSize: 13,
+    paddingRight: 12,
   },
   topTitle: {
     color: '#303133',
     flex: 1,
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: '600',
     textAlign: 'center',
   },
