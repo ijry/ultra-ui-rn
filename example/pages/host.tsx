@@ -70,7 +70,9 @@ export function DemoPagesHost() {
 
   const goBack = () => {
     if (view.type === 'demo') {
-      setView({ type: 'components', category: (view as any).category });
+      const cat = CATEGORIES.find((c) => c.id === view.component.category);
+      if (cat) setView({ type: 'components', category: cat });
+      else setView({ type: 'categories' });
     } else {
       setView({ type: 'categories' });
     }
