@@ -11,7 +11,7 @@ export type UPCouponProps = {
   desc?: string;
   time?: string;
   actionText?: string;
-  shape?: 'coupon' | 'circle';
+  shape?: 'coupon' | 'envelope' | 'card';
   size?: 'small' | 'medium' | 'large';
   circle?: boolean;
   disabled?: boolean;
@@ -21,6 +21,8 @@ export type UPCouponProps = {
   customStyle?: StyleProp<ViewStyle>;
   /** @deprecated React Native has no CSS class runtime. */
   customClass?: string;
+  /** Source `action` slot: replaces the default action button. */
+  actionNode?: React.ReactNode;
   onClick?: () => void;
   /** Source `click` event alias (same timing as `onClick`). */
   onSourceClick?: () => void;
@@ -65,7 +67,10 @@ export function UPCoupon(input: UPCouponProps): React.JSX.Element {
   const bg = props.bgColor || (props.disabled ? '#f0f0f0' : '#ffffff');
   const mainColor = props.disabled ? '#c0c4cc' : props.color || '#303133';
   const accent = props.disabled ? '#c0c4cc' : props.type === 'primary' ? '#2979ff' : '#fa3534';
-  const notch = props.shape === 'circle' || props.circle ? config.radius : config.radius;
+  const notch = config.radius;
+  // Source rounds `envelope`/`card` shapes to 16rpx (8dp) instead of the size preset.
+  const shaped = props.shape === 'envelope' || props.shape === 'card';
+  const radius = shaped ? 8 : config.radius;
 
   return (
     <Pressable
@@ -79,7 +84,7 @@ export function UPCoupon(input: UPCouponProps): React.JSX.Element {
         {
           alignItems: 'center',
           backgroundColor: bg,
-          borderRadius: config.radius,
+          borderRadius: radius,
           flexDirection: 'row',
           height: config.height,
           overflow: 'hidden',
@@ -90,6 +95,10 @@ export function UPCoupon(input: UPCouponProps): React.JSX.Element {
       ]}
       testID="up-coupon"
     >
+      {/* Source `envelope` shape adds a striped rope band across the top. */}
+      {props.shape === 'envelope' ? (
+        <View pointerEvents="none" style={{ backgroundColor: '#ffd000', height: 10, left: 0, position: 'absolute', right: 0, top: 0 }} testID="up-coupon-rope" />
+      ) : null}
       <Notch color={bg} side="left" size={notch} />
       <Notch color={bg} side="right" size={notch} />
       <View
@@ -130,18 +139,20 @@ export function UPCoupon(input: UPCouponProps): React.JSX.Element {
         ) : null}
       </View>
       <View style={{ alignItems: 'center', justifyContent: 'center', paddingRight: 12 }}>
-        <View
-          style={{
-            backgroundColor: accent,
-            borderRadius: 14,
-            opacity: props.disabled ? 0.5 : 1,
-            paddingHorizontal: 14,
-            paddingVertical: 6,
-          }}
-          testID="up-coupon-action"
-        >
-          <Text style={{ color: '#ffffff', fontSize: 12 }}>{props.actionText}</Text>
-        </View>
+        {input.actionNode ?? (
+          <View
+            style={{
+              backgroundColor: accent,
+              borderRadius: 14,
+              opacity: props.disabled ? 0.5 : 1,
+              paddingHorizontal: 14,
+              paddingVertical: 6,
+            }}
+            testID="up-coupon-action"
+          >
+            <Text style={{ color: '#ffffff', fontSize: 12 }}>{props.actionText}</Text>
+          </View>
+        )}
       </View>
     </Pressable>
   );

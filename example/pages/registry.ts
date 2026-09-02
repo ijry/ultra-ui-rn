@@ -107,8 +107,7 @@ export const COMPONENTS: readonly ComponentMeta[] = [
   { id: 'Form', title: 'Form 表单', category: 'form', sourceComponent: 'UPForm', description: '表单组件' },
   { id: 'FormItem', title: 'FormItem 表单项', category: 'form', sourceComponent: 'UPFormItem', description: '表单项组件' },
   { id: 'CodeInput', title: 'CodeInput 验证码输入', category: 'form', sourceComponent: 'UPCodeInput', description: '验证码输入组件' },
-  { id: 'NumberKeyboard', title: 'NumberKeyboard 数字键盘', category: 'form', sourceComponent: 'UPNumberKeyboard', description: '数字键盘组件' },
-  { id: 'CarKeyboard', title: 'CarKeyboard 车牌键盘', category: 'form', sourceComponent: 'UPCarKeyboard', description: '车牌键盘组件' },
+  { id: 'Keyboard', title: 'Keyboard 键盘', category: 'form', sourceComponent: 'UPKeyboard', description: '键盘组件' },
   { id: 'Code', title: 'Code 验证码', category: 'form', sourceComponent: 'UPCode', description: '验证码组件' },
   { id: 'Choose', title: 'Choose 选择器', category: 'form', sourceComponent: 'UPChoose', description: '选择器组件' },
 

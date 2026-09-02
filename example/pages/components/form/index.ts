@@ -16,9 +16,8 @@ export { default as CascaderDemo } from './CascaderDemo';
 export { default as FormDemo } from './FormDemo';
 export { default as FormItemDemo } from './FormItemDemo';
 export { default as CodeInputDemo } from './CodeInputDemo';
-export { default as NumberKeyboardDemo } from './NumberKeyboardDemo';
-export { default as CarKeyboardDemo } from './CarKeyboardDemo';
+export { default as KeyboardDemo } from './KeyboardDemo';
 export { default as CodeDemo } from './CodeDemo';
 export { default as ChooseDemo } from './ChooseDemo';
 
-export const FORM_COMPONENTS = ['Input', 'Textarea', 'Search', 'Switch', 'Checkbox', 'Radio', 'Slider', 'Rate', 'NumberBox', 'Picker', 'DatetimePicker', 'Cascader', 'Form', 'FormItem', 'CodeInput', 'NumberKeyboard', 'CarKeyboard', 'Code', 'Choose'] as const;
+export const FORM_COMPONENTS = ['Input', 'Textarea', 'Search', 'Switch', 'Checkbox', 'Radio', 'Slider', 'Rate', 'NumberBox', 'Picker', 'DatetimePicker', 'Cascader', 'Form', 'FormItem', 'CodeInput', 'Keyboard', 'Code', 'Choose'] as const;

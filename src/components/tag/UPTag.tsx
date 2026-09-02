@@ -40,6 +40,10 @@ export type UPTagProps = {
   /** @deprecated React Native has no CSS class runtime. */
   customClass?: string;
   children?: React.ReactNode;
+  /** Source `icon` slot: replaces the default icon area. */
+  iconNode?: React.ReactNode;
+  /** Source `content` slot: replaces the default text content. */
+  contentNode?: React.ReactNode;
   onClick?: (name: string | number) => void;
   onClose?: (name: string | number) => void;
 };
@@ -93,7 +97,7 @@ export function UPTag(input: UPTagProps): React.JSX.Element | null {
         style={[tagStyle, input.customStyle]}
         testID={input.testID ?? 'up-tag'}
       >
-        {props.icon ? (
+        {input.iconNode ?? (props.icon ? (
           <View style={{ marginRight: 4 }} testID="up-tag-icon">
             {isImage(props.icon) ? (
               <Image source={{ uri: props.icon }} style={{ height: metric.icon, width: metric.icon }} />
@@ -105,10 +109,12 @@ export function UPTag(input: UPTagProps): React.JSX.Element | null {
               />
             )}
           </View>
-        ) : null}
-        <Text style={textStyle} testID="up-tag-text">
-          {input.children ?? props.text}
-        </Text>
+        ) : null)}
+        {input.contentNode ?? (
+          <Text style={textStyle} testID="up-tag-text">
+            {input.children ?? props.text}
+          </Text>
+        )}
       </Pressable>
       {props.closable ? (
         <Pressable

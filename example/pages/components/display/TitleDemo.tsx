@@ -1,36 +1,29 @@
 /**
- * UPTitle 组件示例 — 标题
- * 复刻 uview-plus u-title 页面结构
+ * Title 标题
+ * 严格复刻 uview-plus pages/componentsD/title/title.nvue
  */
 import React from 'react';
-import { View, Text } from 'react-native';
-import { UPTitle } from 'ultra-ui-rn';
-import { DemoPage, Section, PropsTable } from '../_shared';
+import { UPIcon, UPTitle } from 'ultra-ui-rn';
+import { DemoPage, PageItem, PropsTable } from '../_shared';
 
 const PROPS = [
- { prop: 'prefix', type: 'ReactNode', default: '—', desc: '标题前缀' },
- { prop: 'children', type: 'ReactNode', default: '—', desc: '标题内容' },
- { prop: 'customStyle', type: 'ViewStyle', default: '—', desc: '自定义样式' },
+  { prop: 'prefix', type: 'ReactNode', default: '—', desc: '自定义前缀（源 prefix 插槽），默认为竖条标记' },
+  { prop: 'children', type: 'ReactNode', default: '—', desc: '标题内容（源默认插槽）' },
+  { prop: 'customStyle', type: 'ViewStyle', default: '—', desc: '自定义外层样式' },
 ];
 
 export default function TitleDemo() {
- return (
- <DemoPage>
- <Section title="基础用法">
- <UPTitle>组件标题</UPTitle>
- </Section>
+  return (
+    <DemoPage>
+      <PageItem title="默认">
+        <UPTitle>默认标题</UPTitle>
+      </PageItem>
 
- <Section title="带前缀标记">
- <UPTitle prefix={<View style={{ width: 4, height: 16, backgroundColor: '#3c9cff', borderRadius: 2, marginRight: 8 }} />}>
- 带竖线的标题
- </UPTitle>
- </Section>
+      <PageItem title="自定义前缀">
+        <UPTitle prefix={<UPIcon color="red" name="level" size="16px" />}>等级3</UPTitle>
+      </PageItem>
 
- <Section title="自定义颜色">
- <UPTitle customStyle={{ color: '#ff6600' } as any}>橙色标题</UPTitle>
- </Section>
-
- <PropsTable rows={PROPS} />
- </DemoPage>
- );
+      <PropsTable rows={PROPS} />
+    </DemoPage>
+  );
 }

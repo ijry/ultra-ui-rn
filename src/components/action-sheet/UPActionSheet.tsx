@@ -28,6 +28,8 @@ export type UPActionSheetProps = {
   customStyle?: StyleProp<ViewStyle>;
   /** @deprecated React Native has no CSS class runtime. */
   customClass?: string;
+  /** Source default slot: replaces the built-in action list. */
+  children?: React.ReactNode;
   onClose?: () => void;
   onSelect?: (action: UPActionSheetAction) => void;
   onChangeShow?: (show: boolean) => void;
@@ -51,6 +53,7 @@ export function UPActionSheet(input: UPActionSheetProps): React.JSX.Element {
       <View style={input.customStyle} testID="up-action-sheet">
         {props.title ? <Text style={headingStyle}>{props.title}</Text> : null}
         {props.description ? <Text style={descriptionStyle}>{props.description}</Text> : null}
+        {input.children ?? (
         <ScrollView style={{ maxHeight: getPx(props.wrapMaxHeight ?? '600px') }}>
           {props.actions?.map((action, index) => {
             const label = String(action[props.nameKey ?? 'name'] ?? '');
@@ -74,6 +77,7 @@ export function UPActionSheet(input: UPActionSheetProps): React.JSX.Element {
             );
           })}
         </ScrollView>
+        )}
         {props.cancelText ? <Pressable onPress={close} style={{ alignItems: 'center', borderTopColor: '#f3f4f6', borderTopWidth: 6, height: 54, justifyContent: 'center' }} testID="up-action-sheet-cancel"><Text style={{ color: '#303133', fontSize: 16 }}>{props.cancelText}</Text></Pressable> : null}
       </View>
     </UPPopup>

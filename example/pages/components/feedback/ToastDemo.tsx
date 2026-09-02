@@ -1,71 +1,116 @@
 /**
- * UPToast 组件示例 — 轻提示
- * 展示：不同类型、位置、加载中、自定义时长
+ * Toast 消息提示
+ * 严格复刻 uview-plus pages/componentsB/toast/toast.nvue
  */
 import React, { useRef, useState } from 'react';
-import { Pressable, Text } from 'react-native';
-import { UPToast, type UPToastRef } from 'ultra-ui-rn';
-import { DemoPage, Section, PropsTable, EventLog } from '../_shared';
+import { Image, StyleSheet, View } from 'react-native';
+import {
+  UPCell,
+  UPCellGroup,
+  UPGap,
+  UPToast,
+  type UPToastOptions,
+  type UPToastRef,
+} from 'ultra-ui-rn';
+import { EventLog } from '../_shared';
 
-const PROPS = [
- { prop: 'message', type: 'string | number', default: '—', desc: '提示文字' },
- { prop: 'type', type: 'success | error | warning | info | loading | default', default: 'default', desc: '提示类型' },
- { prop: 'icon', type: 'boolean | string', default: '—', desc: '自定义图标' },
- { prop: 'position', type: 'top | center | bottom', default: 'center', desc: '显示位置' },
- { prop: 'duration', type: 'number | string', default: '2000', desc: '持续时间(ms)' },
- { prop: 'loading', type: 'boolean', default: 'false', desc: '加载中状态' },
- { prop: 'overlay', type: 'boolean', default: 'false', desc: '显示遮罩' },
+type ToastEntry = UPToastOptions & { title: string; iconUrl: string };
+
+const list: ToastEntry[] = [
+  {
+    type: 'default',
+    title: '默认主题',
+    message: '锦瑟无端五十弦',
+    iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/toast/default.png',
+  },
+  {
+    type: 'error',
+    icon: false,
+    title: '失败主题(不带图标)',
+    message: '一弦一柱思华年',
+    iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/toast/error.png',
+  },
+  {
+    type: 'success',
+    title: '成功主题(带图标)',
+    message: '庄生晓梦迷蝴蝶',
+    iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/toast/success.png',
+  },
+  {
+    type: 'warning',
+    position: 'top',
+    title: '位置偏移上方',
+    message: '望帝春心托杜鹃',
+    iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/toast/top.png',
+  },
+  {
+    type: 'loading',
+    title: '正在加载',
+    message: '正在加载',
+    iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/toast/loading.png',
+  },
+  {
+    type: 'default',
+    title: '结束后跳转标签页',
+    message: '此情可待成追忆',
+    url: '/pages/componentsB/tag/tag',
+    iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/toast/jump.png',
+  },
+  {
+    type: 'default',
+    title: '其它icon图标',
+    icon: 'photo',
+    message: '只是当时已惘然',
+    iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/toast/default.png',
+  },
+  {
+    type: 'default',
+    title: '自定义图片图标',
+    icon: 'https://uview-plus.jiangruyi.com/uview/demo/toast/jump.png',
+    message: '只是当时已惘然',
+    iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/toast/default.png',
+  },
 ];
 
-function Btn({ label, onPress }: { label: string; onPress: () => void }) {
- return (
- <Pressable
- onPress={onPress}
- style={{ backgroundColor: '#3c9cff', borderRadius: 6, marginBottom: 8, paddingVertical: 10, paddingHorizontal: 16 }}
- >
- <Text style={{ color: '#fff', fontSize: 14, textAlign: 'center' }}>{label}</Text>
- </Pressable>
- );
-}
-
 export default function ToastDemo() {
- const toastRef = useRef<UPToastRef>(null);
- const [events, setEvents] = useState<string[]>([]);
- const log = (e: string) => setEvents((p) => [...p, e]);
+  const toast = useRef<UPToastRef>(null);
+  const [events, setEvents] = useState<string[]>([]);
 
- const show = (opts: { message: string; type?: string; position?: string; duration?: number; loading?: boolean }) => {
- toastRef.current?.show(opts as any);
- log(`show: ${opts.message}`);
- };
+  const showToast = (entry: ToastEntry) => {
+    const { title, iconUrl, url, ...options } = entry;
+    toast.current?.show({
+      ...options,
+      overlay: true,
+      // 源在 complete 里 uni.navigateTo；RN 侧无页面栈，记录到事件日志。
+      complete: () => {
+        if (url) setEvents((prev) => [...prev, `complete → ${url}`]);
+      },
+    });
+  };
 
- return (
- <DemoPage>
- <UPToast ref={toastRef} />
-
- <Section title="不同类型">
- <Btn label="✅ 成功" onPress={() => show({ message: '操作成功', type: 'success' })} />
- <Btn label="❌ 错误" onPress={() => show({ message: '操作失败', type: 'error' })} />
- <Btn label="⚠️ 警告" onPress={() => show({ message: '请注意', type: 'warning' })} />
- <Btn label="ℹ️ 信息" onPress={() => show({ message: '提示信息', type: 'info' })} />
- <Btn label="纯文字" onPress={() => show({ message: '这是一段文字' })} />
- </Section>
-
- <Section title="位置">
- <Btn label="顶部" onPress={() => show({ message: '顶部提示', position: 'top' })} />
- <Btn label="中间" onPress={() => show({ message: '中间提示', position: 'center' })} />
- <Btn label="底部" onPress={() => show({ message: '底部提示', position: 'bottom' })} />
- </Section>
-
- <Section title="加载中">
- <Btn label="加载中 (3秒)" onPress={() => show({ message: '加载中...', loading: true, duration: 3000 })} />
- </Section>
-
- <Section title="自定义时长">
- <Btn label="持续5秒" onPress={() => show({ message: '持续5秒', duration: 5000 })} />
- </Section>
-
- <PropsTable rows={PROPS} />
- <EventLog events={events} />
- </DemoPage>
- );
+  return (
+    <View style={s.page}>
+      <UPGap height={30} />
+      <UPToast ref={toast} />
+      <UPCellGroup>
+        {list.map((item) => (
+          <UPCell
+            iconNode={<Image source={{ uri: item.iconUrl }} style={s.cellIcon} />}
+            isLink
+            key={item.title}
+            onClick={() => showToast(item)}
+            title={item.title}
+            titleStyle={s.cellTitle}
+          />
+        ))}
+      </UPCellGroup>
+      <EventLog events={events} />
+    </View>
+  );
 }
+
+const s = StyleSheet.create({
+  cellIcon: { height: 18, marginRight: 4, width: 18 },
+  cellTitle: { fontWeight: '500' },
+  page: { flex: 1, padding: 0 },
+});

@@ -1,70 +1,110 @@
 /**
- * UPSteps 组件示例 — 步骤条
- * 展示：水平步骤、垂直步骤、带图标、自定义颜色
+ * Steps 步骤条
+ * 严格复刻 uview-plus pages/componentsC/steps/steps.vue
  */
 import React, { useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { UPSteps, UPStepsItem } from 'ultra-ui-rn';
-import { DemoPage, Section, Value, PropsTable, EventLog } from '../_shared';
+import { DemoPage, Section, PropsTable } from '../_shared';
 
 const PROPS = [
- { prop: 'current', type: 'number | string', default: '0', desc: '当前步骤索引' },
- { prop: 'direction', type: 'row | column', default: 'row', desc: '排列方向' },
- { prop: 'activeColor', type: 'string', default: '#3c9cff', desc: '激活颜色' },
- { prop: 'inactiveColor', type: 'string', default: '#969799', desc: '未激活颜色' },
- { prop: 'dot', type: 'boolean', default: 'false', desc: '点状模式' },
+  { prop: 'current', type: 'number | string', default: '0', desc: '设置当前处于第几步' },
+  { prop: 'direction', type: "'row' | 'column'", default: "'row'", desc: '步骤条方向' },
+  { prop: 'activeColor', type: 'string', default: '#3c9cff', desc: '激活状态颜色' },
+  { prop: 'inactiveColor', type: 'string', default: '#969799', desc: '未激活状态颜色' },
+  { prop: 'activeIcon', type: 'string', default: '—', desc: '激活状态的图标' },
+  { prop: 'inactiveIcon', type: 'string', default: '—', desc: '未激活状态的图标' },
+  { prop: 'dot', type: 'boolean', default: 'false', desc: '是否显示点类型' },
+  { prop: 'title', type: 'string', default: '—', desc: '标题（StepsItem）' },
+  { prop: 'desc', type: 'string', default: '—', desc: '描述文字（StepsItem）' },
+  { prop: 'error', type: 'boolean', default: 'false', desc: '当前步骤是否为错误状态（StepsItem）' },
+  { prop: 'iconNode', type: 'ReactNode', default: '—', desc: '自定义图标（源 icon 插槽）' },
 ];
 
 export default function StepsDemo() {
- const [step, setStep] = useState(1);
- const [events, setEvents] = useState<string[]>([]);
- const log = (e: string) => setEvents((p) => [...p, e]);
+  const [current1] = useState(1);
 
- return (
- <DemoPage>
- <Section title="水平步骤">
- <UPSteps current={step}>
- <UPStepsItem title="下单" />
- <UPStepsItem title="支付" />
- <UPStepsItem title="完成" />
- </UPSteps>
- <View style={{ flexDirection: 'row', gap: 12, marginTop: 16, justifyContent: 'center' }}>
- <Pressable onPress={() => { setStep(Math.max(0, step - 1)); log(`prev: ${step - 1}`); }} style={{ backgroundColor: '#e4e7ed', borderRadius: 6, paddingHorizontal: 16, paddingVertical: 8 }}>
- <Text>上一步</Text>
- </Pressable>
- <Pressable onPress={() => { setStep(Math.min(2, step + 1)); log(`next: ${step + 1}`); }} style={{ backgroundColor: '#3c9cff', borderRadius: 6, paddingHorizontal: 16, paddingVertical: 8 }}>
- <Text style={{ color: '#fff' }}>下一步</Text>
- </Pressable>
- </View>
- <Value label="当前步骤" value={step} />
- </Section>
+  return (
+    <DemoPage>
+      <Section title="基础演示">
+        <UPSteps current={current1}>
+          <UPStepsItem desc="10:30" itemStyle={s.firstItem} title="已下单" />
+          <UPStepsItem desc="10:35" title="已出库" />
+          <UPStepsItem desc="11:40" title="运输中" />
+          <UPStepsItem desc="19:50" title="已签收" />
+          <UPStepsItem desc="20:10" title="已拒收" />
+          <UPStepsItem desc="23:20" title="已退回" />
+        </UPSteps>
+      </Section>
 
- <Section title="垂直步骤">
- <UPSteps current={1} direction="column">
- <UPStepsItem title="填写信息" />
- <UPStepsItem title="审核中" />
- <UPStepsItem title="已完成" />
- </UPSteps>
- </Section>
+      <Section title="显示点类型">
+        <UPSteps current={1} dot>
+          <UPStepsItem desc="10:30" title="已下单" />
+          <UPStepsItem desc="10:35" title="已出库" />
+          <UPStepsItem desc="11:40" title="运输中" />
+        </UPSteps>
+        <UPSteps current={1} direction="column" dot>
+          <UPStepsItem desc="10:30" title="已下单" />
+          <UPStepsItem desc="10:35" title="已出库" />
+          <UPStepsItem desc="11:40" title="运输中" />
+        </UPSteps>
+      </Section>
 
- <Section title="自定义颜色 + 完成描述">
- <UPSteps current={2} activeColor="#07c160">
- <UPStepsItem title="步骤一" desc="已完成描述" />
- <UPStepsItem title="步骤二" desc="已完成描述" />
- <UPStepsItem title="步骤三" desc="当前步骤" />
- </UPSteps>
- </Section>
+      <Section title="错误状态">
+        <UPSteps current={1}>
+          <UPStepsItem desc="10:30" title="已下单" />
+          <UPStepsItem desc="10:35" error title="仓库着火" />
+          <UPStepsItem desc="11:40" title="破产清算" />
+        </UPSteps>
+      </Section>
 
- <Section title="点状步骤">
- <UPSteps current={1} dot>
- <UPStepsItem title="第一步" />
- <UPStepsItem title="第二步" />
- <UPStepsItem title="第三步" />
- </UPSteps>
- </Section>
+      <Section title="自定义图标">
+        <UPSteps activeIcon="checkmark" current={1} inactiveIcon="arrow-right">
+          <UPStepsItem desc="10:30" title="已下单" />
+          <UPStepsItem desc="10:35" title="已出库" />
+          <UPStepsItem desc="11:40" title="运输中" />
+        </UPSteps>
+      </Section>
 
- <PropsTable rows={PROPS} />
- <EventLog events={events} />
- </DemoPage>
- );
+      <Section title="自定义插槽">
+        <UPSteps current={1}>
+          <UPStepsItem desc="10:30" title="已下单" />
+          <UPStepsItem desc="10:35" title="已出库" />
+          <UPStepsItem desc="11:40" iconNode={<Text style={s.slotIcon}>运</Text>} title="运输中" />
+        </UPSteps>
+      </Section>
+
+      <Section title="自定义颜色">
+        <UPSteps activeColor="#3c9cff" current={1}>
+          <UPStepsItem desc="10:30" title="已下单" />
+          <UPStepsItem desc="10:35" title="已出库" />
+          <UPStepsItem desc="11:40" title="运输中" />
+        </UPSteps>
+      </Section>
+
+      <Section title="竖向展示">
+        <UPSteps current={1} direction="column">
+          <UPStepsItem desc="10:30" title="已下单" />
+          <UPStepsItem desc="10:35" title="已出库" />
+          <UPStepsItem desc="11:40" title="运输中" />
+        </UPSteps>
+      </Section>
+
+      <PropsTable rows={PROPS} />
+    </DemoPage>
+  );
 }
+
+const s = StyleSheet.create({
+  firstItem: { backgroundColor: '#eee' },
+  slotIcon: {
+    backgroundColor: '#f9ae3d',
+    borderRadius: 100,
+    color: '#fff',
+    fontSize: 12,
+    height: 21,
+    lineHeight: 21,
+    textAlign: 'center',
+    width: 21,
+  },
+});

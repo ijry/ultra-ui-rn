@@ -20,6 +20,8 @@ export type UPNotifyOptions = {
 
 export type UPNotifyProps = UPNotifyOptions & {
   show?: boolean;
+  /** Source `icon` slot: replaces the default type icon. */
+  iconNode?: React.ReactNode;
   onChangeShow?: (show: boolean) => void;
 };
 
@@ -66,7 +68,7 @@ export const UPNotify = forwardRef<UPNotifyRef, UPNotifyProps>(function UPNotify
   const type = effective.type ?? 'primary';
   return (
     <View style={[{ alignItems: 'center', backgroundColor: effective.bgColor || colors[type], flexDirection: 'row', left: 0, minHeight: 40, paddingHorizontal: 10, paddingVertical: 8, position: 'absolute', right: 0, top: getPx(effective.top ?? 0) + (effective.safeAreaInsetTop ? insets.top : 0), zIndex: 10076 }, effective.customStyle]} testID="up-notify">
-      {type !== 'primary' ? <UPIcon color={effective.color} name={icons[type]} size={17} /> : null}
+      {input.iconNode ?? (type !== 'primary' ? <UPIcon color={effective.color} name={icons[type]} size={17} /> : null)}
       <Text style={{ color: effective.color, flex: 1, fontSize: getPx(effective.fontSize ?? 15), marginLeft: type === 'primary' ? 0 : 5, textAlign: 'center' }}>{effective.message}</Text>
     </View>
   );

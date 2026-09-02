@@ -1,63 +1,77 @@
 /**
- * UPLine 组件示例 — 分割线
- * 展示：水平/垂直、虚线、自定义颜色
+ * Line 线条
+ * 严格复刻 uview-plus pages/componentsA/line/line.nvue
  */
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { UPLine } from 'ultra-ui-rn';
 import { DemoPage, Section, PropsTable } from '../_shared';
 
 const PROPS = [
- { prop: 'color', type: 'string', default: "'#ebeef5'", desc: '线条颜色' },
- { prop: 'length', type: 'number | string', default: '100%', desc: '长度' },
- { prop: 'direction', type: "'row' | 'col'", default: "'row'", desc: '方向' },
- { prop: 'hairline', type: 'boolean', default: 'true', desc: '1px细线' },
- { prop: 'dashed', type: 'boolean', default: 'false', desc: '虚线' },
- { prop: 'margin', type: 'number | string', default: '0', desc: '外边距' },
+  { prop: 'color', type: 'string', default: '#d6d7d9', desc: '线条颜色' },
+  { prop: 'length', type: 'number | string', default: "'100%'", desc: '线条长度（横向为宽，竖向为高）' },
+  { prop: 'direction', type: "'row' | 'col'", default: "'row'", desc: '线条方向' },
+  { prop: 'hairline', type: 'boolean', default: 'true', desc: '是否显示 0.5px 细线' },
+  { prop: 'margin', type: 'number | string', default: '0', desc: '线条与上下左右元素的间距' },
+  { prop: 'dashed', type: 'boolean', default: 'false', desc: '是否虚线' },
 ];
 
-export default function LineDemo() {
- return (
- <DemoPage>
- <Section title="水平分割线">
- <Text>上方内容</Text>
- <UPLine />
- <Text>下方内容</Text>
- </Section>
-
- <Section title="自定义颜色">
- <Text>内容</Text>
- <UPLine color="#3c9cff" />
- <Text>内容</Text>
- </Section>
-
- <Section title="虚线">
- <Text>内容</Text>
- <UPLine dashed color="#999" />
- <Text>内容</Text>
- </Section>
-
- <Section title="垂直分割线">
- <View style={ln.row}>
- <Text>左</Text>
- <UPLine direction="col" length={20} margin={12} color="#999" />
- <Text>中</Text>
- <UPLine direction="col" length={20} margin={12} color="#999" />
- <Text>右</Text>
- </View>
- </Section>
-
- <Section title="非 hairline">
- <Text>内容</Text>
- <UPLine hairline={false} color="#ff6600" />
- <Text>内容</Text>
- </Section>
-
- <PropsTable rows={PROPS} />
- </DemoPage>
- );
+/** Upstream wraps each line in `.u-page__line-item` (`margin-top: 5px`). */
+function Item({ children }: { children: React.ReactNode }) {
+  return <View style={s.item}>{children}</View>;
 }
 
-const ln = StyleSheet.create({
- row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12 },
+export default function LineDemo() {
+  return (
+    <DemoPage>
+      <Section contentStyle={s.flush} title="基本案例">
+        <Item>
+          <UPLine />
+        </Item>
+      </Section>
+
+      <Section contentStyle={s.flush} title="自定义颜色">
+        <Item>
+          <UPLine color="#2979ff" />
+        </Item>
+      </Section>
+
+      <Section contentStyle={s.flush} title="自定义长度">
+        <Item>
+          <UPLine length="200" />
+        </Item>
+      </Section>
+
+      <Section contentStyle={s.flush} title="自定义方向">
+        <Item>
+          <UPLine color="#2979ff" direction="col" length="30" />
+        </Item>
+      </Section>
+
+      <Section contentStyle={s.flush} title="是否显示1px粗线条">
+        <Item>
+          <UPLine hairline={false} />
+        </Item>
+      </Section>
+
+      <Section contentStyle={s.flush} title="线条与上下左右元素的间距">
+        <Item>
+          <UPLine margin="20" />
+        </Item>
+      </Section>
+
+      <Section contentStyle={s.flush} title="是否虚线">
+        <Item>
+          <UPLine color="#2979ff" dashed />
+        </Item>
+      </Section>
+
+      <PropsTable rows={PROPS} />
+    </DemoPage>
+  );
+}
+
+const s = StyleSheet.create({
+  flush: { paddingVertical: 8 },
+  item: { marginTop: 5 },
 });

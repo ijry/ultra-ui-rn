@@ -21,6 +21,10 @@ export type UPShortVideoProps = {
   /** Video player is a React Native boundary: inject `renderVideo` (e.g. react-native-video).
    *  Player events (onVideoPlay/onVideoPause/…) should be forwarded from the injected player. */
   renderVideo?: (item: UPShortVideoItem, index: number) => React.ReactNode;
+  /** Source `actions` slot: replaces the right-side action rail per video. */
+  renderActions?: (item: UPShortVideoItem, index: number) => React.ReactNode;
+  /** Source `tabbar` slot: rendered pinned at the bottom of the pager. */
+  renderTabbar?: () => React.ReactNode;
   customStyle?: StyleProp<ViewStyle>;
   /** @deprecated React Native has no CSS class runtime. */
   customClass?: string;
@@ -125,14 +129,16 @@ export function UPShortVideo(input: UPShortVideoProps): React.JSX.Element {
               </Pressable>
             )}
             {/* right action rail */}
-            <View style={{ bottom: 120, position: 'absolute', right: 12, zIndex: 5 }}>
-              {(['like', 'comment', 'share', 'collect'] as const).map((action) => (
-                <Pressable key={action} onPress={() => emitAction(action, index)} style={{ alignItems: 'center', marginBottom: 18 }} testID={`up-short-video-${action}-${index}`}>
-                  <Text style={{ color: '#ffffff', fontSize: 26 }}>{action === 'like' ? '♥' : action === 'comment' ? '💬' : action === 'share' ? '↗' : '★'}</Text>
-                  <Text style={{ color: '#ffffff', fontSize: 12, marginTop: 2 }}>{action}</Text>
-                </Pressable>
-              ))}
-            </View>
+            {props.renderActions?.(item, index) ?? (
+              <View style={{ bottom: 120, position: 'absolute', right: 12, zIndex: 5 }}>
+                {(['like', 'comment', 'share', 'collect'] as const).map((action) => (
+                  <Pressable key={action} onPress={() => emitAction(action, index)} style={{ alignItems: 'center', marginBottom: 18 }} testID={`up-short-video-${action}-${index}`}>
+                    <Text style={{ color: '#ffffff', fontSize: 26 }}>{action === 'like' ? '♥' : action === 'comment' ? '💬' : action === 'share' ? '↗' : '★'}</Text>
+                    <Text style={{ color: '#ffffff', fontSize: 12, marginTop: 2 }}>{action}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
           </View>
         ))}
       </ScrollView>
@@ -159,6 +165,7 @@ export function UPShortVideo(input: UPShortVideoProps): React.JSX.Element {
           </Pressable>
         </View>
       ) : null}
+      {props.renderTabbar?.()}
     </View>
   );
 }

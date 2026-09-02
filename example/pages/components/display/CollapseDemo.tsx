@@ -1,73 +1,119 @@
 /**
- * UPCollapse 组件示例 — 折叠面板
- * 展示：基础折叠、手风琴模式、自定义内容
+ * Collapse 折叠面板
+ * 严格复刻 uview-plus pages/componentsB/collapse/collapse.nvue
  */
 import React, { useState } from 'react';
-import { Text } from 'react-native';
-import { UPCollapse, UPCollapseItem } from 'ultra-ui-rn';
-import { DemoPage, Section, Value, PropsTable, EventLog } from '../_shared';
+import { StyleSheet, Text } from 'react-native';
+import { UPCollapse, UPCollapseItem, UPGap, UPIcon } from 'ultra-ui-rn';
+import { DemoPage, PageItem, PropsTable, EventLog } from '../_shared';
 
 const PROPS = [
- { prop: 'value', type: 'Name | Name[] | null', default: 'null', desc: '当前展开项（v-model）' },
- { prop: 'accordion', type: 'boolean', default: 'false', desc: '手风琴模式（只展开一个）' },
- { prop: 'border', type: 'boolean', default: 'true', desc: '显示外边框' },
+  { prop: 'value', type: 'Name | Name[]', default: '—', desc: '当前展开项的 name（v-model）' },
+  { prop: 'accordion', type: 'boolean', default: 'false', desc: '是否手风琴模式' },
+  { prop: 'border', type: 'boolean', default: 'true', desc: '是否显示外边框' },
+  { prop: 'onChange', type: '(items) => void', default: '—', desc: '面板状态改变时触发' },
+  { prop: 'onOpen', type: '(name) => void', default: '—', desc: '某个面板展开时触发' },
+  { prop: 'onClose', type: '(name) => void', default: '—', desc: '某个面板收起时触发' },
 ];
 
+const DOCS = '涵盖uniapp各个方面，给开发者方向指导和设计理念，让您茅塞顿开，一马平川';
+const COMPONENTS = '众多组件覆盖开发过程的各个需求，组件功能丰富，多端兼容。让您快速集成，开箱即用';
+const TOOLS = '众多的贴心小工具，是您开发过程中召之即来的利器，让您飞镖在手，百步穿杨';
+
 export default function CollapseDemo() {
- const [active, setActive] = useState<string[]>([]);
- const [events, setEvents] = useState<string[]>([]);
- const log = (e: string) => setEvents((p) => [...p, e]);
+  const [events, setEvents] = useState<string[]>([]);
+  const log = (label: string, payload: unknown) =>
+    setEvents((prev) => [...prev, `${label}: ${JSON.stringify(payload)}`]);
 
- return (
- <DemoPage>
- <Section title="手风琴模式（同时只展开一个）">
- <UPCollapse accordion onChange={(items) => log(`accordion: ${JSON.stringify(items)}`)}>
- <UPCollapseItem title="商品详情" name="1">
- <Text style={{ color: '#606266', lineHeight: 22 }}>
- 这是商品的详细信息，包括规格、材质、产地等。{'\n'}可以放任意 React 内容。
- </Text>
- </UPCollapseItem>
- <UPCollapseItem title="用户评价" name="2">
- <Text style={{ color: '#606266', lineHeight: 22 }}>
- 用户评价内容区域。好评率 98%。
- </Text>
- </UPCollapseItem>
- <UPCollapseItem title="售后服务" name="3">
- <Text style={{ color: '#606266', lineHeight: 22 }}>
- 7天无理由退换，1年质保。
- </Text>
- </UPCollapseItem>
- </UPCollapse>
- </Section>
+  return (
+    <DemoPage>
+      <PageItem title="基础功能">
+        <UPCollapse
+          onChange={(items) => log('change', items)}
+          onClose={(name) => log('close', name)}
+          onOpen={(name) => log('open', name)}
+        >
+          <UPCollapseItem name="Docs guide" title="文档指南">
+            <Text style={s.content}>{DOCS}</Text>
+          </UPCollapseItem>
+          <UPCollapseItem name="Variety components" title="组件全面">
+            <Text style={s.content}>{COMPONENTS}</Text>
+          </UPCollapseItem>
+          <UPCollapseItem name="Numerous tools" showRight={false} title="众多利器">
+            <Text style={s.content}>{TOOLS}</Text>
+          </UPCollapseItem>
+        </UPCollapse>
+      </PageItem>
 
- <Section title="多选模式">
- <UPCollapse value={active} onChange={(items) => { setActive(items.map(i => String(i))); log(`multi: ${JSON.stringify(items)}`); }}>
- <UPCollapseItem title="选项一" name="a">
- <Text style={{ color: '#606266' }}>选项一的内容</Text>
- </UPCollapseItem>
- <UPCollapseItem title="选项二" name="b">
- <Text style={{ color: '#606266' }}>选项二的内容</Text>
- </UPCollapseItem>
- <UPCollapseItem title="选项三" name="c">
- <Text style={{ color: '#606266' }}>选项三的内容</Text>
- </UPCollapseItem>
- </UPCollapse>
- <Value label="展开项" value={JSON.stringify(active)} />
- </Section>
+      <PageItem title="展开和禁用">
+        <UPCollapse value={['2']}>
+          <UPCollapseItem title="文档指南">
+            <Text style={s.content}>{DOCS}</Text>
+          </UPCollapseItem>
+          <UPCollapseItem disabled title="组件全面">
+            <Text style={s.content}>{COMPONENTS}</Text>
+          </UPCollapseItem>
+          <UPCollapseItem name="2" title="众多利器">
+            <Text style={s.content}>{TOOLS}</Text>
+          </UPCollapseItem>
+        </UPCollapse>
+      </PageItem>
 
- <Section title="禁用项">
- <UPCollapse accordion>
- <UPCollapseItem title="可展开" name="ok">
- <Text style={{ color: '#606266' }}>正常内容</Text>
- </UPCollapseItem>
- <UPCollapseItem title="禁用" name="disabled" disabled>
- <Text style={{ color: '#606266' }}>不可展开</Text>
- </UPCollapseItem>
- </UPCollapse>
- </Section>
+      <PageItem title="手风琴模式">
+        <UPCollapse accordion>
+          <UPCollapseItem title="文档指南">
+            <Text style={s.content}>{DOCS}</Text>
+          </UPCollapseItem>
+          <UPCollapseItem title="组件全面">
+            <Text style={s.content}>{COMPONENTS}</Text>
+          </UPCollapseItem>
+          <UPCollapseItem title="众多利器">
+            <Text style={s.content}>{TOOLS}</Text>
+          </UPCollapseItem>
+        </UPCollapse>
+      </PageItem>
 
- <PropsTable rows={PROPS} />
- <EventLog events={events} />
- </DemoPage>
- );
+      <PageItem title="移除下划线">
+        <UPCollapse accordion border={false}>
+          <UPCollapseItem title="文档指南">
+            <Text style={s.content}>{DOCS}</Text>
+          </UPCollapseItem>
+          <UPCollapseItem title="组件全面">
+            <Text style={s.content}>{COMPONENTS}</Text>
+          </UPCollapseItem>
+          <UPCollapseItem title="众多利器">
+            <Text style={s.content}>{TOOLS}</Text>
+          </UPCollapseItem>
+        </UPCollapse>
+      </PageItem>
+
+      <PageItem title="自定义标题和内容">
+        <UPCollapse accordion>
+          <UPCollapseItem titleNode={<Text style={s.slotTitle}>文档指南</Text>}>
+            <Text style={s.content}>{DOCS}</Text>
+          </UPCollapseItem>
+          <UPCollapseItem iconNode={<UPIcon name="tags-fill" size={20} />} title="组件全面">
+            <Text style={s.content}>{COMPONENTS}</Text>
+          </UPCollapseItem>
+          <UPCollapseItem
+            icon="tags-fill"
+            rightIconNode={<Text style={s.slotTitle}>10</Text>}
+            title="众多利器"
+          >
+            <Text style={s.content}>{TOOLS}</Text>
+          </UPCollapseItem>
+        </UPCollapse>
+      </PageItem>
+
+      <UPGap height={50} />
+
+      <EventLog events={events} />
+      <PropsTable rows={PROPS} />
+    </DemoPage>
+  );
 }
+
+const s = StyleSheet.create({
+  content: { color: '#909193', fontSize: 14 },
+  slotTitle: { color: '#3c9cff', fontSize: 14 },
+});

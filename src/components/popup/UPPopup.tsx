@@ -41,6 +41,8 @@ export type UPPopupProps = {
   customClass?: string;
   children?: React.ReactNode;
   bottom?: React.ReactNode;
+  /** Source `trigger` slot: rendered in place, opens the popup when pressed. */
+  trigger?: React.ReactNode;
   onOpen?: () => void;
   onClose?: () => void;
   onChangeShow?: (show: boolean) => void;
@@ -148,6 +150,11 @@ export function UPPopup(input: UPPopupProps): React.JSX.Element | null {
     input.onChangeShow?.(false);
     input.onClose?.();
   };
+  const triggerNode = input.trigger ? (
+    <Pressable onPress={() => input.onChangeShow?.(true)} testID="up-popup-trigger">
+      {input.trigger}
+    </Pressable>
+  ) : null;
 
   useEffect(() => {
     if (!shown) {
@@ -164,7 +171,12 @@ export function UPPopup(input: UPPopupProps): React.JSX.Element | null {
   }, [id, input, overlay, props, shown]);
 
   if (props.pageInline && shown) {
-    return <PopupLayer props={props} requestClose={requestClose} />;
+    return (
+      <>
+        {triggerNode}
+        <PopupLayer props={props} requestClose={requestClose} />
+      </>
+    );
   }
-  return null;
+  return triggerNode;
 }

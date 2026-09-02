@@ -45,6 +45,8 @@ export type UPAlertProps = {
   customStyle?: StyleProp<ViewStyle>;
   /** @deprecated React Native has no CSS class runtime. */
   customClass?: string;
+  /** Source `close` slot: replaces the default close icon. */
+  closeNode?: React.ReactNode;
   onClick?: (event: GestureResponderEvent) => void;
   onClose?: () => void;
   onClosed?: () => void;
@@ -122,7 +124,9 @@ export function UPAlert(input: UPAlertProps): React.JSX.Element | null {
           style={{ position: 'absolute', right: 10, top: 10 }}
           testID="up-alert-close"
         >
-          <UPIcon color={dark ? '#ffffff' : textColor} name="close" size={15} />
+          {input.closeNode ?? (
+            <UPIcon color={dark ? '#ffffff' : textColor} name="close" size={15} />
+          )}
         </Pressable>
       ) : null}
     </Pressable>

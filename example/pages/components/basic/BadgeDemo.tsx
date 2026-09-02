@@ -1,73 +1,99 @@
 /**
  * UPBadge 组件示例 — 徽标
- * 复刻 uview-plus u-badge 页面结构
+ * 复刻 uview-plus pages/componentsB/badge/badge.nvue
  */
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { UPBadge } from 'ultra-ui-rn';
 import { DemoPage, Section, PropsTable } from '../_shared';
 
 const PROPS = [
- { prop: 'isDot', type: 'boolean', default: 'false', desc: '圆点模式' },
- { prop: 'value', type: 'string | number', default: '—', desc: '徽标值' },
- { prop: 'show', type: 'boolean', default: 'true', desc: '是否显示' },
- { prop: 'max', type: 'number', default: '99', desc: '最大值' },
- { prop: 'type', type: "'info' | 'primary' | 'success' | 'warning' | 'error'", default: "'error'", desc: '类型' },
- { prop: 'shape', type: "'circle' | 'horn'", default: "'circle'", desc: '形状' },
- { prop: 'numberType', type: "'overflow' | 'ellipsis' | 'limit'", default: "'overflow'", desc: '数字处理方式' },
- { prop: 'offset', type: '[number, number?]', default: '—', desc: '偏移量' },
- { prop: 'bgColor', type: 'string', default: '—', desc: '背景色' },
- { prop: 'color', type: 'string', default: '—', desc: '文字颜色' },
+  { prop: 'isDot', type: 'boolean', default: 'false', desc: '是否显示圆点' },
+  { prop: 'value', type: 'string | number', default: '—', desc: '显示的内容' },
+  { prop: 'modelValue', type: 'string | number', default: '—', desc: 'value 的别名，value 优先' },
+  { prop: 'show', type: 'boolean', default: 'true', desc: '是否显示徽标' },
+  { prop: 'max', type: 'string | number', default: '999', desc: '最大值，超出显示 max+' },
+  { prop: 'type', type: "'info' | 'primary' | 'success' | 'warning' | 'error'", default: "'error'", desc: '主题类型' },
+  { prop: 'showZero', type: 'boolean', default: 'false', desc: 'value 为 0 时是否显示' },
+  { prop: 'bgColor', type: 'string | null', default: 'null', desc: '背景颜色，优先于 type' },
+  { prop: 'color', type: 'string | null', default: 'null', desc: '文字颜色' },
+  { prop: 'shape', type: "'circle' | 'horn'", default: "'circle'", desc: '徽标形状，horn 为左下角直角' },
+  { prop: 'numberType', type: "'overflow' | 'ellipsis' | 'limit'", default: "'overflow'", desc: '数字显示方式' },
+  { prop: 'offset', type: '[UPDimension, UPDimension?]', default: '—', desc: '位置偏移，absolute 时生效' },
+  { prop: 'inverted', type: 'boolean', default: 'false', desc: '是否反转背景和字体颜色' },
+  { prop: 'absolute', type: 'boolean', default: 'false', desc: '是否绝对定位' },
 ];
 
-export default function BadgeDemo() {
- return (
- <DemoPage>
- <Section title="基础用法">
- <View style={bd.row}>
- <UPBadge value={5}>
- <View style={bd.box}><Text>消息</Text></View>
- </UPBadge>
- <UPBadge value={100} max={99}>
- <View style={bd.box}><Text>邮件</Text></View>
- </UPBadge>
- <UPBadge isDot>
- <View style={bd.box}><Text>通知</Text></View>
- </UPBadge>
- </View>
- </Section>
-
- <Section title="类型">
- <View style={bd.row}>
- <UPBadge type="info" value="info"><View style={bd.box}><Text>info</Text></View></UPBadge>
- <UPBadge type="primary" value="primary"><View style={bd.box}><Text>primary</Text></View></UPBadge>
- <UPBadge type="success" value="success"><View style={bd.box}><Text>success</Text></View></UPBadge>
- <UPBadge type="warning" value="warning"><View style={bd.box}><Text>warning</Text></View></UPBadge>
- <UPBadge type="error" value="error"><View style={bd.box}><Text>error</Text></View></UPBadge>
- </View>
- </Section>
-
- <Section title="自定义颜色">
- <View style={bd.row}>
- <UPBadge value={1} bgColor="#ff6600"><View style={bd.box}><Text>自定义</Text></View></UPBadge>
- <UPBadge isDot bgColor="#67c23a"><View style={bd.box}><Text>绿点</Text></View></UPBadge>
- </View>
- </Section>
-
- <Section title="独立使用">
- <View style={bd.row}>
- <UPBadge value={5} />
- <UPBadge value={100} max={99} />
- <UPBadge isDot />
- </View>
- </Section>
-
- <PropsTable rows={PROPS} />
- </DemoPage>
- );
+/** Upstream wraps each badge in `.u-page__tag-item` (`margin-right: 40px; margin-top: 10px`). */
+function Item({ children }: { children: React.ReactNode }) {
+  return <View style={s.item}>{children}</View>;
 }
 
-const bd = StyleSheet.create({
- row: { flexDirection: 'row', gap: 16, flexWrap: 'wrap', paddingVertical: 8 },
- box: { width: 60, height: 60, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5', borderRadius: 8 },
+export default function BadgeDemo() {
+  return (
+    <DemoPage>
+      <Section title="直角边形状" direction="row">
+        <Item>
+          <UPBadge value={1500} shape="horn" />
+        </Item>
+      </Section>
+
+      <Section title="徽标数显示方式" direction="row">
+        <Item>
+          <UPBadge value={5132} numberType="ellipsis" />
+        </Item>
+        <Item>
+          <UPBadge value={1011} numberType="overflow" />
+        </Item>
+        <Item>
+          <UPBadge value={1500} numberType="limit" />
+        </Item>
+        <Item>
+          <UPBadge value={45187} numberType="limit" />
+        </Item>
+      </Section>
+
+      <Section title="显示圆点" direction="row">
+        <Item>
+          <UPBadge value={1011} numberType="overflow" isDot />
+        </Item>
+      </Section>
+
+      <Section title="自定义主题" direction="row">
+        <Item>
+          <UPBadge value={9} type="error" />
+        </Item>
+        <Item>
+          <UPBadge value={9} type="warning" />
+        </Item>
+        <Item>
+          <UPBadge value={9} type="success" />
+        </Item>
+        <Item>
+          <UPBadge value={9} type="primary" />
+        </Item>
+      </Section>
+
+      <Section title="反转色" direction="row">
+        <Item>
+          <UPBadge value={9} type="error" inverted />
+        </Item>
+        <Item>
+          <UPBadge value={1532} inverted type="warning" />
+        </Item>
+        <Item>
+          <UPBadge value={12} inverted type="success" />
+        </Item>
+        <Item>
+          <UPBadge value={999} inverted type="primary" />
+        </Item>
+      </Section>
+
+      <PropsTable rows={PROPS} />
+    </DemoPage>
+  );
+}
+
+const s = StyleSheet.create({
+  item: { marginRight: 40, marginTop: 10 },
 });

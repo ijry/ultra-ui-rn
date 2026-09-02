@@ -1,72 +1,167 @@
 /**
- * UPSwipeAction 组件示例 — 滑动操作
- * 复刻 uview-plus u-swipe-action 页面结构
+ * SwipeAction 滑动单元格
+ * 严格复刻 uview-plus pages/componentsA/swipeAction/swipeAction.nvue
  */
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { UPSwipeAction, UPSwipeActionItem } from 'ultra-ui-rn';
+import { StyleSheet, Text, View } from 'react-native';
+import {
+  UPModal,
+  UPSwipeAction,
+  UPSwipeActionItem,
+  type UPSwipeActionOption,
+} from 'ultra-ui-rn';
 import { DemoPage, Section, PropsTable, EventLog } from '../_shared';
 
 const PROPS = [
- { prop: 'autoClose', type: 'boolean', default: 'false', desc: '操作后自动关闭' },
- { prop: 'opendItem', type: 'boolean', default: 'false', desc: '是否打开' },
- { prop: 'children', type: 'ReactNode', default: '—', desc: '内容' },
- { prop: 'onUpdateOpendItem', type: '(open) => void', default: '—', desc: '打开状态变化' },
+  { prop: 'options', type: 'SwipeActionOption[]', default: '[]', desc: '右侧按钮组配置' },
+  { prop: 'show', type: 'boolean', default: 'false', desc: '是否展开右侧按钮（v-model）' },
+  { prop: 'name', type: 'string | number', default: '—', desc: '标识符，用于多项互斥' },
+  { prop: 'disabled', type: 'boolean', default: 'false', desc: '是否禁用滑动' },
+  { prop: 'closeOnClick', type: 'boolean', default: 'true', desc: '点击按钮后是否自动收起' },
+  { prop: 'autoClose', type: 'boolean', default: 'true', desc: '打开一个时是否收起其他项' },
+  { prop: 'threshold', type: 'number', default: '20', desc: '触发滑动的最小距离' },
+  { prop: 'onClick', type: '({ index, name }) => void', default: '—', desc: '点击右侧按钮时触发' },
+  { prop: 'onOpen', type: '(name) => void', default: '—', desc: '展开时触发' },
+  { prop: 'onClose', type: '(name) => void', default: '—', desc: '收起时触发' },
+];
+
+const options1: UPSwipeActionOption[] = [
+  { text: '删除', style: { backgroundColor: '#f56c6c' } },
+];
+
+const options2: UPSwipeActionOption[] = [
+  { text: '收藏', style: { backgroundColor: '#3c9cff' } },
+  { text: '删除', style: { backgroundColor: '#f56c6c' } },
+];
+
+const options3: UPSwipeActionOption[] = [
+  { text: '收藏', icon: 'star-fill', iconSize: '20', style: { backgroundColor: '#f9ae3d' } },
+];
+
+const groupOptions: UPSwipeActionOption[] = [
+  { text: '置顶', style: { backgroundColor: '#3c9cff' } },
+  { text: '取消', style: { backgroundColor: '#f9ae3d' } },
+];
+
+const options4 = [
+  { text: '禁用状态', disabled: true, options: groupOptions },
+  { text: '正常状态', disabled: false, options: groupOptions },
+  { text: '自动关闭', disabled: false, options: groupOptions },
+];
+
+const CIRCLE_STYLE = {
+  borderRadius: 100,
+  height: 40,
+  marginHorizontal: 6,
+  width: 40,
+} as const;
+
+const options5: UPSwipeActionOption[] = [
+  { icon: 'trash-fill', style: { backgroundColor: '#f56c6c', ...CIRCLE_STYLE } },
+  { icon: 'heart-fill', style: { backgroundColor: '#5ac725', ...CIRCLE_STYLE } },
 ];
 
 export default function SwipeActionDemo() {
- const [events, setEvents] = useState<string[]>([]);
+  const [show1, setShow1] = useState(true);
+  const [swshow1, setSwshow1] = useState(true);
+  const [confirming, setConfirming] = useState(false);
+  const [events, setEvents] = useState<string[]>([]);
 
- return (
- <DemoPage>
- <Section title="基础用法">
- <UPSwipeActionItem
- options={[{ text: '删除', style: { backgroundColor: '#ee0a24', color: '#fff' } }]}
- closeOnClick
- onClick={() => setEvents((e) => [...e, 'delete'])}
- >
- <View style={sa.item}>
- <Text>左滑显示删除按钮</Text>
- </View>
- </UPSwipeActionItem>
- </Section>
+  // 源在 click 里 uni.showModal 二次确认，确认后隐藏整行。
+  const click = (event: { index: number; name: string | number }) => {
+    setEvents((prev) => [...prev, `click ${event.index}`]);
+    setConfirming(true);
+  };
 
- <Section title="多个操作按钮">
- <UPSwipeActionItem
- options={[
- { text: '收藏', style: { backgroundColor: '#07c160', color: '#fff' } },
- { text: '删除', style: { backgroundColor: '#ee0a24', color: '#fff' } },
- ]}
- closeOnClick
- onClick={(name) => setEvents((e) => [...e, `click: ${name}`])}
- >
- <View style={sa.item}>
- <Text>左滑显示多个按钮</Text>
- </View>
- </UPSwipeActionItem>
- </Section>
+  return (
+    <DemoPage>
+      <Section contentStyle={s.flush} title="演示案例">
+        <UPSwipeAction>
+          {show1 ? (
+            <UPSwipeActionItem
+              closeOnClick={false}
+              onClick={click}
+              onUpdateShow={setSwshow1}
+              options={options1}
+              show={swshow1}
+            >
+              <View style={s.row}>
+                <Text style={s.rowText}>基础使用</Text>
+              </View>
+            </UPSwipeActionItem>
+          ) : null}
+        </UPSwipeAction>
+      </Section>
 
- <Section title="多行滑动">
- {['列表项 1', '列表项 2', '列表项 3'].map((text, i) => (
- <UPSwipeActionItem
- key={i}
- options={[{ text: '删除', style: { backgroundColor: '#ee0a24', color: '#fff' } }]}
- closeOnClick
- onClick={() => setEvents((e) => [...e, `delete: ${text}`])}
- >
- <View style={sa.item}>
- <Text>{text}</Text>
- </View>
- </UPSwipeActionItem>
- ))}
- </Section>
+      <Section contentStyle={s.flush} title="按钮组">
+        <UPSwipeAction>
+          <UPSwipeActionItem closeOnClick options={options2}>
+            <View style={s.row}>
+              <Text style={s.rowText}>两个按钮并列</Text>
+            </View>
+          </UPSwipeActionItem>
+        </UPSwipeAction>
+      </Section>
 
- <EventLog events={events} />
- <PropsTable rows={PROPS} />
- </DemoPage>
- );
+      <Section contentStyle={s.flush} title="带图标">
+        <UPSwipeAction>
+          <UPSwipeActionItem options={options3}>
+            <View style={s.row}>
+              <Text style={s.rowText}>自定义图标</Text>
+            </View>
+          </UPSwipeActionItem>
+        </UPSwipeAction>
+      </Section>
+
+      <Section contentStyle={s.flush} title="组合使用">
+        <UPSwipeAction>
+          {options4.map((item) => (
+            <UPSwipeActionItem disabled={item.disabled} key={item.text} options={item.options}>
+              <View style={s.row}>
+                <Text style={s.rowText}>{item.text}</Text>
+              </View>
+            </UPSwipeActionItem>
+          ))}
+        </UPSwipeAction>
+      </Section>
+
+      <Section contentStyle={s.flush} title="自定义按钮形状">
+        <UPSwipeAction>
+          <UPSwipeActionItem options={options5}>
+            <View style={s.row}>
+              <Text style={s.rowText}>圆形按钮</Text>
+            </View>
+          </UPSwipeActionItem>
+        </UPSwipeAction>
+      </Section>
+
+      <UPModal
+        content="确定要删除吗？"
+        onCancel={() => setConfirming(false)}
+        onConfirm={() => {
+          setSwshow1(false);
+          setShow1(false);
+          setConfirming(false);
+        }}
+        show={confirming}
+        showCancelButton
+        title="温馨提示"
+      />
+
+      <EventLog events={events} />
+      <PropsTable rows={PROPS} />
+    </DemoPage>
+  );
 }
 
-const sa = StyleSheet.create({
- item: { height: 50, justifyContent: 'center', paddingHorizontal: 16, backgroundColor: '#fff', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#eee' },
+const s = StyleSheet.create({
+  flush: { padding: 0 },
+  row: {
+    borderBottomColor: '#dadbde',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#dadbde',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingVertical: 12,
+  },
+  rowText: { color: '#303133', fontSize: 15, paddingLeft: 15 },
 });

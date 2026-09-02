@@ -1,54 +1,54 @@
 /**
- * UPNavbarMini 组件示例 — 迷你导航栏
- * 展示：基础用法、自定义颜色、自定义渲染
+ * NavbarMini 迷你导航栏
+ * 严格复刻 uview-plus pages/componentsD/navbarMini/navbarMini.nvue
  */
-import React from 'react';
-import { View, Text } from 'react-native';
-import { UPNavbarMini } from 'ultra-ui-rn';
-import { DemoPage, Section, PropsTable } from '../_shared';
+import React, { useState } from 'react';
+import { UPGap, UPIcon, UPNavbarMini } from 'ultra-ui-rn';
+import { DemoPage, PageItem, PropsTable, EventLog } from '../_shared';
 
 const PROPS = [
- { prop: 'fixed', type: 'boolean', default: 'false', desc: '固定定位' },
- { prop: 'autoBack', type: 'boolean', default: 'false', desc: '自动返回' },
- { prop: 'bgColor', type: 'string', default: '—', desc: '背景色' },
- { prop: 'height', type: 'number | string', default: '44', desc: '高度' },
- { prop: 'iconSize', type: 'number | string', default: '20', desc: '图标大小' },
- { prop: 'iconColor', type: 'string', default: '—', desc: '图标颜色' },
- { prop: 'renderLeft', type: '() => ReactNode', default: '—', desc: '自定义左侧渲染' },
- { prop: 'renderCenter', type: '() => ReactNode', default: '—', desc: '自定义中间渲染' },
+  { prop: 'safeAreaInsetTop', type: 'boolean', default: 'true', desc: '是否留出状态栏安全区' },
+  { prop: 'placeholder', type: 'boolean', default: 'false', desc: 'fixed 时是否生成等高占位块' },
+  { prop: 'fixed', type: 'boolean', default: 'true', desc: '是否固定在顶部' },
+  { prop: 'autoBack', type: 'boolean', default: 'false', desc: '点击返回是否自动返回上一页' },
+  { prop: 'homeUrl', type: 'string', default: '—', desc: '点击主页图标跳转的地址' },
+  { prop: 'leftIcon', type: 'string', default: "'arrow-left'", desc: '左侧返回图标名' },
+  { prop: 'bgColor', type: 'string', default: '—', desc: '背景颜色' },
+  { prop: 'height', type: 'number | string', default: '32', desc: '导航栏高度' },
+  { prop: 'iconSize', type: 'number | string', default: '—', desc: '图标大小' },
+  { prop: 'iconColor', type: 'string', default: '—', desc: '图标颜色' },
+  { prop: 'left', type: 'ReactNode', default: '—', desc: '自定义左侧内容（源 left 插槽）' },
+  { prop: 'center', type: 'ReactNode', default: '—', desc: '自定义中间内容（源 center 插槽）' },
+  { prop: 'onLeftClick', type: '(event) => void', default: '—', desc: '点击左侧返回时触发' },
+  { prop: 'onHomeClick', type: '(event) => void', default: '—', desc: '点击主页图标时触发' },
 ];
 
 export default function NavbarMiniDemo() {
- return (
- <DemoPage>
- <Section title="基础用法">
- <UPNavbarMini />
- </Section>
+  const [events, setEvents] = useState<string[]>([]);
 
- <Section title="自动返回">
- <UPNavbarMini autoBack />
- </Section>
+  return (
+    <DemoPage>
+      <PageItem title="基础功能">
+        <UPNavbarMini
+          fixed
+          homeUrl="/pages/index/index"
+          onLeftClick={() => setEvents((prev) => [...prev, 'leftClick'])}
+          safeAreaInsetTop
+        />
+      </PageItem>
 
- <Section title="自定义颜色">
- <UPNavbarMini bgColor="#1989fa" iconColor="#ffffff" />
- </Section>
+      <PageItem title="自定义插槽">
+        <UPNavbarMini
+          fixed={false}
+          left={<UPIcon name="arrow-left" size={19} />}
+          safeAreaInsetTop={false}
+        />
+      </PageItem>
 
- <Section title="自定义高度">
- <UPNavbarMini height={56} />
- </Section>
+      <UPGap height={50} />
 
- <Section title="自定义渲染">
- <UPNavbarMini
- renderLeft={() => (
- <Text style={{ color: '#3c9cff', fontSize: 14 }}>🏠 首页</Text>
- )}
- renderCenter={() => (
- <Text style={{ color: '#303133', fontSize: 16, fontWeight: '600' }}>迷你导航栏</Text>
- )}
- />
- </Section>
-
- <PropsTable rows={PROPS} />
- </DemoPage>
- );
+      <EventLog events={events} />
+      <PropsTable rows={PROPS} />
+    </DemoPage>
+  );
 }

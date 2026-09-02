@@ -1,60 +1,76 @@
 /**
  * UPLink 组件示例 — 链接
- * 复刻 uview-plus u-link 页面结构
+ * 复刻 uview-plus pages/componentsA/link/link.nvue
  */
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet } from 'react-native';
 import { UPLink } from 'ultra-ui-rn';
-import { DemoPage, Section, PropsTable } from '../_shared';
+import { DemoPage, Section, PropsTable, EventLog } from '../_shared';
 
 const PROPS = [
- { prop: 'text', type: 'string', default: '—', desc: '链接文字' },
- { prop: 'color', type: 'string', default: '主题色', desc: '文字颜色' },
- { prop: 'fontSize', type: 'number | string', default: '15', desc: '字号' },
- { prop: 'underLine', type: 'boolean', default: 'true', desc: '下划线' },
- { prop: 'href', type: 'string', default: '—', desc: '链接地址' },
- { prop: 'lineColor', type: 'string', default: '—', desc: '下划线颜色' },
- { prop: 'children', type: 'ReactNode', default: '—', desc: '内容' },
+  { prop: 'color', type: 'string', default: '#606266', desc: '文字颜色' },
+  { prop: 'fontSize', type: 'string | number', default: '15', desc: '字体大小' },
+  { prop: 'underLine', type: 'boolean', default: 'false', desc: '是否显示下划线' },
+  { prop: 'href', type: 'string', default: '—', desc: '跳转的链接' },
+  { prop: 'lineColor', type: 'string', default: '—', desc: '下划线颜色，默认同 color' },
+  { prop: 'text', type: 'string', default: '—', desc: '超链接的问题' },
+  { prop: 'mpTips', type: 'string', default: "'链接已复制，请在浏览器打开'", desc: '各个小程序平台把链接复制到粘贴板后的提示语' },
 ];
 
-export default function LinkDemo() {
- return (
- <DemoPage>
- <Section title="基础用法">
- <UPLink text="默认链接" />
- </Section>
-
- <Section title="自定义颜色">
- <View style={lk.row}>
- <UPLink text="橙色链接" color="#ff6600" />
- <UPLink text="绿色链接" color="#67c23a" />
- <UPLink text="蓝色链接" color="#3c9cff" />
- </View>
- </Section>
-
- <Section title="无下划线">
- <UPLink text="无下划线链接" underLine={false} />
- </Section>
-
- <Section title="自定义字号">
- <View style={lk.row}>
- <UPLink text="12号字" fontSize={12} />
- <UPLink text="16号字" fontSize={16} />
- <UPLink text="20号字" fontSize={20} />
- </View>
- </Section>
-
- <Section title="子节点模式">
- <UPLink>
- <Text style={{ color: '#3c9cff', textDecorationLine: 'underline' }}>自定义内容链接</Text>
- </UPLink>
- </Section>
-
- <PropsTable rows={PROPS} />
- </DemoPage>
- );
+/** Upstream wraps each link in `.u-page__link-item` (`margin-top: 5px`). */
+function Item({ children }: { children: React.ReactNode }) {
+  return <View style={s.item}>{children}</View>;
 }
 
-const lk = StyleSheet.create({
- row: { flexDirection: 'row', gap: 16, flexWrap: 'wrap', paddingVertical: 4 },
+export default function LinkDemo() {
+  const [events, setEvents] = useState<string[]>([]);
+  const log = (msg: string) => setEvents((prev) => [...prev, msg]);
+
+  return (
+    <DemoPage>
+      <Section title="基本案例">
+        <Item>
+          <UPLink
+            href="https://uview-plus.jiangruyi.com/"
+            text="打开uview-plus文档"
+            onClick={() => log('click')}
+          />
+        </Item>
+      </Section>
+
+      <Section title="显示下划线">
+        <Item>
+          <UPLink
+            href="https://uview-plus.jiangruyi.com/"
+            underLine
+            text="Go to uview-plus doc"
+          />
+        </Item>
+      </Section>
+
+      <Section title="自定义颜色">
+        <Item>
+          <UPLink
+            href="https://uview-plus.jiangruyi.com/"
+            lineColor="#19be6b"
+            color="#19be6b"
+            text="打开uview-plus文档"
+          />
+        </Item>
+      </Section>
+
+      <Section title="自定义链接内容">
+        <Item>
+          <UPLink href="https://uniapp.dcloud.io/" text="打开uni-app文档" />
+        </Item>
+      </Section>
+
+      <EventLog events={events} />
+      <PropsTable rows={PROPS} />
+    </DemoPage>
+  );
+}
+
+const s = StyleSheet.create({
+  item: { marginTop: 5 },
 });

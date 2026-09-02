@@ -1,92 +1,126 @@
 /**
- * UPActionSheet 组件示例 — 操作面板
- * 展示：基础用法、带标题描述、自定义选项颜色、禁用选项
+ * ActionSheet 操作菜单
+ * 严格复刻 uview-plus pages/componentsB/actionSheet/actionSheet.nvue
  */
 import React, { useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
-import { UPActionSheet } from 'ultra-ui-rn';
-import { DemoPage, Section, PropsTable, EventLog } from '../_shared';
+import { Image, StyleSheet, Text, View } from 'react-native';
+import {
+  UPActionSheet,
+  UPCell,
+  UPCellGroup,
+  toast,
+  type UPActionSheetAction,
+} from 'ultra-ui-rn';
+import { EventLog } from '../_shared';
 
-const PROPS = [
- { prop: 'show', type: 'boolean', default: 'false', desc: '是否显示' },
- { prop: 'actions', type: 'UPActionSheetAction[]', default: '[]', desc: '操作选项数组' },
- { prop: 'title', type: 'string', default: '—', desc: '标题' },
- { prop: 'description', type: 'string', default: '—', desc: '描述' },
- { prop: 'cancelText', type: 'string', default: '取消', desc: '取消按钮文字' },
- { prop: 'closeOnClickAction', type: 'boolean', default: 'true', desc: '点击选项后关闭' },
- { prop: 'closeOnClickOverlay', type: 'boolean', default: 'true', desc: '点击遮罩关闭' },
- { prop: 'round', type: 'boolean | number', default: 'true', desc: '圆角' },
- { prop: 'onSelect', type: '(action) => void', default: '—', desc: '选项点击回调' },
- { prop: 'onClose', type: '() => void', default: '—', desc: '关闭回调' },
+const actions0: UPActionSheetAction[] = [
+  { name: '选项1' },
+  ...Array.from({ length: 11 }, () => ({ name: '选项2' })),
+  { name: '选项3', subname: '描述文本' },
 ];
 
-function Btn({ label, onPress }: { label: string; onPress: () => void }) {
- return (
- <Pressable
- onPress={onPress}
- style={{ backgroundColor: '#3c9cff', borderRadius: 6, marginBottom: 8, paddingVertical: 10, paddingHorizontal: 16 }}
- >
- <Text style={{ color: '#fff', fontSize: 14, textAlign: 'center' }}>{label}</Text>
- </Pressable>
- );
-}
+const actions1: UPActionSheetAction[] = [
+  { name: '选项1' },
+  { loading: true },
+  { name: '选项被禁用', disabled: true },
+];
+
+const actions2: UPActionSheetAction[] = [{ name: '选项1' }, { name: '选项2' }, { name: '选项3' }];
+const actions3: UPActionSheetAction[] = [{ name: '选项1' }, { name: '选项2' }, { name: '选项3' }];
+const actions5: UPActionSheetAction[] = [
+  { name: '获取用户信息', openType: 'getUserInfo', color: '#5ac725' },
+];
+
+const list = [
+  { title: '普通使用', iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/actionSheet/custom.png' },
+  { title: '设置状态', iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/actionSheet/status.png' },
+  { title: '显示取消按钮', iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/actionSheet/cancel.png' },
+  { title: '描述内容', iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/actionSheet/desc.png' },
+  { title: '显示标题(显示圆角)', iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/actionSheet/title.png' },
+  { title: '微信开放能力', iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/actionSheet/open.png' },
+];
 
 export default function ActionSheetDemo() {
- const [show1, setShow1] = useState(false);
- const [show2, setShow2] = useState(false);
- const [show3, setShow3] = useState(false);
- const [events, setEvents] = useState<string[]>([]);
- const log = (e: string) => setEvents((p) => [...p, e]);
+  const [active, setActive] = useState(-1);
+  const [events, setEvents] = useState<string[]>([]);
 
- return (
- <DemoPage>
- <Section title="基础用法">
- <Btn label="打开操作面板" onPress={() => setShow1(true)} />
- <UPActionSheet
- show={show1}
- actions={[
- { name: '拍照' },
- { name: '从相册选择' },
- { name: '保存图片' },
- ]}
- onSelect={(a) => { log(`select: ${a.name}`); setShow1(false); }}
- onClose={() => { log('close'); setShow1(false); }}
- />
- </Section>
+  const openSheet = (index: number) => {
+    // 源在非微信端直接提示，第 6 项依赖 openType 开放能力。
+    if (index === 5) {
+      toast.default('请在微信内预览');
+      return;
+    }
+    setActive(index);
+  };
 
- <Section title="带标题和描述">
- <Btn label="打开（带标题）" onPress={() => setShow2(true)} />
- <UPActionSheet
- show={show2}
- title="请选择操作"
- description="选择一种方式上传头像"
- actions={[
- { name: '拍照', nameKey: 'name' },
- { name: '从相册选择' },
- ]}
- onSelect={(a) => { log(`select: ${a.name}`); setShow2(false); }}
- onClose={() => setShow2(false)}
- />
- </Section>
+  const close = () => {
+    setEvents((prev) => [...prev, 'close']);
+    setActive(-1);
+  };
 
- <Section title="禁用选项 + 自定义颜色">
- <Btn label="打开（禁用+颜色）" onPress={() => setShow3(true)} />
- <UPActionSheet
- show={show3}
- title="自定义样式"
- actions={[
- { name: '正常选项' },
- { name: '红色选项', color: '#f56c6c' },
- { name: '禁用选项', disabled: true },
- { name: '绿色选项', color: '#07c160' },
- ]}
- onSelect={(a) => { log(`select: ${a.name}`); setShow3(false); }}
- onClose={() => setShow3(false)}
- />
- </Section>
+  const select = (action: UPActionSheetAction) => {
+    setEvents((prev) => [...prev, `select ${String(action.name ?? '')}`]);
+  };
 
- <PropsTable rows={PROPS} />
- <EventLog events={events} />
- </DemoPage>
- );
+  return (
+    <View style={s.page}>
+      <UPCellGroup>
+        {list.map((item, index) => (
+          <UPCell
+            iconNode={<Image source={{ uri: item.iconUrl }} style={s.cellIcon} />}
+            isLink
+            key={item.title}
+            onClick={() => openSheet(index)}
+            title={item.title}
+          />
+        ))}
+      </UPCellGroup>
+
+      <UPActionSheet
+        actions={actions0}
+        closeOnClickOverlay={false}
+        onClose={close}
+        onSelect={select}
+        show={active === 0}
+      />
+      <UPActionSheet actions={actions1} onClose={() => setActive(-1)} show={active === 1} />
+      <UPActionSheet
+        actions={actions2}
+        cancelText="取消"
+        onClose={() => setActive(-1)}
+        show={active === 2}
+      />
+      <UPActionSheet
+        actions={actions3}
+        description="这是一段描述文本,字号偏小,颜色偏淡"
+        onClose={() => setActive(-1)}
+        show={active === 3}
+      />
+      <UPActionSheet onClose={() => setActive(-1)} round={10} show={active === 4} title="标题位置">
+        <Text style={s.slotText}>
+          这是一段通过slot传入的内容,您可以在此自定义操作面板
+        </Text>
+      </UPActionSheet>
+      <UPActionSheet
+        actions={actions5}
+        onClose={() => setActive(-1)}
+        show={active === 5}
+        title="微信开放能力"
+      />
+
+      <EventLog events={events} />
+    </View>
+  );
 }
+
+const s = StyleSheet.create({
+  cellIcon: { height: 18, marginRight: 4, width: 18 },
+  page: { flex: 1, padding: 0 },
+  slotText: {
+    color: '#303133',
+    fontSize: 15,
+    marginBottom: 30,
+    marginHorizontal: 20,
+    marginTop: 10,
+  },
+});

@@ -81,6 +81,8 @@ export type UPUploadProps = {
   previewImage?: boolean;
   renderFile?: (payload: UPUploadRenderPayload) => React.ReactNode;
   renderUpload?: (payload: UPUploadRenderUploadPayload) => React.ReactNode;
+  /** Source `playIcon` slot: overlays a successfully uploaded video thumbnail. */
+  playIconNode?: React.ReactNode;
   sizeType?: readonly string[];
   uploadAdapter?: UPUploadAdapter;
   uploadIcon?: string;
@@ -125,6 +127,15 @@ function isImageFile(file: UPUploadFile): boolean {
     file.type?.startsWith('image/') ||
     file.thumb ||
     /\.(png|jpe?g|gif|webp|heic|heif)$/i.test(src),
+  );
+}
+
+function isVideoFile(file: UPUploadFile): boolean {
+  const src = file.uri || file.url || '';
+  return Boolean(
+    file.type === 'video' ||
+    file.type?.startsWith('video/') ||
+    /\.(mp4|mov|m4v|avi|mkv|webm)$/i.test(src),
   );
 }
 
@@ -368,8 +379,11 @@ export const UPUpload = forwardRef<UPUploadRef, UPUploadProps>(function UPUpload
               {isImageFile(file) ? (
                 <UPImage height={56} mode={props.imageMode} src={file.thumb ?? file.url ?? file.uri} width={56} />
               ) : (
-                <UPIcon name="file-text" size={28} />
+                <UPIcon name={isVideoFile(file) ? 'movie' : 'file-text'} size={28} />
               )}
+              {isVideoFile(file) && file.status === 'success' ? (
+                input.playIconNode ?? <UPIcon name="play-right" size={22} />
+              ) : null}
               <Text numberOfLines={1}>{file.name ?? file.url ?? file.uri}</Text>
             </Pressable>
             {file.status === 'uploading' ? <Text>{`${file.progress ?? 0}%`}</Text> : null}

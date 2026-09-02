@@ -1,116 +1,146 @@
 /**
- * UPPicker 组件示例 — 选择器
- * 展示：单列/多列选择、hasInput 模式、ref 级联、自定义 key/value
+ * Picker 选择器
+ * 严格复刻 uview-plus pages/componentsC/picker/picker.nvue
  */
-import React, { useRef, useState } from 'react';
-import { View, Text } from 'react-native';
-import { UPPicker, type UPPickerRef } from 'ultra-ui-rn';
-import { DemoPage, Section, Row, Value, PropsTable, EventLog } from '../_shared';
+import React, { useEffect, useRef, useState } from 'react';
+import { Image, StyleSheet, Text, View } from 'react-native';
+import {
+  UPCell,
+  UPCellGroup,
+  UPPicker,
+  type UPPickerChangePayload,
+  type UPPickerRef,
+} from 'ultra-ui-rn';
 
-const FRUITS = [
- [{ text: '苹果', value: 1 }, { text: '香蕉', value: 2 }, { text: '橘子', value: 3 }, { text: '西瓜', value: 4 }],
+const columnData = [
+  ['深圳', '厦门', '上海', '拉萨'],
+  ['得州', '华盛顿', '纽约', '阿拉斯加'],
 ];
 
-const PROVINCES = [
- { value: 'guangdong', text: '广东省' },
- { value: 'zhejiang', text: '浙江省' },
- { value: 'jiangsu', text: '江苏省' },
+const list = [
+  { title: '基础使用', iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/picker/2.png' },
+  { title: '设置默认项', iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/picker/5.png' },
+  { title: '多列联动', iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/picker/1.png' },
+  { title: '加载中状态(切换第一列)', iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/picker/3.png' },
+  { title: '设置标题', iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/picker/4.png' },
+  { title: '允许点击遮罩关闭', iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/picker/6.png' },
 ];
 
-const CITIES: Record<string, Array<{ value: string; text: string }>> = {
- guangdong: [{ value: 'guangzhou', text: '广州市' }, { value: 'shenzhen', text: '深圳市' }, { value: 'dongguan', text: '东莞市' }],
- zhejiang: [{ value: 'hangzhou', text: '杭州市' }, { value: 'ningbo', text: '宁波市' }, { value: 'wenzhou', text: '温州市' }],
- jiangsu: [{ value: 'nanjing', text: '南京市' }, { value: 'suzhou', text: '苏州市' }, { value: 'wuxi', text: '无锡市' }],
-};
-
-const PROPS = [
- { prop: 'columns', type: 'PickerColumns', default: '[]', desc: '列数据（二维数组）' },
- { prop: 'show', type: 'boolean', default: 'false', desc: '直接控制弹出（v-model:show）' },
- { prop: 'hasInput', type: 'boolean', default: 'false', desc: '输入框触发模式' },
- { prop: 'modelValue', type: 'Primitive[]', default: '—', desc: '受控值（v-model）' },
- { prop: 'placeholder', type: 'string', default: '请选择', desc: '输入框占位文本' },
- { prop: 'showToolbar', type: 'boolean', default: 'true', desc: '显示顶栏（取消/确认）' },
- { prop: 'title', type: 'string', default: '—', desc: '顶栏标题' },
- { prop: 'visibleItemCount', type: 'number | string', default: '5', desc: '可见行数' },
- { prop: 'keyName', type: 'string', default: 'text', desc: '选项显示字段名' },
- { prop: 'onConfirm', type: '(payload) => void', default: '—', desc: '确认回调' },
- { prop: 'onCancel', type: '() => void', default: '—', desc: '取消回调' },
- { prop: 'onChange', type: '(payload) => void', default: '—', desc: '列滚动变化回调' },
-];
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 export default function PickerDemo() {
- const [selected, setSelected] = useState<unknown[]>([]);
- const [selected2, setSelected2] = useState<unknown[]>([]);
- const cascadeRef = useRef<UPPickerRef>(null);
- const [cascadeProv, setCascadeProv] = useState<string>('');
- const [cascadeCity, setCascadeCity] = useState<string>('');
- const [events, setEvents] = useState<string[]>([]);
- const log = (e: string) => setEvents((p) => [...p, e]);
+  const [active, setActive] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [columns1, setColumns1] = useState([['中国', '美国', '日本']]);
+  const [show5value, setShow5value] = useState<string[]>(['日本']);
 
- const handleCascadeProvince = (val: string) => {
- setCascadeProv(val);
- setCascadeCity('');
- const cities = CITIES[val] ?? [];
- cascadeRef.current?.setColumnValues(1, cities);
- };
- const safeVal = (val: unknown): string => typeof val === 'string' || typeof val === 'number' ? String(val) : '';
+  const picker3 = useRef<UPPickerRef>(null);
+  const picker4 = useRef<UPPickerRef>(null);
 
- return (
- <DemoPage>
- {/* 1. 单列选择 (hasInput) */}
- <Section title="单列选择（输入框触发）">
- <UPPicker
- hasInput
- columns={FRUITS}
- placeholder="请选择水果"
- title="选择水果"
- onConfirm={(p) => { setSelected(p.value); log(`confirm: ${JSON.stringify(p.value)}`); }}
- onCancel={() => log('cancel')}
- />
- <Value label="已选" value={selected.join(', ')} />
- </Section>
+  // Upstream mutates columns1 from onLoad after 3s to prove late column updates work.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setColumns1([['中国onLoad', '美国onLoad', '日本onLoad']]);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
- {/* 2. 多列选择 */}
- <Section title="多列选择">
- <UPPicker
- hasInput
- columns={[
- [{ text: '周一', value: 'mon' }, { text: '周二', value: 'tue' }, { text: '周三', value: 'wed' }],
- [{ text: '上午', value: 'am' }, { text: '下午', value: 'pm' }, { text: '晚上', value: 'eve' }],
- ]}
- placeholder="选择日期和时段"
- title="预约时间"
- onConfirm={(p) => { setSelected2(p.value); log(`multi: ${JSON.stringify(p.value)}`); }}
- />
- <Value label="已选" value={selected2.join(', ')} />
- </Section>
+  const change = (e: UPPickerChangePayload) => {
+    console.log('change', e);
+  };
 
- {/* 3. 级联选择 (ref.setColumnValues) */}
- <Section title="级联选择（省 → 市）">
- <UPPicker
- ref={cascadeRef}
- hasInput
- columns={[PROVINCES, []]}
- placeholder="请选择地区"
- title="地区"
- onConfirm={(p) => { log(`cascade: ${JSON.stringify(p.value)}`); }}
- onChange={(p) => { if (p.columnIndex === 0) handleCascadeProvince(safeVal(p.value[0])); }}
- />
- <Value label="省" value={cascadeProv || '—'} />
- <Value label="市" value={cascadeCity || '—'} />
- </Section>
+  const close = () => setActive(0);
 
- {/* 4. 直接弹出（无输入框） */}
- <Section title="直接弹出模式">
- <UPPicker
- show={false}
- columns={FRUITS}
- title="直接弹出"
- />
- </Section>
+  const changeHandler1 = (e: UPPickerChangePayload) => {
+    change(e);
+    if (e.columnIndex === 0) {
+      picker3.current?.setColumnValues(1, columnData[e.index] ?? []);
+    }
+  };
 
- <PropsTable rows={PROPS} />
- <EventLog events={events} />
- </DemoPage>
- );
+  const changeHandler2 = (e: UPPickerChangePayload) => {
+    change(e);
+    if (e.columnIndex === 0) {
+      setLoading(true);
+      void sleep(1500).then(() => {
+        picker4.current?.setColumnValues(1, columnData[e.index] ?? []);
+        setLoading(false);
+      });
+    }
+  };
+
+  return (
+    <View style={styles.page}>
+      <UPCellGroup>
+        {list.map((item, index) => (
+          <UPCell
+            iconNode={<Image source={{ uri: item.iconUrl }} style={styles.cellIcon} />}
+            isLink
+            key={item.title}
+            onClick={() => setActive(index + 1)}
+            title={item.title}
+            valueNode={index === 4 ? <Text>{show5value.join('|')}</Text> : undefined}
+          />
+        ))}
+      </UPCellGroup>
+
+      <UPPicker
+        columns={columns1}
+        onCancel={close}
+        onChange={change}
+        onConfirm={close}
+        show={active === 1}
+        toolbarRight={<View style={styles.toolbarRight}><Text>右侧</Text></View>}
+        toolbarRightSlot
+      />
+      <UPPicker
+        columns={[['中国', '美国', '日本']]}
+        defaultIndex={[1]}
+        onCancel={close}
+        onChange={change}
+        onConfirm={close}
+        show={active === 2}
+      />
+      <UPPicker
+        columns={[['中国', '美国'], ['深圳', '厦门', '上海', '拉萨']]}
+        onCancel={close}
+        onChange={changeHandler1}
+        onConfirm={close}
+        ref={picker3}
+        show={active === 3}
+      />
+      <UPPicker
+        columns={[['中国', '美国'], ['深圳', '厦门', '上海', '拉萨']]}
+        loading={loading}
+        onCancel={close}
+        onChange={changeHandler2}
+        onConfirm={close}
+        ref={picker4}
+        show={active === 4}
+      />
+      <UPPicker
+        columns={[['中国', '美国', '日本']]}
+        modelValue={show5value}
+        onCancel={close}
+        onChange={change}
+        onConfirm={close}
+        onUpdateModelValue={(values) => setShow5value(values.map(String))}
+        show={active === 5}
+        title="标题太长就会显示省略号"
+      />
+      <UPPicker
+        closeOnClickOverlay
+        columns={[['中国', '美国', '日本']]}
+        onChange={change}
+        onChangeShow={(next) => { if (!next) close(); }}
+        show={active === 6}
+      />
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  cellIcon: { height: 30, marginRight: 8, width: 30 },
+  page: { flex: 1, padding: 0 },
+  toolbarRight: { paddingRight: 10 },
+});

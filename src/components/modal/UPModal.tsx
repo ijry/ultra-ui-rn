@@ -30,6 +30,10 @@ export type UPModalProps = {
   /** @deprecated React Native has no CSS class runtime. */
   customClass?: string;
   titleNode?: React.ReactNode;
+  /** Source `confirmButton` slot: replaces the whole button row. */
+  confirmButtonNode?: React.ReactNode;
+  /** Source `popupBottom` slot: rendered below the modal panel. */
+  popupBottomNode?: React.ReactNode;
   children?: React.ReactNode;
   onConfirm?: () => void;
   onCancel?: () => void;
@@ -66,6 +70,7 @@ export function UPModal(input: UPModalProps): React.JSX.Element {
   return (
     <UPPopup
       bgColor="transparent"
+      bottom={input.popupBottomNode}
       closeOnClickOverlay={props.closeOnClickOverlay}
       duration={props.duration}
       mode="center"
@@ -77,7 +82,7 @@ export function UPModal(input: UPModalProps): React.JSX.Element {
       <View style={[{ backgroundColor: '#ffffff', borderRadius: 6, marginTop: getPx(props.negativeTop ?? 0), overflow: 'hidden', width: getPx(props.width ?? '650rpx') }, input.customStyle]} testID="up-modal">
         {input.titleNode ?? (props.title ? <Text style={{ color: '#303133', fontSize: 17, fontWeight: '600', paddingHorizontal: 20, paddingTop: 24, textAlign: 'center' }}>{props.title}</Text> : null)}
         {input.children ?? (props.content ? <Text style={[{ color: '#606266', fontSize: 15, lineHeight: 22, paddingHorizontal: 20, paddingTop: props.title ? 12 : 24, textAlign: props.contentTextAlign }, props.contentStyle]}>{props.content}</Text> : null)}
-        {props.showConfirmButton || props.showCancelButton ? <View style={{ borderTopColor: '#e4e7ed', borderTopWidth: props.confirmButtonShape ? 0 : 0.5, flexDirection: 'row', marginTop: 20 }}>{buttons}</View> : null}
+        {input.confirmButtonNode ?? (props.showConfirmButton || props.showCancelButton ? <View style={{ borderTopColor: '#e4e7ed', borderTopWidth: props.confirmButtonShape ? 0 : 0.5, flexDirection: 'row', marginTop: 20 }}>{buttons}</View> : null)}
       </View>
     </UPPopup>
   );

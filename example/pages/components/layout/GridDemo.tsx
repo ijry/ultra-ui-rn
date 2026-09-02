@@ -1,62 +1,84 @@
 /**
- * UPGrid 组件示例 — 宫格
- * 展示：基础宫格、不同列数、带边框、自定义
+ * Grid 宫格布局
+ * 严格复刻 uview-plus pages/componentsA/grid/grid.nvue
  */
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { UPGrid, UPGridItem } from 'ultra-ui-rn';
+import React, { useRef } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { UPGrid, UPGridItem, UPIcon, UPToast, type UPToastRef } from 'ultra-ui-rn';
 import { DemoPage, Section, PropsTable } from '../_shared';
 
 const PROPS = [
- { prop: 'col', type: 'number | string', default: '3', desc: '每行列数' },
- { prop: 'border', type: 'boolean', default: 'true', desc: '是否显示边框' },
- { prop: 'align', type: "'left' | 'center' | 'right'", default: "'center'", desc: '文字对齐' },
- { prop: 'gap', type: 'number | string', default: '0', desc: '间距' },
+  { prop: 'col', type: 'number | string', default: '3', desc: '每行显示的宫格数量' },
+  { prop: 'border', type: 'boolean', default: 'true', desc: '是否显示宫格边框' },
+  { prop: 'align', type: "'left' | 'center' | 'right'", default: "'center'", desc: '宫格对齐方式' },
+  { prop: 'gap', type: 'number | string', default: '0', desc: '宫格之间的间距' },
+  { prop: 'name', type: 'string | number', default: '—', desc: '宫格标识符（GridItem）' },
+  { prop: 'onClick', type: '(name) => void', default: '—', desc: '点击宫格时触发' },
 ];
 
-const ITEMS = ['话费充值', '流量包', '宽带办理', '权益中心', '积分商城', '客服热线'];
+const baseList = [
+  { name: 'photo', title: '图片' },
+  { name: 'lock', title: '锁头' },
+  { name: 'star', title: '星星' },
+  { name: 'hourglass', title: '沙漏' },
+  { name: 'home', title: '首页' },
+  { name: 'volume', title: '音量' },
+];
+
+const list = baseList;
 
 export default function GridDemo() {
- return (
- <DemoPage>
- <Section title="3列宫格">
- <UPGrid col={3}>
- {ITEMS.map((name, i) => (
- <UPGridItem key={i} name={name}>
- <View style={g.item}>
- <View style={[g.icon, { backgroundColor: ['#3c9cff', '#67c23a', '#ff6600', '#e6a23c', '#f56c6c', '#909399'][i] }]}>
- <Text style={g.iconText}>{name.charAt(0)}</Text>
- </View>
- <Text style={g.name}>{name}</Text>
- </View>
- </UPGridItem>
- ))}
- </UPGrid>
- </Section>
+  const toast = useRef<UPToastRef>(null);
 
- <Section title="4列无边框">
- <UPGrid col={4} border={false} gap={8}>
- {ITEMS.map((name, i) => (
- <UPGridItem key={i} name={name}>
- <View style={g.item}>
- <View style={[g.icon, { backgroundColor: ['#3c9cff', '#67c23a', '#ff6600', '#e6a23c'][i % 4] }]}>
- <Text style={g.iconText}>{name.charAt(0)}</Text>
- </View>
- <Text style={g.name}>{name}</Text>
- </View>
- </UPGridItem>
- ))}
- </UPGrid>
- </Section>
+  const click = (name: string | number) => {
+    toast.current?.show({ message: `点击了第${String(name)}个`, type: 'success' });
+  };
 
- <PropsTable rows={PROPS} />
- </DemoPage>
- );
+  return (
+    <DemoPage>
+      <Section contentStyle={s.flush} title="基本案例">
+        <UPGrid align="center" border={false} onClick={click}>
+          {baseList.map((item) => (
+            <UPGridItem key={item.title} name={item.title} onClick={() => click('test')}>
+              <UPIcon customStyle={s.iconTop} name={item.name} size={22} />
+              <Text style={s.gridText}>{item.title}</Text>
+            </UPGridItem>
+          ))}
+        </UPGrid>
+      </Section>
+
+      <Section contentStyle={s.flush} title="显示边框">
+        <UPGrid border>
+          {list.map((item) => (
+            <UPGridItem customStyle={s.itemPadding} key={item.title} name={item.title}>
+              <UPIcon customStyle={s.iconTop} name={item.name} size={22} />
+              <Text style={s.gridText}>{item.title}</Text>
+            </UPGridItem>
+          ))}
+        </UPGrid>
+      </Section>
+
+      <Section contentStyle={s.flush} title="绑定点击事件&自定义列数">
+        <UPGrid border={false} col="4">
+          {list.map((item) => (
+            <UPGridItem customStyle={s.itemPadding} key={item.title} name={item.title}>
+              <UPIcon customStyle={s.iconTop} name={item.name} size={22} />
+              <Text style={s.gridText}>{item.title}</Text>
+            </UPGridItem>
+          ))}
+        </UPGrid>
+      </Section>
+
+      <UPToast ref={toast} />
+
+      <PropsTable rows={PROPS} />
+    </DemoPage>
+  );
 }
 
-const g = StyleSheet.create({
- item: { alignItems: 'center', paddingVertical: 12 },
- icon: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
- iconText: { color: '#fff', fontSize: 16, fontWeight: '600' },
- name: { fontSize: 12, color: '#333' },
+const s = StyleSheet.create({
+  flush: { padding: 0 },
+  gridText: { color: '#909399', fontSize: 14, paddingBottom: 10, paddingTop: 5 },
+  iconTop: { paddingTop: 10 },
+  itemPadding: { paddingBottom: 10, paddingTop: 10 },
 });

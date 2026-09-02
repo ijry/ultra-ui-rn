@@ -1,44 +1,56 @@
 /**
- * UPGap 组件示例 — 间距
- * 展示：基础间距、背景色、上下边距
+ * Gap 间隔槽
+ * 严格复刻 uview-plus pages/componentsA/gap/gap.nvue
  */
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { UPGap } from 'ultra-ui-rn';
 import { DemoPage, Section, PropsTable } from '../_shared';
 
 const PROPS = [
- { prop: 'height', type: 'number | string', default: '20', desc: '高度' },
- { prop: 'bgColor', type: 'string', default: '—', desc: '背景色' },
- { prop: 'marginTop', type: 'number | string', default: '—', desc: '上边距' },
- { prop: 'marginBottom', type: 'number | string', default: '—', desc: '下边距' },
+  { prop: 'bgColor', type: 'string', default: 'transparent', desc: '背景颜色' },
+  { prop: 'height', type: 'number | string', default: '20', desc: '间隔槽高度' },
+  { prop: 'marginTop', type: 'number | string', default: '0', desc: '与上一个元素的距离' },
+  { prop: 'marginBottom', type: 'number | string', default: '0', desc: '与下一个元素的距离' },
 ];
 
-export default function GapDemo() {
- return (
- <DemoPage>
- <Section title="基础间距">
- <View style={gp.block}><Text>上方内容</Text></View>
- <UPGap height={20} />
- <View style={gp.block}><Text>下方内容</Text></View>
- </Section>
-
- <Section title="带背景色的间距">
- <View style={gp.block}><Text>内容 A</Text></View>
- <UPGap height={30} bgColor="#f5f5f5" />
- <View style={gp.block}><Text>内容 B</Text></View>
- </Section>
-
- <Section title="上下边距">
- <UPGap height={15} bgColor="#e3f2fd" marginTop={10} marginBottom={10} />
- <View style={gp.block}><Text>中间内容</Text></View>
- </Section>
-
- <PropsTable rows={PROPS} />
- </DemoPage>
- );
+/** Upstream wraps each gap in `.u-page__gap-item`. */
+function Item({ children }: { children: React.ReactNode }) {
+  return <View>{children}</View>;
 }
 
-const gp = StyleSheet.create({
- block: { backgroundColor: '#fff', padding: 12, borderRadius: 4, borderWidth: 1, borderColor: '#eee' },
+export default function GapDemo() {
+  return (
+    <DemoPage>
+      <Section contentStyle={s.flush} title="基本案列">
+        <Item>
+          <UPGap bgColor="#f3f4f6" />
+        </Item>
+      </Section>
+
+      <Section contentStyle={s.flush} title="自定义颜色">
+        <Item>
+          <UPGap bgColor="#2979ff" />
+        </Item>
+      </Section>
+
+      <Section contentStyle={s.flush} title="自定义高度">
+        <Item>
+          <UPGap bgColor="#f3f4f6" height="40" />
+        </Item>
+      </Section>
+
+      <Section contentStyle={s.flush} title="自定义上下边距">
+        <Item>
+          <UPGap bgColor="#f3f4f6" marginBottom="20" marginTop="20" />
+        </Item>
+      </Section>
+
+      <PropsTable rows={PROPS} />
+    </DemoPage>
+  );
+}
+
+const s = StyleSheet.create({
+  flush: { padding: 0 },
 });

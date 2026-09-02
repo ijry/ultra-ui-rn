@@ -1,88 +1,173 @@
 /**
- * UPCheckbox 组件示例 — 复选框
- * 展示：单独使用、复选组、自定义颜色、禁用、方形
+ * Checkbox 复选框
+ * 严格复刻 uview-plus pages/componentsA/checkbox/checkbox.nvue
  */
 import React, { useState } from 'react';
-import { View } from 'react-native';
-import { UPCheckbox, UPCheckboxGroup } from 'ultra-ui-rn';
-import { DemoPage, Section, Row, Value, PropsTable, EventLog } from '../_shared';
+import { StyleSheet } from 'react-native';
+import { UPButton, UPCheckbox, UPCheckboxGroup } from 'ultra-ui-rn';
+import { DemoPage, Section, PropsTable, EventLog } from '../_shared';
 
 const PROPS = [
- { prop: 'name', type: 'string | number', default: '—', desc: '选项唯一标识' },
- { prop: 'checked', type: 'boolean', default: 'false', desc: '受控选中状态' },
- { prop: 'defaultChecked', type: 'boolean', default: 'false', desc: '默认选中（非受控）' },
- { prop: 'label', type: 'string | number', default: '—', desc: '标签文字' },
- { prop: 'shape', type: 'circle | square', default: 'square', desc: '形状' },
- { prop: 'size', type: 'number | string', default: '18', desc: '复选框大小' },
- { prop: 'disabled', type: 'boolean | string', default: 'false', desc: '是否禁用' },
- { prop: 'activeColor', type: 'string', default: '#2979ff', desc: '选中颜色' },
- { prop: 'onChange', type: '(checked, { name }) => void', default: '—', desc: '选中变化回调' },
+  { prop: 'name', type: 'string | number', default: '—', desc: 'checkbox 的标识符' },
+  { prop: 'shape', type: "'circle' | 'square'", default: "'square'", desc: '形状' },
+  { prop: 'size', type: 'number | string', default: '18', desc: '整体的大小' },
+  { prop: 'checked', type: 'boolean', default: 'false', desc: '是否默认选中' },
+  { prop: 'disabled', type: 'boolean', default: 'false', desc: '是否禁用' },
+  { prop: 'activeColor', type: 'string', default: '#2979ff', desc: '选中状态下的颜色' },
+  { prop: 'inactiveColor', type: 'string', default: '#c8c9cc', desc: '未选中的颜色' },
+  { prop: 'iconSize', type: 'number | string', default: '12', desc: '图标的大小' },
+  { prop: 'label', type: 'string | number', default: '—', desc: 'label 提示文字' },
+  { prop: 'labelDisabled', type: 'boolean', default: 'false', desc: '是否禁止点击文本选中' },
+  { prop: 'usedAlone', type: 'boolean', default: 'false', desc: '是否单独使用（不在 group 内）' },
+  { prop: 'iconNode', type: 'ReactNode | (payload) => ReactNode', default: '—', desc: '自定义图标（源 icon 插槽）' },
+  { prop: 'labelNode', type: 'ReactNode | (payload) => ReactNode', default: '—', desc: '自定义文本（源 label 插槽）' },
+  { prop: 'onChange', type: '(checked, payload) => void', default: '—', desc: '选中状态变化时触发' },
 ];
 
+const checkboxList1 = ['苹果', '香蕉', '橙子'];
+const checkboxList2 = ['西游记', '红楼梦', '三国演义', '水浒传'];
+const checkboxList3 = ['冬瓜', '西瓜', '黄瓜', '傻瓜'];
+const checkboxList4 = ['黄庭坚', '欧阳修', '苏小宝', '王安石'];
+const checkboxList5 = ['红色', '黄色', '绿色', '蓝色'];
+const checkboxList6 = ['小鸟', '游艇', '轮船', '飞机'];
+const checkboxList7 = ['汽车', '蒸汽机', '猪肉', '抄手'];
+
 export default function CheckboxDemo() {
- const [checked, setChecked] = useState(false);
- const [groupVal, setGroupVal] = useState<Array<string | number | boolean>>(['apple']);
- const [events, setEvents] = useState<string[]>([]);
- const log = (e: string) => setEvents((p) => [...p, e]);
+  const [checkboxValue1, setCheckboxValue1] = useState<Array<string | number | boolean>>(['苹果', '橙子']);
+  const [aloneChecked, setAloneChecked] = useState(false);
+  const [checkboxValue2, setCheckboxValue2] = useState<Array<string | number | boolean>>(['西游记', '红楼梦', '三国演义', '水浒传']);
+  const [checkboxValue3, setCheckboxValue3] = useState<Array<string | number | boolean>>(['傻瓜']);
+  const [checkboxValue4, setCheckboxValue4] = useState<Array<string | number | boolean>>(['黄庭坚', '欧阳修', '王安石']);
+  const [checkboxValue5, setCheckboxValue5] = useState<Array<string | number | boolean>>(['绿色']);
+  const [checkboxValue6, setCheckboxValue6] = useState<Array<string | number | boolean>>(['游艇', '轮船']);
+  const [checkboxValue7, setCheckboxValue7] = useState<Array<string | number | boolean>>(['汽车', '蒸汽机']);
+  const [events, setEvents] = useState<string[]>([]);
+  const checkboxChange = (n: Array<string | number | boolean>) =>
+    setEvents((prev) => [...prev, `change: ${JSON.stringify(n)}`]);
 
- return (
- <DemoPage>
- {/* 1. 单独使用 */}
- <Section title="单独使用">
- <UPCheckbox
- name="agree"
- label="同意协议"
- checked={checked}
- onChange={(c) => { setChecked(c); log(`onChange: ${c}`); }}
- />
- <Value label="选中" value={checked} />
- </Section>
+  return (
+    <DemoPage>
+      <Section subtitle="苹果、香蕉和橙子哪个最甜？" title="基本案例">
+        <UPCheckboxGroup
+          onChange={(next) => { setCheckboxValue1(next); checkboxChange(next); }}
+          placement="column"
+          value={checkboxValue1}
+        >
+          {checkboxList1.map((name) => (
+            <UPCheckbox customStyle={s.stacked} key={name} label={name} name={name} />
+          ))}
+        </UPCheckboxGroup>
+      </Section>
 
- {/* 2. 不同形状 */}
- <Section title="形状">
- <Row label="方形">
- <UPCheckbox name="s1" label="方形" defaultChecked />
- </Row>
- <Row label="圆形">
- <UPCheckbox name="c1" label="圆形" shape="circle" defaultChecked />
- </Row>
- </Section>
+      <Section subtitle="是否同意用户协议？" title="单独使用checkbox">
+        <UPCheckbox
+          checked={aloneChecked}
+          customStyle={s.stacked}
+          label="同意用户协议与隐私条款"
+          name="agree"
+          onChange={setAloneChecked}
+          usedAlone
+        />
+        <UPButton
+          customStyle={s.toggleButton}
+          onClick={() => setAloneChecked((prev) => !prev)}
+          size="small"
+          text="切换"
+          type="primary"
+        />
+      </Section>
 
- {/* 3. 自定义颜色 */}
- <Section title="自定义颜色">
- <UPCheckbox name="color1" label="绿色" activeColor="#07c160" defaultChecked />
- <View style={{ height: 8 }} />
- <UPCheckbox name="color2" label="橙色" activeColor="#ff9900" defaultChecked />
- </Section>
+      <Section subtitle="中国四大名著是？" title="自定义形状">
+        <UPCheckboxGroup
+          onChange={(next) => { setCheckboxValue2(next); checkboxChange(next); }}
+          placement="column"
+          shape="square"
+          value={checkboxValue2}
+        >
+          {checkboxList2.map((name) => (
+            <UPCheckbox customStyle={s.stacked} key={name} label={name} name={name} />
+          ))}
+        </UPCheckboxGroup>
+      </Section>
 
- {/* 4. 禁用 */}
- <Section title="禁用">
- <Row label="未选+禁用">
- <UPCheckbox name="d1" label="禁用" disabled />
- </Row>
- <Row label="已选+禁用">
- <UPCheckbox name="d2" label="禁用已选" disabled defaultChecked />
- </Row>
- </Section>
+      <Section subtitle="下面什么东西不能吃？" title="是否禁用">
+        <UPCheckboxGroup
+          onChange={(next) => { setCheckboxValue3(next); checkboxChange(next); }}
+          placement="column"
+          value={checkboxValue3}
+        >
+          {checkboxList3.map((name, index) => (
+            <UPCheckbox
+              customStyle={s.stacked}
+              disabled={index === 0}
+              key={name}
+              label={name}
+              name={name}
+            />
+          ))}
+        </UPCheckboxGroup>
+      </Section>
 
- {/* 5. 复选组（UPSelection） */}
- <Section title="复选组">
- <UPCheckboxGroup value={groupVal} onChange={(val) => { setGroupVal(val); log(`group: ${JSON.stringify(val)}`); }}>
- <Row label="苹果">
- <UPCheckbox name="apple" label="苹果" />
- </Row>
- <Row label="香蕉">
- <UPCheckbox name="banana" label="香蕉" />
- </Row>
- <Row label="橘子">
- <UPCheckbox name="orange" label="橘子" />
- </Row>
- </UPCheckboxGroup>
- <Value label="已选" value={JSON.stringify(groupVal)} />
- </Section>
+      <Section subtitle="北宋四大家是谁？" title="是否禁止点击提示语选中复选框">
+        <UPCheckboxGroup
+          labelDisabled
+          onChange={(next) => { setCheckboxValue4(next); checkboxChange(next); }}
+          placement="column"
+          value={checkboxValue4}
+        >
+          {checkboxList4.map((name) => (
+            <UPCheckbox customStyle={s.stacked} key={name} label={name} name={name} />
+          ))}
+        </UPCheckboxGroup>
+      </Section>
 
- <PropsTable rows={PROPS} />
- <EventLog events={events} />
- </DemoPage>
- );
+      <Section subtitle="哪个颜色最好看？" title="自定义颜色">
+        <UPCheckboxGroup
+          activeColor="#19be6b"
+          onChange={(next) => { setCheckboxValue5(next); checkboxChange(next); }}
+          placement="column"
+          value={checkboxValue5}
+        >
+          {checkboxList5.map((name) => (
+            <UPCheckbox customStyle={s.stacked} key={name} label={name} name={name} />
+          ))}
+        </UPCheckboxGroup>
+      </Section>
+
+      <Section subtitle="什么东西不能飞？" title="横向排列形式">
+        <UPCheckboxGroup
+          onChange={(next) => { setCheckboxValue6(next); checkboxChange(next); }}
+          value={checkboxValue6}
+        >
+          {checkboxList6.map((name) => (
+            <UPCheckbox customStyle={s.inline} key={name} label={name} name={name} />
+          ))}
+        </UPCheckboxGroup>
+      </Section>
+
+      <Section subtitle="什么东西不能吃？" title="横向两端排列形式">
+        <UPCheckboxGroup
+          borderBottom
+          iconPlacement="right"
+          onChange={(next) => { setCheckboxValue7(next); checkboxChange(next); }}
+          placement="column"
+          value={checkboxValue7}
+        >
+          {checkboxList7.map((name) => (
+            <UPCheckbox customStyle={s.stackedWide} key={name} label={name} name={name} />
+          ))}
+        </UPCheckboxGroup>
+      </Section>
+
+      <EventLog events={events} />
+      <PropsTable rows={PROPS} />
+    </DemoPage>
+  );
 }
+
+const s = StyleSheet.create({
+  inline: { marginRight: 16 },
+  stacked: { marginBottom: 8 },
+  stackedWide: { marginBottom: 16 },
+  toggleButton: { width: 120 },
+});

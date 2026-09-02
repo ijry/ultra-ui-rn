@@ -1,68 +1,131 @@
 /**
- * UPCard 组件示例 — 卡片
- * 展示：基础卡片、带标题/副标题、全宽、无边框、自定义圆角
+ * Card 卡片
+ * 严格复刻 uview-plus pages/componentsB/card/card.vue
  */
-import React from 'react';
-import { View, Text } from 'react-native';
-import { UPCard } from 'ultra-ui-rn';
-import { DemoPage, Section, PropsTable } from '../_shared';
+import React, { useState } from 'react';
+import { Image, StyleSheet, Text, View } from 'react-native';
+import { UPCard, UPIcon, UPTitle } from 'ultra-ui-rn';
+import { DemoPage, ParamPanel, PropsTable } from '../_shared';
 
 const PROPS = [
- { prop: 'title', type: 'string', default: '—', desc: '标题' },
- { prop: 'subTitle', type: 'string', default: '—', desc: '副标题' },
- { prop: 'full', type: 'boolean', default: 'false', desc: '全宽（无左右 margin）' },
- { prop: 'border', type: 'boolean', default: 'true', desc: '显示边框' },
- { prop: 'margin', type: 'number | string', default: '—', desc: '外边距' },
- { prop: 'borderRadius', type: 'number | string', default: '—', desc: '圆角大小' },
- { prop: 'headBorderBottom', type: 'boolean', default: 'true', desc: '标题底部分割线' },
- { prop: 'titleColor', type: 'string', default: '—', desc: '标题颜色' },
- { prop: 'subTitleColor', type: 'string', default: '—', desc: '副标题颜色' },
+  { prop: 'title', type: 'string', default: '—', desc: '头部左边的标题' },
+  { prop: 'subTitle', type: 'string', default: '—', desc: '头部左边的副标题' },
+  { prop: 'thumb', type: 'string', default: '—', desc: '左上角的图片' },
+  { prop: 'padding', type: 'number | string', default: '15', desc: '各部分内边距' },
+  { prop: 'border', type: 'boolean', default: 'true', desc: '是否显示外边框' },
+  { prop: 'showHead', type: 'boolean', default: 'true', desc: '是否显示头部' },
+  { prop: 'showFoot', type: 'boolean', default: 'true', desc: '是否显示底部' },
+  { prop: 'head', type: 'ReactNode', default: '—', desc: '自定义头部（源 head 插槽）' },
+  { prop: 'children', type: 'ReactNode', default: '—', desc: '卡片主体（源 body 插槽）' },
+  { prop: 'foot', type: 'ReactNode', default: '—', desc: '自定义底部（源 foot 插槽）' },
+  { prop: 'onClick', type: '(index) => void', default: '—', desc: '点击整个卡片时触发' },
+  { prop: 'onHeadClick', type: '(index) => void', default: '—', desc: '点击头部时触发' },
 ];
 
+const THUMB = 'https://uview-plus.jiangruyi.com/uview/ext/59c256f85a8c3757.jpg';
+const BODY_IMAGE = 'https://uview-plus.jiangruyi.com/uview/ext/59c256f85a8c3757.jpg';
+
 export default function CardDemo() {
- return (
- <DemoPage>
- <Section title="基础用法">
- <UPCard>
- <Text style={{ color: '#606266', lineHeight: 22 }}>
- 这是一段卡片内容，可以通过 children 传入任意内容。
- </Text>
- </UPCard>
- </Section>
+  const [thumb, setThumb] = useState(THUMB);
+  const [padding, setPadding] = useState(15);
+  const [bottomSlot, setBottomSlot] = useState(true);
+  const [border, setBorder] = useState(true);
 
- <Section title="带标题和副标题">
- <UPCard title="订单信息" subTitle="2026-08-20">
- <Text style={{ color: '#606266', lineHeight: 22 }}>
- 商品：Ultra UI React Native{'\n'}数量：1{'\n'}价格：¥299.00
- </Text>
- </UPCard>
- </Section>
+  return (
+    <DemoPage>
+      <View style={s.cardWrap}>
+        <UPTitle customStyle={s.title}>基础卡片</UPTitle>
+        <UPCard showHead={false}>
+          <Text style={s.bodyText}>
+            尊敬的客户您好，您有来自的开票。如果有疑问请联系您的客户经理。
+          </Text>
+        </UPCard>
 
- <Section title="无边框 + 自定义圆角">
- <UPCard border={false} borderRadius={16}>
- <Text style={{ color: '#606266', lineHeight: 22 }}>
- 无边框卡片，圆角 16px。
- </Text>
- </UPCard>
- </Section>
+        <UPTitle customStyle={s.title}>高级卡片</UPTitle>
+        <UPCard
+          border={border}
+          foot={
+            bottomSlot ? (
+              <View>
+                <UPIcon label="30评论" name="chat-fill" size={16} />
+              </View>
+            ) : undefined
+          }
+          padding={padding}
+          showFoot={bottomSlot}
+          subTitle="2023-05-15"
+          thumb={thumb}
+          title="素胚勾勒出青花，笔锋浓转淡"
+        >
+          <View>
+            <View style={s.bodyItemTop}>
+              <Text numberOfLines={2} style={s.bodyItemTitle}>
+                瓶身描绘的牡丹一如你初妆，冉冉檀香透过窗心事我了然，宣纸上走笔至此搁一半
+              </Text>
+              <Image source={{ uri: BODY_IMAGE }} style={s.image} />
+            </View>
+            <View style={s.bodyItem}>
+              <Text numberOfLines={2} style={s.bodyItemTitle}>
+                釉色渲染仕女图韵味被私藏，而你嫣然的一笑如含苞待放
+              </Text>
+              <Image source={{ uri: BODY_IMAGE }} style={s.image} />
+            </View>
+          </View>
+        </UPCard>
+      </View>
 
- <Section title="标题底部无分割线">
- <UPCard title="无分割线" headBorderBottom={false}>
- <Text style={{ color: '#606266', lineHeight: 22 }}>
- 标题和内容之间没有分割线。
- </Text>
- </UPCard>
- </Section>
+      <View style={s.demo}>
+        <Text style={s.blockTitle}>参数配置</Text>
 
- <Section title="自定义标题颜色">
- <UPCard title="彩色标题" titleColor="#07c160" subTitle="副标题" subTitleColor="#909399">
- <Text style={{ color: '#606266', lineHeight: 22 }}>
- 标题使用自定义颜色。
- </Text>
- </UPCard>
- </Section>
+        <ParamPanel
+          current={thumb === THUMB ? 0 : 1}
+          label="左上角图标"
+          onChange={(index) => setThumb(index === 0 ? THUMB : '')}
+          options={['显示', '隐藏']}
+        />
 
- <PropsTable rows={PROPS} />
- </DemoPage>
- );
+        <ParamPanel
+          current={[10, 15, 20].indexOf(padding)}
+          label="内边距"
+          onChange={(index) => setPadding([10, 15, 20][index] ?? 15)}
+          options={['10', '15', '20']}
+        />
+
+        <ParamPanel
+          current={bottomSlot ? 0 : 1}
+          label="底部"
+          onChange={(index) => setBottomSlot(index === 0)}
+          options={['显示', '隐藏']}
+        />
+
+        <ParamPanel
+          current={border ? 0 : 1}
+          label="外边框"
+          onChange={(index) => setBorder(index === 0)}
+          options={['显示', '隐藏']}
+        />
+      </View>
+
+      <PropsTable rows={PROPS} />
+    </DemoPage>
+  );
 }
+
+const s = StyleSheet.create({
+  blockTitle: { color: '#909193', fontSize: 14, marginBottom: 8 },
+  bodyItem: { alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between' },
+  bodyItemTitle: { flex: 1, fontSize: 14, lineHeight: 22, marginRight: 8 },
+  bodyItemTop: {
+    alignItems: 'flex-start',
+    borderBottomColor: '#e4e7ed',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: 10,
+  },
+  bodyText: { fontSize: 14, fontWeight: '500', lineHeight: 25 },
+  cardWrap: { marginBottom: 20 },
+  demo: { marginBottom: 23 },
+  image: { borderRadius: 4, height: 50, width: 50 },
+  title: { paddingLeft: 15, paddingTop: 10 },
+});

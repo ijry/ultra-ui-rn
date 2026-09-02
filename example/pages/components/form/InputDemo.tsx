@@ -1,128 +1,172 @@
 /**
- * UPInput 组件示例 — 输入框
- * 展示：受控/非受控、密码、清空、前缀/后缀图标、字数统计、边框样式
+ * Input 输入框
+ * 严格复刻 uview-plus pages/componentsC/input/input.nvue
  */
-import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { UPInput } from 'ultra-ui-rn';
-import { DemoPage, Section, Row, Value, PropsTable, EventLog } from '../_shared';
+import React, { useRef, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import {
+  UPButton,
+  UPCode,
+  UPGap,
+  UPInput,
+  UPText,
+  toast,
+  type UPCodeRef,
+} from 'ultra-ui-rn';
+import { DemoPage, Section, PropsTable, EventLog } from '../_shared';
 
 const PROPS = [
- { prop: 'value', type: 'string | number', default: '—', desc: '受控值（v-model）' },
- { prop: 'placeholder', type: 'string', default: '—', desc: '占位提示文本' },
- { prop: 'type', type: 'string', default: '—', desc: '类型：text/password/number/digit/idcard' },
- { prop: 'clearable', type: 'boolean', default: 'false', desc: '是否显示清除按钮' },
- { prop: 'password', type: 'boolean', default: 'false', desc: '是否密码输入' },
- { prop: 'passwordVisibilityToggle', type: 'boolean', default: 'false', desc: '密码显隐切换' },
- { prop: 'disabled', type: 'boolean', default: 'false', desc: '是否禁用' },
- { prop: 'readonly', type: 'boolean', default: 'false', desc: '是否只读' },
- { prop: 'maxlength', type: 'number | string', default: '—', desc: '最大输入长度' },
- { prop: 'showWordLimit', type: 'boolean', default: 'false', desc: '显示字数统计' },
- { prop: 'border', type: "surround | bottom | none", default: 'surround', desc: '边框样式' },
- { prop: 'shape', type: 'circle | square', default: 'square', desc: '边框形状（surround 时）' },
- { prop: 'inputAlign', type: 'left | center | right', default: 'left', desc: '输入文字对齐' },
- { prop: 'prefixIcon', type: 'string', default: '—', desc: '前置图标名' },
- { prop: 'suffixIcon', type: 'string', default: '—', desc: '后置图标名' },
- { prop: 'onChange', type: '(value: string) => void', default: '—', desc: '值变化回调' },
- { prop: 'onFocus', type: '() => void', default: '—', desc: '聚焦回调' },
- { prop: 'onBlur', type: '(value: string) => void', default: '—', desc: '失焦回调' },
- { prop: 'onClear', type: '() => void', default: '—', desc: '清空回调' },
+  { prop: 'value', type: 'string | number', default: '—', desc: '输入的值（v-model）' },
+  { prop: 'type', type: "'text' | 'number' | 'idcard' | 'digit'", default: "'text'", desc: '输入框类型' },
+  { prop: 'placeholder', type: 'string', default: '—', desc: '占位提示文字' },
+  { prop: 'border', type: "'surround' | 'bottom' | 'none'", default: "'surround'", desc: '边框类型' },
+  { prop: 'shape', type: "'circle' | 'square'", default: "'square'", desc: '输入框形状' },
+  { prop: 'clearable', type: 'boolean', default: 'false', desc: '是否显示清除控件' },
+  { prop: 'onlyClearableOnFocused', type: 'boolean', default: 'true', desc: '仅聚焦时显示清除图标' },
+  { prop: 'password', type: 'boolean', default: 'false', desc: '是否密码类型' },
+  { prop: 'passwordVisibilityToggle', type: 'boolean', default: 'false', desc: '是否显示密码显隐切换' },
+  { prop: 'disabled', type: 'boolean', default: 'false', desc: '是否禁用' },
+  { prop: 'color', type: 'string', default: '#303133', desc: '输入框字体颜色' },
+  { prop: 'prefixIcon', type: 'string', default: '—', desc: '输入框前置图标' },
+  { prop: 'suffixIcon', type: 'string', default: '—', desc: '输入框后置图标' },
+  { prop: 'prefix', type: 'ReactNode', default: '—', desc: '前置插槽内容（源 prefix 插槽）' },
+  { prop: 'suffix', type: 'ReactNode', default: '—', desc: '后置插槽内容（源 suffix 插槽）' },
+  { prop: 'confirmType', type: 'string', default: "'done'", desc: '键盘右下角按钮的文字' },
+  { prop: 'onChange', type: '(value: string) => void', default: '—', desc: '内容变化时触发' },
+  { prop: 'onConfirm', type: '(value: string) => void', default: '—', desc: '点击键盘确认按钮时触发' },
 ];
 
 export default function InputDemo() {
- const [v1, setV1] = useState('');
- const [v2, setV2] = useState('');
- const [v3, setV3] = useState('');
- const [v4, setV4] = useState('已输入内容');
- const [v5, setV5] = useState('');
- const [events, setEvents] = useState<string[]>([]);
- const log = (e: string) => setEvents((p) => [...p, e]);
+  const [value, setValue] = useState('');
+  const [inputNumber, setInputNumber] = useState('');
+  const [inputPassword, setInputPassword] = useState('123456');
+  const [tips, setTips] = useState('');
+  const codeRef = useRef<UPCodeRef>(null);
+  const [events, setEvents] = useState<string[]>([]);
+  const change = (e: string) => setEvents((prev) => [...prev, `change: ${e}`]);
 
- return (
- <DemoPage>
- {/* 1. 基础用法 */}
- <Section title="基础用法">
- <UPInput
- placeholder="请输入内容"
- value={v1}
- onChange={(val) => { setV1(val); log(`onChange: ${val}`); }}
- onFocus={() => log('onFocus')}
- onBlur={(val) => log(`onBlur: ${val}`)}
- />
- <Value label="当前值" value={v1} />
- </Section>
+  const handleSearch = (e: string) => {
+    toast.default('@confirm触发');
+    setEvents((prev) => [...prev, `confirm: ${e}`]);
+  };
 
- {/* 2. 密码输入 + 可见切换 */}
- <Section title="密码输入">
- <UPInput
- type="password"
- placeholder="请输入密码"
- password
- passwordVisibilityToggle
- value={v2}
- onChange={setV2}
- />
- <Value label="当前值" value={v2} />
- </Section>
+  const getCode = () => {
+    toast.loading('正在获取验证码');
+    setTimeout(() => {
+      toast.hide();
+      toast.default('验证码已发送');
+      codeRef.current?.start();
+    }, 2000);
+  };
 
- {/* 3. 可清空 */}
- <Section title="可清空">
- <UPInput
- placeholder="输入后出现清除按钮"
- clearable
- onlyClearableOnFocused
- value={v3}
- onChange={setV3}
- onClear={() => log('onClear')}
- />
- <Value label="当前值" value={v3} />
- </Section>
+  return (
+    <DemoPage>
+      <Section title="基础使用">
+        <Text>{value}</Text>
+        <UPInput
+          border="surround"
+          confirmType="search"
+          onChange={(next) => { setValue(next); change(next); }}
+          onConfirm={handleSearch}
+          placeholder="请输入内容"
+          value={value}
+        />
+        <UPButton customStyle={s.spaced} onClick={() => setValue(Math.random().toString())} text="变化" />
+        <Text>{value}</Text>
+      </Section>
 
- {/* 4. 字数统计 */}
- <Section title="字数统计">
- <UPInput
- placeholder="最多10个字符"
- maxlength={10}
- showWordLimit
- value={v4}
- onChange={setV4}
- />
- </Section>
+      <Section title="颜色">
+        <UPInput
+          border="surround"
+          color="blue"
+          onChange={setValue}
+          placeholder="请输入内容"
+          value={value}
+        />
+      </Section>
 
- {/* 5. 前缀/后缀图标 */}
- <Section title="前后缀图标">
- <UPInput
- placeholder="搜索"
- prefixIcon="search"
- suffixIcon="arrow-right"
- value={v5}
- onChange={setV5}
- />
- </Section>
+      <Section title="可清空内容(仅focus时显示清除图标)">
+        <UPInput border="surround" clearable placeholder="请输入内容" />
+      </Section>
 
- {/* 6. 边框变体 */}
- <Section title="边框样式">
- <UPInput placeholder="surround（默认）" border="surround" />
- <View style={{ height: 10 }} />
- <UPInput placeholder="bottom" border="bottom" />
- <View style={{ height: 10 }} />
- <UPInput placeholder="none（无边框）" border="none" />
- </Section>
+      <Section title="可清空内容(始终显示清除图标)">
+        <UPInput border="surround" clearable onlyClearableOnFocused={false} placeholder="请输入内容" />
+      </Section>
 
- {/* 7. 禁用 / 只读 */}
- <Section title="禁用 / 只读">
- <UPInput placeholder="禁用" disabled />
- <View style={{ height: 10 }} />
- <UPInput placeholder="只读" readonly value="只读内容" />
- </Section>
+      <Section title="数字键盘">
+        <UPInput
+          border="surround"
+          clearable
+          onChange={setInputNumber}
+          placeholder="请输入内容"
+          type="number"
+          value={inputNumber}
+        />
+        <Text>{inputNumber}</Text>
+      </Section>
 
- {/* 8. 圆形边框 + 居中对齐 */}
- <Section title="圆形 + 居中">
- <UPInput placeholder="圆形居中" shape="circle" inputAlign="center" border="surround" />
- </Section>
+      <Section title="密码类型">
+        <UPInput
+          border="surround"
+          clearable
+          onChange={setInputPassword}
+          password
+          passwordVisibilityToggle
+          placeholder="请输入内容"
+          value={inputPassword}
+        />
+        <Text>{inputPassword}</Text>
+      </Section>
 
- <PropsTable rows={PROPS} />
- <EventLog events={events} />
- </DemoPage>
- );
+      <Section title="显示下划线">
+        <UPInput border="bottom" clearable placeholder="请输入内容" />
+      </Section>
+
+      <Section title="禁用状态">
+        <UPInput border="surround" disabled placeholder="禁用状态" />
+      </Section>
+
+      <Section title="圆形">
+        <UPInput border="surround" placeholder="请输入内容" shape="circle" />
+      </Section>
+
+      <Section title="前后图标">
+        <UPInput placeholder="前置图标" prefixIcon="search" prefixIconStyle={s.prefixIcon} />
+        <View style={s.spaced}>
+          <UPInput placeholder="后置图标" suffixIcon="map-fill" suffixIconStyle={s.suffixIcon} />
+        </View>
+      </Section>
+
+      <Section title="前后插槽">
+        <UPInput
+          placeholder="前置插槽"
+          prefix={<UPText customStyle={s.prefixText} text="http://" type="tips" />}
+        />
+        <View style={s.spaced}>
+          <UPInput
+            placeholder="后置插槽"
+            suffix={
+              <View style={s.suffixSlot}>
+                <UPCode changeText="X秒重新获取哈哈哈" onChange={setTips} ref={codeRef} seconds="20" />
+                <UPButton onClick={getCode} size="mini" text={tips} type="success" />
+              </View>
+            }
+          />
+        </View>
+      </Section>
+
+      <UPGap height={50} />
+
+      <EventLog events={events} />
+      <PropsTable rows={PROPS} />
+    </DemoPage>
+  );
 }
+
+const s = StyleSheet.create({
+  prefixIcon: { color: '#909399', fontSize: 22 },
+  prefixText: { marginRight: 3 },
+  spaced: { marginTop: 15 },
+  suffixIcon: { color: '#909399' },
+  suffixSlot: { alignItems: 'center', flexDirection: 'row' },
+});
