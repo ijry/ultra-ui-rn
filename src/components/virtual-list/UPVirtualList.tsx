@@ -110,6 +110,11 @@ function UPVirtualListInner<T = unknown>(input: UPVirtualListProps<T>, ref: Reac
 
   useEffect(() => {
     const next = Math.max(0, getPx(props.scrollTop));
+    // Source `scrollTop` is a two-way binding, so a caller that feeds
+    // `onUpdateScrollTop` back arrives here with the value we just reported.
+    // Re-issuing `scrollTo` for it would fight the in-progress gesture and kill
+    // momentum, so echoes are ignored.
+    if (Math.abs(next - scrollTopRef.current) < 1) return;
     scrollTopRef.current = next;
     setScrollTop(next);
     scrollRef.current?.scrollTo({ animated: false, y: next });

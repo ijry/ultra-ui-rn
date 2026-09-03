@@ -80,6 +80,39 @@ it('tracks controlled scrollTop', () => {
   );
 });
 
+it('supports two-way scrollTop without re-scrolling on its own echo', () => {
+  // Mirrors a caller wiring `scrollTop` + `onUpdateScrollTop` together, as
+  // upstream's `v-model:scrollTop` does. The echoed value must not trigger
+  // another scrollTo, which would fight the gesture.
+  function Controlled() {
+    const [top, setTop] = React.useState(0);
+    return (
+      <UPVirtualList
+        height={100}
+        itemHeight={20}
+        listData={data}
+        onUpdateScrollTop={setTop}
+        renderItem={({ item }) => <Text>{item.name}</Text>}
+        scrollTop={top}
+      />
+    );
+  }
+  const screen = renderRoot(<Controlled />);
+
+  act(() => {
+    fireEvent.scroll(screen.getByTestId('up-virtual-list-scroll'), {
+      nativeEvent: { contentOffset: { x: 0, y: 80 } },
+    });
+  });
+
+  // The range followed the gesture, and the echo did not reset it to 0.
+  expect(screen.getByText('Row 2')).toBeTruthy();
+  expect(screen.getByText('Row 10')).toBeTruthy();
+  expect(screen.getByTestId('up-virtual-list-top-spacer').props.style).toEqual(
+    expect.objectContaining({ height: 40 }),
+  );
+});
+
 it('wraps primitive data for render callbacks', () => {
   const screen = renderRoot(
     <UPVirtualList

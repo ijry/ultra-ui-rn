@@ -108,8 +108,14 @@ finally made the cause visible.
 ### ~~UPButton~~ ✓ FIXED
 - ~~**type="default"**~~ — ✓ Fixed 2026-09-03: added to `UPButtonType` union, renders like 'info' (white bg, gray border)
 
-### UPVirtualList
-- **scrollTop bidirectional binding** — upstream `v-model:scrollTop` is read+write (setting scrolls, scrolling updates); local `scrollTop` is write-only (feeding `onUpdateScrollTop` back causes gesture conflicts)
+### ~~UPVirtualList~~ ✓ FIXED
+- ~~**scrollTop bidirectional binding**~~ — ✓ Fixed 2026-09-03, and it was
+  **misclassified**. Both directions already existed: the `[props.scrollTop]`
+  effect scrolls, and `onUpdateScrollTop` fires on every scroll. The real problem
+  was the echo — a caller wiring the two together arrived back with the value the
+  component had just reported, and the effect re-issued `scrollTo` mid-gesture,
+  fighting momentum. The effect now ignores values within 1px of what it last
+  reported, so `v-model:scrollTop` semantics work.
 
 ---
 
@@ -148,11 +154,11 @@ finally made the cause visible.
 ## Summary
 
 **Total gaps identified**: 20  
-**Fixed**: 16 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor (demo-side), UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags)
-**Remaining**: 4
+**Fixed**: 17 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor (demo-side), UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags)
+**Remaining**: 3
 - Critical (defined but broken): 0
 - Missing props/events: 1 (UPSignature canvas adapter — a design question, not a defect)
-- API discrepancies: 1 (UPVirtualList.scrollTop — bidirectional binding conflicts with RN gestures)
+- API discrepancies: 0
 - Platform limitations: 6 (including 2 upstream bugs in UPLazyLoad)
 - Enum corrections: 1 (already applied)
 
@@ -160,13 +166,15 @@ finally made the cause visible.
 1. ~~UPParse (6 gaps, all fixed)~~ ✓ — `navigateTo` anchor scrolling verified on an
    Android emulator; see "Scroll container composition"
 2. UPLazyLoad (2 upstream bugs) — statusChange/clickImg events referenced in demo but never emitted by component
-3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓ / ~~UPMarkdown~~ ✓ / ~~UPButton~~ ✓
+3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓ / ~~UPMarkdown~~ ✓ / ~~UPButton~~ ✓ / ~~UPVirtualList~~ ✓
 
-**One classification lesson**: two entries on this list were never library gaps —
-`UPSignature` theme reactivity and `UPLazyLoad`'s `@statusChange` / `@clickImg`.
-The first was the local *demo* failing to replicate what the upstream *demo*
-computes; the second is upstream referencing events its own component never
-emits. When an entry reads "upstream does X and we don't", check whether X lives
-in upstream's component or only in its demo.
+**One classification lesson**: three entries on this list were never what they
+claimed. `UPSignature` theme reactivity was the local *demo* failing to replicate
+what the upstream *demo* computes. `UPLazyLoad`'s `@statusChange` / `@clickImg`
+are upstream referencing events its own component never emits. `UPVirtualList`'s
+`scrollTop` was described as write-only when both directions already worked — the
+actual defect was the feedback echo. When an entry reads "upstream does X and we
+don't", check whether X lives in upstream's component or only in its demo, and
+re-read the local source before trusting the description.
 
 **Next steps**: See task #2 "Fix library gaps surfaced by replication"
