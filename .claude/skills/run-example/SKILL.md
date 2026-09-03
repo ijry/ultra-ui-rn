@@ -127,21 +127,35 @@ cd example/android && ./gradlew installDebug --console=plain
 
 `:app:buildCMakeDebug[arm64-v8a]` fails with
 `ninja: error: Stat(...RNGestureHandlerDetectorShadowNode.cpp.o): Filename
-longer than 260 characters`. CMake mirrors the full source path under the object
-directory, so the generated path lands around 380 chars.
+longer than 260 characters`.
+
+Measured, so nobody re-litigates it:
+
+```
+ninja cwd prefix                    86
+relative object path               292   <- already over 260 on its own
+  of which mirrored source path    156
+total                              378   (limit 260)
+```
+
+CMake mirrors the full source path under the object directory, and that
+mirrored portion is 156 chars of gesture-handler's own
+`shared/shadowNodes/react/renderer/components/rngesturehandler_codegen/` tree.
+
+**Path shortening cannot fix this.** The relative object path alone is 292
+chars, so even a one-character build root leaves it over the limit; relocating
+the native build dir gets to ~322, and moving the whole repo to `D:\u\` only
+reaches ~346.
+
+The one real fix is enabling Windows long paths (`LongPathsEnabled`) —
+system-wide and needs admin, so ask before doing it. CMake 3.22 and ninja both
+honour it once the OS flag is set.
 
 reanimated, worklets and gesture-handler all compile fine on their own —
 autolinking is working. Only the app module's codegen step trips the limit.
 
-Resolving it needs one of (ask first, both have consequences):
-
-- enable Windows long paths (`LongPathsEnabled`) — system-wide, needs admin
-- relocate the native build dir to a short root — shortens the prefix by ~68
-  chars, which on its own is **not** enough; the mirrored source path is ~155
-  chars by itself
-
 Restricting `abiFilters` to `x86_64` cuts build time roughly 4× for emulator
-work but saves only 3 characters, so it does not fix this.
+work but saves only 3 characters, so it is a speed change, not a fix.
 
 ### If you touch the native setup
 

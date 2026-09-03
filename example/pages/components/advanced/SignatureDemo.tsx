@@ -4,7 +4,7 @@
  */
 import React, { useRef, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
-import { toast, UPAlert, UPButton, UPSignature, type UPSignatureRef } from 'ultra-ui-rn';
+import { toast, UPAlert, UPButton, UPSignature, useUPTheme, type UPSignatureRef } from 'ultra-ui-rn';
 import { DemoPage, PageItem } from '../_shared';
 
 export default function SignatureDemo() {
@@ -12,6 +12,9 @@ export default function SignatureDemo() {
   const signature2 = useRef<UPSignatureRef>(null);
   const [signatureImage1, setSignatureImage1] = useState('');
   const [signatureImage2, setSignatureImage2] = useState('');
+  // 源库用 `:bg-color="upThemeIsDark ? '#1c1c1e' : '#f5f5f5'"`
+  const { mode } = useUPTheme();
+  const bgColor = mode === 'dark' ? '#1c1c1e' : '#f5f5f5';
 
   const onConfirm1 = (result: { tempFilePath: string }) => {
     setSignatureImage1(result.tempFilePath);
@@ -49,7 +52,7 @@ export default function SignatureDemo() {
 
       <PageItem title="基础签名示例">
         <UPSignature
-          bgColor="#f5f5f5"
+          bgColor={bgColor}
           height={200}
           onConfirm={onConfirm1}
           onError={onError1}
@@ -68,7 +71,7 @@ export default function SignatureDemo() {
 
       <PageItem title="自定义颜色和工具栏示例">
         <UPSignature
-          bgColor="#f5f5f5"
+          bgColor={bgColor}
           color="#ff0000"
           height={200}
           onConfirm={onConfirm2}
