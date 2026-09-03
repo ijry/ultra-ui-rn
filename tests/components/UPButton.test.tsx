@@ -70,3 +70,14 @@ it('reacts to global button defaults', () => {
     expect.objectContaining({ height: 22, minWidth: 50 }),
   );
 });
+
+it('renders type="default" with white background and gray border like info', () => {
+  const screen = renderButton(<UPButton text="Default" type="default" />);
+
+  expect(getButtonStyle(screen)).toEqual(
+    expect.objectContaining({
+      backgroundColor: '#ffffff',
+      borderColor: '#e4e7ed',
+    }),
+  );
+});

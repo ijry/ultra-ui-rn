@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo } from 'react';
-import { Pressable, ScrollView, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Image, Pressable, ScrollView, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useUPConfig } from '../../config/useUPConfig';
 import { parseHtml, type ParseNode } from './htmlParser';
 
@@ -13,6 +13,7 @@ export type UPParseClickDetail = {
 
 export type UPParseProps = {
   content?: string;
+  /** @deprecated CSS string syntax unsupported in RN. Use customStyle instead. */
   containerStyle?: string;
   copyLink?: boolean | string;
   domain?: string;
@@ -53,11 +54,122 @@ function nodeText(node: ParseNode): string {
   return node.children.map(nodeText).join('');
 }
 
-function RenderNode({ node, onPress, textColor, mutedColor }: {
+function ImageRenderer({ src, alt, domain, errorImg, loadingImg, onPress }: {
+  src: string;
+  alt?: string;
+  domain?: string;
+  errorImg?: string;
+  loadingImg?: string;
+  onPress?: () => void;
+}): React.JSX.Element {
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null);
+
+  // Resolve relative URLs with domain
+  const resolvedSrc = useMemo(() => {
+    if (!src) return '';
+    if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:')) {
+      return src;
+    }
+    if (domain) {
+      const base = domain.endsWith('/') ? domain.slice(0, -1) : domain;
+      const path = src.startsWith('/') ? src : `/${src}`;
+      return base + path;
+    }
+    return src;
+  }, [src, domain]);
+
+  useEffect(() => {
+    if (!resolvedSrc) {
+      setStatus('error');
+      return;
+    }
+
+    Image.getSize(
+      resolvedSrc,
+      (width, height) => {
+        setDimensions({ width, height });
+        setStatus('success');
+      },
+      () => {
+        setStatus('error');
+      }
+    );
+  }, [resolvedSrc]);
+
+  if (status === 'loading') {
+    if (loadingImg) {
+      return (
+        <View testID="up-parse-node-img">
+          <Image
+            source={{ uri: loadingImg }}
+            style={{ width: 100, height: 100, marginVertical: 4 }}
+            testID="up-parse-img-loading"
+          />
+        </View>
+      );
+    }
+    return (
+      <View testID="up-parse-node-img">
+        <Text style={{ color: '#909399', fontSize: 13, marginVertical: 4 }}>
+          [加载中...]
+        </Text>
+      </View>
+    );
+  }
+
+  if (status === 'error') {
+    if (errorImg) {
+      return (
+        <View testID="up-parse-node-img">
+          <Image
+            source={{ uri: errorImg }}
+            style={{ width: 100, height: 100, marginVertical: 4 }}
+            testID="up-parse-img-error"
+          />
+        </View>
+      );
+    }
+    return (
+      <View testID="up-parse-node-img">
+        <Text style={{ color: '#909399', fontSize: 13, marginVertical: 4 }}>
+          [图片加载失败: {alt || src}]
+        </Text>
+      </View>
+    );
+  }
+
+  // Calculate display dimensions (max width 90% of container, maintain aspect ratio)
+  const maxWidth = 340; // Approximate 90% of typical phone width
+  let displayWidth = dimensions?.width || 100;
+  let displayHeight = dimensions?.height || 100;
+
+  if (displayWidth > maxWidth) {
+    const ratio = maxWidth / displayWidth;
+    displayWidth = maxWidth;
+    displayHeight = displayHeight * ratio;
+  }
+
+  return (
+    <Pressable onPress={onPress} testID="up-parse-node-img">
+      <Image
+        source={{ uri: resolvedSrc }}
+        style={{ width: displayWidth, height: displayHeight, marginVertical: 4 }}
+        resizeMode="contain"
+        testID="up-parse-img"
+      />
+    </Pressable>
+  );
+}
+
+function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, loadingImg }: {
   node: ParseNode;
   onPress?: (detail: UPParseClickDetail) => void;
   textColor: string;
   mutedColor: string;
+  domain?: string;
+  errorImg?: string;
+  loadingImg?: string;
 }): React.JSX.Element | null {
   if (node.type === 'text') {
     return (
@@ -94,7 +206,7 @@ function RenderNode({ node, onPress, textColor, mutedColor }: {
       return wrap(
         <Text style={{ color: textColor, fontSize: size, fontWeight: '700', marginBottom: 6, marginTop: 10 }}>
           {children.map((child, index) => (
-            <RenderNode key={index} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
           ))}
         </Text>,
       );
@@ -105,7 +217,7 @@ function RenderNode({ node, onPress, textColor, mutedColor }: {
       return wrap(
         <Text style={style}>
           {children.map((child, index) => (
-            <RenderNode key={index} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
           ))}
         </Text>,
       );
@@ -116,7 +228,7 @@ function RenderNode({ node, onPress, textColor, mutedColor }: {
       return wrap(
         <Text style={{ color: textColor, fontSize: 15, fontWeight: '700' }}>
           {children.map((child, index) => (
-            <RenderNode key={index} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
           ))}
         </Text>,
       );
@@ -125,7 +237,7 @@ function RenderNode({ node, onPress, textColor, mutedColor }: {
       return wrap(
         <Text style={{ color: textColor, fontSize: 15, fontStyle: 'italic' }}>
           {children.map((child, index) => (
-            <RenderNode key={index} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
           ))}
         </Text>,
       );
@@ -133,7 +245,7 @@ function RenderNode({ node, onPress, textColor, mutedColor }: {
       return wrap(
         <Text style={{ color: textColor, fontSize: 15, textDecorationLine: 'underline' }}>
           {children.map((child, index) => (
-            <RenderNode key={index} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
           ))}
         </Text>,
       );
@@ -141,7 +253,65 @@ function RenderNode({ node, onPress, textColor, mutedColor }: {
       return wrap(
         <Text style={{ color: mutedColor, fontSize: 15, textDecorationLine: 'line-through' }}>
           {children.map((child, index) => (
-            <RenderNode key={index} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+          ))}
+        </Text>,
+      );
+    case 's':
+      return wrap(
+        <Text style={{ color: mutedColor, fontSize: 15, textDecorationLine: 'line-through' }}>
+          {children.map((child, index) => (
+            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+          ))}
+        </Text>,
+      );
+    case 'sup':
+      return wrap(
+        <Text style={{ color: textColor, fontSize: 11, lineHeight: 15 }}>
+          {children.map((child, index) => (
+            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+          ))}
+        </Text>,
+      );
+    case 'sub':
+      return wrap(
+        <Text style={{ color: textColor, fontSize: 11, lineHeight: 15 }}>
+          {children.map((child, index) => (
+            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+          ))}
+        </Text>,
+      );
+    case 'small':
+      return wrap(
+        <Text style={{ color: textColor, fontSize: 13 }}>
+          {children.map((child, index) => (
+            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+          ))}
+        </Text>,
+      );
+    case 'big':
+      return wrap(
+        <Text style={{ color: textColor, fontSize: 17 }}>
+          {children.map((child, index) => (
+            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+          ))}
+        </Text>,
+      );
+    case 'ruby':
+    case 'section':
+      return wrap(
+        <View>
+          {children.map((child, index) => (
+            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+          ))}
+        </View>,
+      );
+    case 'rp':
+    case 'rt':
+      return wrap(
+        <Text style={{ color: mutedColor, fontSize: 11 }}>
+          {children.map((child, index) => (
+            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
           ))}
         </Text>,
       );
@@ -149,7 +319,7 @@ function RenderNode({ node, onPress, textColor, mutedColor }: {
       return wrap(
         <Text style={{ backgroundColor: '#f2f3f5', borderRadius: 3, color: '#476582', fontFamily: 'monospace', fontSize: 13, paddingHorizontal: 3 }}>
           {children.map((child, index) => (
-            <RenderNode key={index} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
           ))}
         </Text>,
       );
@@ -158,7 +328,7 @@ function RenderNode({ node, onPress, textColor, mutedColor }: {
         <View style={{ backgroundColor: '#f6f8fa', borderRadius: 4, marginBottom: 8, padding: 10 }}>
           <Text style={{ color: '#24292e', fontFamily: 'monospace', fontSize: 13, lineHeight: 19 }}>
             {children.map((child, index) => (
-              <RenderNode key={index} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+              <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
             ))}
           </Text>
         </View>,
@@ -167,7 +337,7 @@ function RenderNode({ node, onPress, textColor, mutedColor }: {
       return wrap(
         <View style={{ borderLeftColor: '#4da6ff', borderLeftWidth: 3, marginBottom: 8, paddingLeft: 10 }}>
           {children.map((child, index) => (
-            <RenderNode key={index} mutedColor={mutedColor} node={child} onPress={onPress} textColor={mutedColor} />
+            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={mutedColor} />
           ))}
         </View>,
       );
@@ -176,7 +346,7 @@ function RenderNode({ node, onPress, textColor, mutedColor }: {
       return wrap(
         <View style={{ marginBottom: 8, paddingLeft: 12 }}>
           {children.map((child, index) => (
-            <RenderNode key={index} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
           ))}
         </View>,
       );
@@ -186,7 +356,7 @@ function RenderNode({ node, onPress, textColor, mutedColor }: {
           <Text style={{ color: mutedColor, fontSize: 15, marginRight: 6, width: 16 }}>•</Text>
           <View style={{ flex: 1 }}>
             {children.map((child, childIndex) => (
-              <RenderNode key={childIndex} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+              <RenderNode key={childIndex} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
             ))}
           </View>
         </View>,
@@ -196,22 +366,27 @@ function RenderNode({ node, onPress, textColor, mutedColor }: {
         <Pressable onPress={() => onPress?.({ tag, attrs, text: nodeText(node) })}>
           <Text style={{ color: '#4da6ff', fontSize: 15, textDecorationLine: 'underline' }}>
             {children.map((child, index) => (
-              <RenderNode key={index} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+              <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
             ))}
           </Text>
         </Pressable>,
       );
     case 'img':
-      return wrap(
-        <Pressable onPress={() => onPress?.({ tag, attrs, text: nodeText(node) })}>
-          <Text style={{ color: mutedColor, fontSize: 13 }}>[图片:{attrs.alt || attrs.src || ''}]</Text>
-        </Pressable>,
+      return (
+        <ImageRenderer
+          alt={attrs.alt}
+          domain={domain}
+          errorImg={errorImg}
+          loadingImg={loadingImg}
+          onPress={() => onPress?.({ tag, attrs, text: nodeText(node) })}
+          src={attrs.src || ''}
+        />
       );
     case 'table':
       return wrap(
         <View style={{ borderColor: '#e4e7ed', borderWidth: 1, marginBottom: 8 }}>
           {children.map((child, index) => (
-            <RenderNode key={index} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
           ))}
         </View>,
       );
@@ -219,7 +394,7 @@ function RenderNode({ node, onPress, textColor, mutedColor }: {
       return wrap(
         <View style={{ flexDirection: 'row' }}>
           {children.map((child, index) => (
-            <RenderNode key={index} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
           ))}
         </View>,
       );
@@ -228,7 +403,7 @@ function RenderNode({ node, onPress, textColor, mutedColor }: {
       return wrap(
         <View style={{ borderColor: '#e4e7ed', borderWidth: 0.5, flex: 1, padding: 6 }}>
           {children.map((child, index) => (
-            <RenderNode key={index} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
           ))}
         </View>,
       );
@@ -236,7 +411,7 @@ function RenderNode({ node, onPress, textColor, mutedColor }: {
       return (
         <>
           {children.map((child, index) => (
-            <RenderNode key={index} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
           ))}
         </>
       );
@@ -273,7 +448,7 @@ export function UPParse(input: UPParseProps): React.JSX.Element {
   return (
     <ScrollView style={input.customStyle} testID="up-parse">
       {nodes.map((node, index) => (
-        <RenderNode key={index} mutedColor={mutedColor} node={node} onPress={press} textColor={textColor} />
+        <RenderNode key={index} domain={props.domain} errorImg={props.errorImg} loadingImg={props.loadingImg} mutedColor={mutedColor} node={node} onPress={press} textColor={textColor} />
       ))}
     </ScrollView>
   );

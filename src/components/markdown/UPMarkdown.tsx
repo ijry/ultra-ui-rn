@@ -91,10 +91,11 @@ function Inline({ nodes, theme, onImgtap, onLinktap }: {
   );
 }
 
-function Block({ block, theme, index, onImgtap, onLinktap }: {
+function Block({ block, theme, index, showLineNumber, onImgtap, onLinktap }: {
   block: BlockNode;
   theme: 'light' | 'dark';
   index: number;
+  showLineNumber?: boolean;
   onImgtap?: (event: { src: string; alt?: string }) => void;
   onLinktap?: (event: { href: string }) => void;
 }): React.JSX.Element | null {
@@ -149,7 +150,7 @@ function Block({ block, theme, index, onImgtap, onLinktap }: {
       return (
         <View style={{ backgroundColor: theme === 'dark' ? '#2b2b2b' : '#f6f8fa', borderRadius: 4, marginBottom: 10, padding: 10 }}>
           <Text style={{ color: theme === 'dark' ? '#dcdcdc' : '#24292e', fontFamily: 'monospace', fontSize: 13, lineHeight: 19 }}>
-            {block.text}
+            {showLineNumber ? block.text.split('\n').map((line, i) => `${i + 1}  ${line}`).join('\n') : block.text}
           </Text>
         </View>
       );
@@ -205,6 +206,7 @@ export function UPMarkdown(input: UPMarkdownProps): React.JSX.Element {
           key={`${block.type}-${index}`}
           onImgtap={input.onImgtap}
           onLinktap={input.onLinktap}
+          showLineNumber={props.showLineNumber}
           theme={theme}
         />
       ))}

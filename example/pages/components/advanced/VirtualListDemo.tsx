@@ -1,47 +1,45 @@
 /**
- * UPVirtualList 组件示例 — 虚拟列表
- * 展示：大数据量虚拟滚动
+ * VirtualList 虚拟列表
+ * 严格复刻 uview-plus pages/componentsD/virtualList/virtualList.nvue
  */
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { UPVirtualList } from 'ultra-ui-rn';
-import { DemoPage, Section, PropsTable } from '../_shared';
+import React, { useRef } from 'react';
+import { StyleSheet } from 'react-native';
+import { UPAlert, UPCell, UPVirtualList } from 'ultra-ui-rn';
+import { DemoPage, PageItem } from '../_shared';
 
-const DATA = Array.from({ length: 10000 }, (_, i) => ({
- id: String(i + 1),
- text: `第 ${i + 1} 条数据`,
+const listData3 = Array.from({ length: 10000 }, (_, i) => ({
+  id: i,
+  name: `Item ${i}`,
 }));
 
-const PROPS = [
- { prop: 'listData', type: 'T[]', default: '[]', desc: '数据列表' },
- { prop: 'itemHeight', type: 'number | string', default: '40', desc: '项高度' },
- { prop: 'height', type: 'number | string', default: '300', desc: '容器高度' },
- { prop: 'buffer', type: 'number', default: '5', desc: '缓冲区大小' },
- { prop: 'renderItem', type: '(payload) => ReactNode', default: '—', desc: '自定义渲染' },
-];
-
 export default function VirtualListDemo() {
- return (
- <DemoPage>
- <Section title="10000条数据虚拟滚动">
- <UPVirtualList
- listData={DATA}
- itemHeight={44}
- height={300}
- renderItem={({ item, index }) => (
- <View style={vl.item}>
- <Text style={vl.text}>{item.text}</Text>
- </View>
- )}
- />
- </Section>
+  // 上游为 `v-model:scrollTop`（双向绑定）。本地 scrollTop 是命令式受控值：
+  // 变化时组件会立即 scrollTo，把滚动回调值回灌进去会打断手势/惯性，
+  // 因此这里只保存在 ref 中，仅复刻 `update:scrollTop` 的发射侧。
+  const scrollTop = useRef(0);
 
- <PropsTable rows={PROPS} />
- </DemoPage>
- );
+  return (
+    <DemoPage>
+      <UPAlert customStyle={s.alert} description="PC端查看时需要触摸仿真模式" />
+
+      <PageItem title="基本使用">
+        <UPVirtualList
+          height="800px"
+          itemHeight={49}
+          listData={listData3}
+          onUpdateScrollTop={(top) => {
+            scrollTop.current = top;
+          }}
+        >
+          {/* 上游 `@scroll="onScroll3"` 为空实现，无可复刻的反馈 */}
+          {({ item }) => <UPCell title={`Item${item.id}`} />}
+        </UPVirtualList>
+      </PageItem>
+    </DemoPage>
+  );
 }
 
-const vl = StyleSheet.create({
- item: { height: 44, justifyContent: 'center', paddingHorizontal: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#eee' },
- text: { fontSize: 14, color: '#333' },
+const s = StyleSheet.create({
+  // 上游 `class="u-m-b-20"`：margin-bottom: 20rpx
+  alert: { marginBottom: 10 },
 });

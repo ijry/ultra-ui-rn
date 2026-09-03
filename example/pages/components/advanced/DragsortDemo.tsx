@@ -1,56 +1,153 @@
 /**
- * UPDragsort 组件示例 — 拖拽排序
- * 展示：基础拖拽排序
+ * Dragsort 拖拽排序
+ * 严格复刻 uview-plus pages/componentsD/dragsort/dragsort.vue
  */
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { UPDragsort } from 'ultra-ui-rn';
-import { DemoPage, Section, Row, Value, PropsTable } from '../_shared';
+import { StyleSheet, Text, View } from 'react-native';
+import { UPAlert, UPDragsort } from 'ultra-ui-rn';
+import { DemoPage, PageItem } from '../_shared';
 
-const PROPS = [
- { prop: 'initialList', type: 'T[]', default: '[]', desc: '初始列表' },
- { prop: 'draggable', type: 'boolean', default: 'true', desc: '是否可拖拽' },
- { prop: 'itemHeight', type: 'number | string', default: '—', desc: '项高度' },
- { prop: 'columns', type: 'number', default: '1', desc: '列数' },
- { prop: 'onDragEnd', type: '(list) => void', default: '—', desc: '拖拽结束回调' },
-];
+type ListItem = { id: number; label: string };
 
 export default function DragsortDemo() {
- const [list, setList] = useState(
- Array.from({ length: 8 }, (_, i) => ({ id: String(i + 1), text: `项目 ${i + 1}` }))
- );
+  const [list] = useState<ListItem[]>([
+    { id: 1, label: '项目 A' },
+    { id: 2, label: '项目 B' },
+    { id: 3, label: '项目 C' },
+    { id: 4, label: '项目 D' },
+    { id: 5, label: '项目 E' },
+    { id: 6, label: '项目 F' },
+    { id: 7, label: '项目 G' },
+    { id: 8, label: '项目 H' },
+  ]);
 
- return (
- <DemoPage>
- <Section title="基础拖拽排序">
- <UPDragsort
- initialList={list}
- draggable
- itemHeight={48}
- onDragEnd={(nextList) => {
- setList(nextList as { id: string; text: string }[]);
- }}
- renderItem={({ item }) => (
- <View style={ds.item}>
- <Text style={ds.text}>{item.text}</Text>
- <Text style={ds.handle}>⠿</Text>
- </View>
- )}
- />
- </Section>
+  const [list2] = useState<ListItem[]>([
+    { id: 1, label: '横向 A' },
+    { id: 2, label: '横向 B' },
+    { id: 3, label: '横向 C' },
+    { id: 4, label: '横向 D' },
+    { id: 5, label: '横向 E' },
+    { id: 6, label: '横向 F' },
+    { id: 7, label: '横向 G' },
+    { id: 8, label: '横向 H' },
+  ]);
 
- <Value label="当前顺序" value={list.map((i) => i.text).join(' → ')} />
- <PropsTable rows={PROPS} />
- </DemoPage>
- );
+  const handleDragEnd = (sortedList: readonly ListItem[]) => {
+    console.log('拖拽结束，新的顺序:', sortedList);
+  };
+
+  return (
+    <DemoPage>
+      <UPAlert customStyle={s.alert} description="PC端查看时需要触摸仿真模式才会正确计算位置" />
+
+      <PageItem title="单列多行模式">
+        <UPDragsort initialList={list} onDragEnd={handleDragEnd}>
+          {({ item, index }) => (
+            <View style={s.customItem}>
+              <Text>序号：{index + 1}</Text>
+              <Text> - </Text>
+              <Text>{item.label}</Text>
+            </View>
+          )}
+        </UPDragsort>
+      </PageItem>
+
+      <PageItem title="自定义拖动句柄">
+        <UPDragsort
+          initialList={list}
+          onDragEnd={handleDragEnd}
+          renderHandler={() => (
+            <View style={s.customItemHandler}>
+              <View style={s.handle} />
+            </View>
+          )}
+        >
+          {({ item, index }) => (
+            <View style={s.customItem}>
+              <Text>序号：{index + 1}</Text>
+              <Text> - </Text>
+              <Text>{item.label}</Text>
+            </View>
+          )}
+        </UPDragsort>
+      </PageItem>
+
+      <PageItem title="多行多列模式">
+        <UPDragsort
+          columns={3}
+          direction="all"
+          draggable
+          initialList={list}
+          onDragEnd={handleDragEnd}
+        >
+          {({ item }) => (
+            <View style={s.wrapper}>
+              <View style={s.customItemH}>
+                <Text>{item.label}</Text>
+              </View>
+            </View>
+          )}
+        </UPDragsort>
+      </PageItem>
+
+      <PageItem title="单行横向拖动">
+        <UPDragsort
+          direction="horizontal"
+          draggable
+          initialList={list2}
+          onDragEnd={handleDragEnd}
+        >
+          {({ item }) => (
+            <View style={s.wrapper}>
+              <View style={s.customItemH}>
+                <Text>{item.label}</Text>
+              </View>
+            </View>
+          )}
+        </UPDragsort>
+      </PageItem>
+    </DemoPage>
+  );
 }
 
-const ds = StyleSheet.create({
- item: {
- flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
- height: 48, paddingHorizontal: 16, backgroundColor: '#fff',
- borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#eee',
- },
- text: { fontSize: 14, color: '#333' },
- handle: { fontSize: 18, color: '#999' },
+const s = StyleSheet.create({
+  alert: {
+    marginBottom: 10,
+  },
+  customItem: {
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderColor: 'rgba(125, 126, 128, 0.35)',
+    borderRadius: 4,
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    padding: 10,
+  },
+  customItemH: {
+    backgroundColor: '#fff',
+    borderColor: 'rgba(125, 126, 128, 0.35)',
+    borderRadius: 4,
+    borderWidth: 1,
+    padding: 10,
+  },
+  customItemHandler: {
+    alignItems: 'center',
+    bottom: 0,
+    flexDirection: 'row',
+    left: 0,
+    padding: 10,
+    position: 'absolute',
+    top: 0,
+    zIndex: 10,
+  },
+  handle: {
+    backgroundColor: '#666',
+    height: 2,
+    position: 'relative',
+    width: 10,
+  },
+  wrapper: {
+    paddingRight: 5,
+  },
 });

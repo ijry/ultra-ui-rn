@@ -1,49 +1,91 @@
 /**
- * UPBarcode 组件示例 — 条形码
- * 展示：基础条形码、自定义
+ * Barcode 条形码
+ * 严格复刻 uview-plus pages/componentsD/barcode/barcode.nvue
  */
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
 import { UPBarcode } from 'ultra-ui-rn';
-import { DemoPage, Section, Value, PropsTable } from '../_shared';
-
-const PROPS = [
- { prop: 'value', type: 'string', default: '""', desc: '条形码内容' },
- { prop: 'type', type: 'string', default: "'CODE128'", desc: '条形码类型' },
- { prop: 'width', type: 'number', default: '2', desc: '线条宽度' },
- { prop: 'height', type: 'number', default: '100', desc: '条形码高度' },
- { prop: 'showText', type: 'boolean', default: 'true', desc: '显示文字' },
- { prop: 'color', type: 'string', default: "'#000'", desc: '前景色' },
- { prop: 'bgColor', type: 'string', default: "'#fff'", desc: '背景色' },
-];
+import { DemoPage, PageItem } from '../_shared';
 
 export default function BarcodeDemo() {
- return (
- <DemoPage>
- <Section title="基础条形码">
- <View style={bc.center}>
- <UPBarcode value="6901234567892" displayValue />
- </View>
- <Value label="内容" value={"6901234567892"} />
- </Section>
+  return (
+    <DemoPage>
+      <PageItem title="CODE128 条形码">
+        <UPBarcode
+          fontSize={16}
+          format="CODE128"
+          height={70}
+          value="1234567890"
+        />
+      </PageItem>
 
- <Section title="自定义高度和宽度">
- <View style={bc.center}>
- <UPBarcode value="ABC123456" width={3} height={80} displayValue />
- </View>
- </Section>
+      <PageItem title="EAN-13 条形码">
+        <UPBarcode
+          fontSize={16}
+          format="EAN13"
+          height={70}
+          value="5901234123457"
+        />
+      </PageItem>
 
- <Section title="隐藏文字">
- <View style={bc.center}>
- <UPBarcode value="9876543210" displayValue={false} />
- </View>
- </Section>
+      <PageItem title="EAN-8 条形码">
+        <UPBarcode
+          fontSize={11}
+          format="EAN8"
+          height={70}
+          value="96385074"
+        />
+      </PageItem>
 
- <PropsTable rows={PROPS} />
- </DemoPage>
- );
+      <PageItem title="UPC-A 条形码">
+        <UPBarcode
+          fontSize={16}
+          format="UPCA"
+          height={70}
+          value="123456789012"
+        />
+      </PageItem>
+
+      <PageItem title="CODE39 条形码">
+        <UPBarcode
+          fontSize={16}
+          format="CODE39"
+          height={70}
+          value="CODE39"
+        />
+      </PageItem>
+
+      <PageItem title="EAN-5 补充码">
+        <UPBarcode
+          fontSize={14}
+          format="EAN5"
+          height={60}
+          value="12345"
+          width={100}
+        />
+      </PageItem>
+
+      <PageItem title="EAN-2 补充码">
+        <UPBarcode
+          fontSize={14}
+          format="EAN2"
+          height={60}
+          value="12"
+          width={100}
+        />
+      </PageItem>
+
+      <PageItem title="自定义样式条形码">
+        <UPBarcode
+          background="#F0F0F0"
+          fontSize={14}
+          format="CODE128"
+          height={70}
+          lineColor="#FF0000"
+          textPosition="top"
+          value="CUSTOM123"
+          width={200}
+        />
+      </PageItem>
+    </DemoPage>
+  );
 }
-
-const bc = StyleSheet.create({
- center: { alignItems: 'center', paddingVertical: 16 },
-});

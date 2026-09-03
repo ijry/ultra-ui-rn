@@ -1,57 +1,127 @@
 /**
- * UPRow 组件示例 — 行布局
- * 展示：基础行、对齐方式、间距
+ * Row 行布局 & Col 列容器
+ * 严格复刻 uview-plus pages/componentsC/layout/layout.nvue
  */
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { UPRow, UPCol } from 'ultra-ui-rn';
-import { DemoPage, Section, PropsTable } from '../_shared';
-
-const PROPS = [
- { prop: 'gutter', type: 'number | string', default: '0', desc: '列间距' },
- { prop: 'justify', type: "'start' | 'end' | 'center' | 'around' | 'between'", default: "'start'", desc: '水平对齐' },
- { prop: 'align', type: "'top' | 'center' | 'bottom'", default: 'stretch', desc: '垂直对齐' },
-];
+import { StyleSheet, View } from 'react-native';
+import { UPCol, UPRow } from 'ultra-ui-rn';
+import { DemoPage, Section } from '../_shared';
 
 export default function RowDemo() {
- return (
- <DemoPage>
- <Section title="基础行">
- <UPRow gutter={8}>
- <UPCol span={8}><View style={[r.box, { backgroundColor: '#3c9cff' }]}><Text style={r.text}>8</Text></View></UPCol>
- <UPCol span={8}><View style={[r.box, { backgroundColor: '#67c23a' }]}><Text style={r.text}>8</Text></View></UPCol>
- <UPCol span={8}><View style={[r.box, { backgroundColor: '#ff6600' }]}><Text style={r.text}>8</Text></View></UPCol>
- </UPRow>
- </Section>
+  return (
+    <DemoPage>
+      <Section title="基础使用">
+        <UPRow customStyle={s.mb10}>
+          <UPCol span={6}>
+            <View style={[s.box, s.bgPurpleLight]} />
+          </UPCol>
+          <UPCol span={6}>
+            <View style={[s.box, s.bgPurple]} />
+          </UPCol>
+        </UPRow>
+        <UPRow customStyle={s.mb10}>
+          <UPCol span={4}>
+            <View style={[s.box, s.bgPurple]} />
+          </UPCol>
+          <UPCol span={4}>
+            <View style={[s.box, s.bgPurpleLight]} />
+          </UPCol>
+          <UPCol span={4}>
+            <View style={[s.box, s.bgPurpleDark]} />
+          </UPCol>
+        </UPRow>
+        <UPRow justify="space-between">
+          <UPCol span={3}>
+            <View style={[s.box, s.bgPurple]} />
+          </UPCol>
+          <UPCol span={3}>
+            <View style={[s.box, s.bgPurpleLight]} />
+          </UPCol>
+          <UPCol span={3}>
+            <View style={[s.box, s.bgPurple]} />
+          </UPCol>
+          <UPCol span={3}>
+            <View style={[s.box, s.bgPurpleLight]} />
+          </UPCol>
+        </UPRow>
+      </Section>
 
- <Section title="不同列宽">
- <UPRow gutter={8}>
- <UPCol span={6}><View style={[r.box, { backgroundColor: '#e3f2fd' }]}><Text style={r.text}>6</Text></View></UPCol>
- <UPCol span={12}><View style={[r.box, { backgroundColor: '#f3e5f5' }]}><Text style={r.text}>12</Text></View></UPCol>
- <UPCol span={6}><View style={[r.box, { backgroundColor: '#e8f5e9' }]}><Text style={r.text}>6</Text></View></UPCol>
- </UPRow>
- </Section>
+      <Section title="分栏间隔">
+        <UPRow gutter="10" justify="space-between">
+          <UPCol span={3}>
+            <View style={[s.box, s.bgPurple]} />
+          </UPCol>
+          <UPCol span={3}>
+            <View style={[s.box, s.bgPurpleLight]} />
+          </UPCol>
+          <UPCol span={3}>
+            <View style={[s.box, s.bgPurple]} />
+          </UPCol>
+          <UPCol span={3}>
+            <View style={[s.box, s.bgPurpleLight]} />
+          </UPCol>
+        </UPRow>
+      </Section>
 
- <Section title="justify: between">
- <UPRow justify="between">
- <View style={[r.box, { backgroundColor: '#fff3e0' }]}><Text style={r.text}>左</Text></View>
- <View style={[r.box, { backgroundColor: '#fce4ec' }]}><Text style={r.text}>右</Text></View>
- </UPRow>
- </Section>
+      <Section title="混合布局">
+        <UPRow gutter="10" justify="space-between">
+          <UPCol span={2}>
+            <View style={[s.box, s.bgPurpleLight]} />
+          </UPCol>
+          <UPCol span={4}>
+            <View style={[s.box, s.bgPurple]} />
+          </UPCol>
+          <UPCol span={6}>
+            <View style={[s.box, s.bgPurpleDark]} />
+          </UPCol>
+        </UPRow>
+      </Section>
 
- <Section title="align: center">
- <UPRow align="center" gutter={8}>
- <UPCol span={12}><View style={[r.box, { height: 60, backgroundColor: '#e3f2fd' }]}><Text style={r.text}>60h</Text></View></UPCol>
- <UPCol span={12}><View style={[r.box, { height: 30, backgroundColor: '#f3e5f5' }]}><Text style={r.text}>30h</Text></View></UPCol>
- </UPRow>
- </Section>
+      <Section title="分栏偏移">
+        <UPRow customStyle={s.mb10} justify="space-between">
+          <UPCol offset={3} span={3}>
+            <View style={[s.box, s.bgPurpleLight]} />
+          </UPCol>
+          <UPCol offset={3} span={3}>
+            <View style={[s.box, s.bgPurple]} />
+          </UPCol>
+        </UPRow>
+        <UPRow>
+          <UPCol span={3}>
+            <View style={[s.box, s.bgPurpleLight]} />
+          </UPCol>
+          <UPCol offset={3} span={3}>
+            <View style={[s.box, s.bgPurple]} />
+          </UPCol>
+        </UPRow>
+      </Section>
 
- <PropsTable rows={PROPS} />
- </DemoPage>
- );
+      <Section title="对齐方式">
+        <UPRow customStyle={s.mb10} justify="space-between">
+          <UPCol span={3}>
+            <View style={[s.box, s.bgPurpleLight]} />
+          </UPCol>
+          <UPCol span={3}>
+            <View style={[s.box, s.bgPurple]} />
+          </UPCol>
+        </UPRow>
+        <UPRow>
+          <UPCol span={3}>
+            <View style={[s.box, s.bgPurpleLight]} />
+          </UPCol>
+          <UPCol span={3}>
+            <View style={[s.box, s.bgPurple]} />
+          </UPCol>
+        </UPRow>
+      </Section>
+    </DemoPage>
+  );
 }
 
-const r = StyleSheet.create({
- box: { height: 40, borderRadius: 4, justifyContent: 'center', alignItems: 'center' },
- text: { color: '#fff', fontSize: 12, fontWeight: '600' },
+const s = StyleSheet.create({
+  bgPurple: { backgroundColor: '#ced7e1' },
+  bgPurpleDark: { backgroundColor: '#99a9bf' },
+  bgPurpleLight: { backgroundColor: '#e5e9f2' },
+  box: { borderRadius: 4, height: 25, width: '100%' },
+  mb10: { marginBottom: 10 },
 });

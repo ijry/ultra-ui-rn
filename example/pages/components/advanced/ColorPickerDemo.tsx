@@ -1,52 +1,113 @@
 /**
- * UPColorPicker 组件示例 — 颜色选择器
- * 展示：基础选择、自定义常用色、受控
+ * ColorPicker 颜色选择器
+ * 严格复刻 uview-plus pages/componentsD/colorPicker/colorPicker.nvue
  */
 import React, { useState } from 'react';
-import { View, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { UPColorPicker } from 'ultra-ui-rn';
-import { DemoPage, Section, Row, Value, PropsTable, EventLog } from '../_shared';
-
-const PROPS = [
- { prop: 'value', type: 'string', default: '—', desc: '当前颜色（受控）' },
- { prop: 'defaultValue', type: 'string', default: '—', desc: '默认颜色' },
- { prop: 'show', type: 'boolean', default: 'false', desc: '是否显示弹窗' },
- { prop: 'commonColors', type: 'string[]', default: '系统预设', desc: '常用颜色列表' },
- { prop: 'onChange', type: '(color) => void', default: '—', desc: '颜色变化回调' },
- { prop: 'onConfirm', type: '(color) => void', default: '—', desc: '确认回调' },
-];
+import { DemoPage } from '../_shared';
 
 export default function ColorPickerDemo() {
- const [color, setColor] = useState('#3c9cff');
- const [show, setShow] = useState(false);
- const [events, setEvents] = useState<string[]>([]);
+  const [selectedColor, setSelectedColor] = useState('#ff0000');
+  const [selectedColor2, setSelectedColor2] = useState('#00ff00');
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showColorPickerWithCommon, setShowColorPickerWithCommon] = useState(false);
 
- return (
- <DemoPage>
- <Section title="内嵌模式">
- <UPColorPicker
- value={color}
- onChange={(c) => {
- setColor(c);
- setEvents((e) => [...e, `change: ${c}`]);
- }}
- />
- <Value label="当前颜色" value={color} />
- </Section>
+  const commonColors = [
+    '#ff0000',
+    '#00ff00',
+    '#0000ff',
+    '#ffff00',
+    '#00ffff',
+    '#ff00ff',
+    '#ffffff',
+    '#000000',
+  ];
 
- <Section title="自定义常用色">
- <UPColorPicker
- commonColors={['#ff0000', '#00ff00', '#0000ff', '#ff6600', '#333']}
- value={color}
- onChange={(c) => {
- setColor(c);
- setEvents((e) => [...e, `change: ${c}`]);
- }}
- />
- </Section>
+  const confirmColor = (color: string) => {
+    setSelectedColor(color);
+  };
 
- <EventLog events={events} />
- <PropsTable rows={PROPS} />
- </DemoPage>
- );
+  const confirmColor2 = (color: string) => {
+    setSelectedColor2(color);
+  };
+
+  return (
+    <DemoPage>
+      <View style={s.card}>
+        <Text style={s.title}>颜色选择器示例</Text>
+        <Pressable onPress={() => setShowColorPicker(true)}>
+          <View style={s.colorPreview}>
+            <View style={[s.colorBlock, { backgroundColor: selectedColor }]} />
+            <Text style={s.colorText}>{selectedColor}</Text>
+          </View>
+        </Pressable>
+        <UPColorPicker
+          onClose={() => setShowColorPicker(false)}
+          onConfirm={confirmColor}
+          show={showColorPicker}
+          value={selectedColor}
+        />
+        <Text style={s.desc}>点击上方色块选择颜色</Text>
+      </View>
+
+      <View style={s.card}>
+        <Text style={s.title}>带常用颜色的示例</Text>
+        <Pressable onPress={() => setShowColorPickerWithCommon(true)}>
+          <View style={s.colorPreview}>
+            <View style={[s.colorBlock, { backgroundColor: selectedColor2 }]} />
+            <Text style={s.colorText}>{selectedColor2}</Text>
+          </View>
+        </Pressable>
+        <UPColorPicker
+          commonColors={commonColors}
+          onClose={() => setShowColorPickerWithCommon(false)}
+          onConfirm={confirmColor2}
+          show={showColorPickerWithCommon}
+          value={selectedColor2}
+        />
+        <Text style={s.desc}>包含常用颜色选项</Text>
+      </View>
+    </DemoPage>
+  );
 }
+
+const s = StyleSheet.create({
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    marginBottom: 10,
+    padding: 15,
+  },
+  colorBlock: {
+    borderColor: '#eee',
+    borderRadius: 6,
+    borderWidth: 1,
+    height: 40,
+    marginRight: 15,
+    width: 40,
+  },
+  colorPreview: {
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 6,
+    flexDirection: 'row',
+    padding: 15,
+  },
+  colorText: {
+    color: '#666',
+    flex: 1,
+    fontSize: 14,
+  },
+  desc: {
+    color: '#999',
+    fontSize: 12,
+    marginTop: 10,
+  },
+  title: {
+    color: '#333',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+});

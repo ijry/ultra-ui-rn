@@ -143,4 +143,20 @@ describe('P38 lazy-load source aliases', () => {
     fireEvent.press(screen.getByTestId('up-lazy-load-content'));
     expect(onClick).toHaveBeenCalledWith('card-1');
   });
+
+  it('applies borderRadius prop to frame style', () => {
+    const screen = renderRoot(
+      <UPLazyLoad
+        borderRadius={10}
+        height={100}
+        src="https://example.com/a.jpg"
+        visible
+        width={100}
+      />,
+    );
+
+    expect(screen.getByTestId('up-lazy-load').props.style).toEqual(
+      expect.arrayContaining([expect.objectContaining({ borderRadius: 10 })]),
+    );
+  });
 });

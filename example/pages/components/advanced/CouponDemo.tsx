@@ -1,49 +1,119 @@
 /**
- * UPCoupon 组件示例 — 优惠券
- * 展示：基础、不同形状、自定义颜色、禁用
+ * Coupon 优惠券
+ * 严格复刻 uview-plus pages/componentsD/coupon/coupon.nvue
  */
 import React from 'react';
-import { View, Text } from 'react-native';
-import { UPCoupon } from 'ultra-ui-rn';
-import { DemoPage, Section, PropsTable } from '../_shared';
-
-const PROPS = [
- { prop: 'amount', type: 'string | number', default: '0', desc: '金额' },
- { prop: 'unit', type: 'string', default: "'¥'", desc: '单位符号' },
- { prop: 'title', type: 'string', default: '—', desc: '标题' },
- { prop: 'desc', type: 'string', default: '—', desc: '描述' },
- { prop: 'time', type: 'string', default: '—', desc: '有效期' },
- { prop: 'actionText', type: 'string', default: "'立即使用'", desc: '操作按钮文字' },
- { prop: 'shape', type: "'coupon' | 'circle'", default: "'coupon'", desc: '形状' },
- { prop: 'size', type: "'small' | 'medium' | 'large'", default: "'medium'", desc: '尺寸' },
- { prop: 'disabled', type: 'boolean', default: 'false', desc: '是否禁用' },
- { prop: 'color', type: 'string', default: '主题色', desc: '主题颜色' },
-];
+import { StyleSheet, Text } from 'react-native';
+import { UPButton, UPCoupon } from 'ultra-ui-rn';
+import { DemoPage, PageItem } from '../_shared';
 
 export default function CouponDemo() {
- return (
- <DemoPage>
- <Section title="基础用法">
- <UPCoupon amount="100" title="满500减100" desc="全品类可用" time="2026.12.31" />
- </Section>
+  return (
+    <DemoPage>
+      <PageItem title="基础优惠券">
+        <UPCoupon
+          amount={100}
+          color="#333"
+          limit="满200可用"
+          time="2023-12-31前使用"
+          title="满减券"
+        />
+      </PageItem>
 
- <Section title="圆形">
- <UPCoupon amount="50" shape="circle" title="满200减50" />
- </Section>
+      <PageItem title="小尺寸">
+        <UPCoupon
+          actionText="去使用"
+          amount={20}
+          size="small"
+          title="满减券"
+        />
+      </PageItem>
 
- <Section title="小尺寸">
- <UPCoupon amount="20" size="small" title="满100减20" color="#67c23a" />
- </Section>
+      <PageItem title="大尺寸">
+        <UPCoupon
+          amount={200}
+          desc="仅限VIP用户"
+          limit="满500可用"
+          size="large"
+          time="有效期至2023-12-31"
+          title="大额优惠券"
+          type="error"
+          unit="￥"
+        />
+      </PageItem>
 
- <Section title="自定义颜色">
- <UPCoupon amount="200" color="#ff6600" title="大额优惠" desc="限时使用" />
- </Section>
+      <PageItem title="自定义内容">
+        <UPCoupon
+          amount={66}
+          desc="通过插槽自定义内容"
+          shape="card"
+          title="自定义样式"
+          amountNode={(amount) => (
+            <Text style={s.customAmount}>{amount}</Text>
+          )}
+          titleNode={(title) => (
+            <Text style={s.customTitle}>{title}</Text>
+          )}
+          actionNode={
+            <UPButton
+              customStyle={{ borderRadius: 6 }}
+              hairline={false}
+              size="mini"
+              type="success"
+            >
+              立即使用
+            </UPButton>
+          }
+        />
+      </PageItem>
 
- <Section title="禁用状态">
- <UPCoupon amount="88" title="满300减88" disabled desc="已过期" />
- </Section>
+      <PageItem title="圆形按钮">
+        <UPCoupon
+          actionText="抢购"
+          amount={30}
+          circle
+          desc="今日专享"
+          title="限时优惠"
+        />
+      </PageItem>
 
- <PropsTable rows={PROPS} />
- </DemoPage>
- );
+      <PageItem title="禁用状态">
+        <UPCoupon
+          amount={50}
+          desc="活动已结束"
+          disabled
+          time="2023-01-01至2023-01-31"
+          title="已过期"
+        />
+      </PageItem>
+
+      <PageItem title="红包样式">
+        <UPCoupon
+          amount={50}
+          desc="限时专享"
+          shape="envelope"
+          title="新人红包"
+          type="warning"
+          unit="元"
+        />
+      </PageItem>
+
+      <PageItem title="卡片样式">
+        <UPCoupon
+          actionText="立即领取"
+          amount={88}
+          desc="全场通用"
+          shape="card"
+          title="折扣券"
+          type="success"
+          unit="折"
+        />
+      </PageItem>
+    </DemoPage>
+  );
 }
+
+const s = StyleSheet.create({
+  customAmount: { color: '#ff0000', fontSize: 30, fontWeight: 'bold' },
+  customTitle: { color: '#333', fontSize: 18, fontWeight: 'bold' },
+});

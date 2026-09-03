@@ -21,8 +21,16 @@ export type UPCouponProps = {
   customStyle?: StyleProp<ViewStyle>;
   /** @deprecated React Native has no CSS class runtime. */
   customClass?: string;
-  /** Source `action` slot: replaces the default action button. */
+  /** Source `action` slot: replaces the default action button. Payload `{ circle }` is caller-supplied. */
   actionNode?: React.ReactNode;
+  /**
+   * Source `amount` slot: replaces the amount figure (unit + number).
+   * The upstream component source is not vendored here, so the slot boundary is
+   * inferred from `coupon.nvue`'s `#amount="{ amount }"` usage; `limit` stays put.
+   */
+  amountNode?: React.ReactNode | ((amount: string | number) => React.ReactNode);
+  /** Source `title` slot: replaces the title line, per `#title="{ title }"`. */
+  titleNode?: React.ReactNode | ((title: string) => React.ReactNode);
   onClick?: () => void;
   /** Source `click` event alias (same timing as `onClick`). */
   onSourceClick?: () => void;
@@ -112,20 +120,32 @@ export function UPCoupon(input: UPCouponProps): React.JSX.Element {
         }}
         testID="up-coupon-amount"
       >
-        <View style={{ alignItems: 'baseline', flexDirection: 'row' }}>
-          {props.unitPosition === 'left' && props.unit ? (
-            <Text style={{ color: accent, fontSize: config.amount * 0.55, fontWeight: '600' }}>{props.unit}</Text>
-          ) : null}
-          <Text style={{ color: accent, fontSize: config.amount, fontWeight: '700' }}>{String(props.amount ?? '')}</Text>
-          {props.unitPosition === 'right' && props.unit ? (
-            <Text style={{ color: accent, fontSize: config.amount * 0.55, fontWeight: '600' }}>{props.unit}</Text>
-          ) : null}
-        </View>
-        {props.limit ? <Text style={{ color: mainColor, fontSize: 11, marginTop: 4, opacity: 0.7 }}>{props.limit}</Text> : null}
+        {input.amountNode === undefined ? (
+          <>
+            <View style={{ alignItems: 'baseline', flexDirection: 'row' }}>
+              {props.unitPosition === 'left' && props.unit ? (
+                <Text style={{ color: accent, fontSize: config.amount * 0.55, fontWeight: '600' }}>{props.unit}</Text>
+              ) : null}
+              <Text style={{ color: accent, fontSize: config.amount, fontWeight: '700' }}>{String(props.amount ?? '')}</Text>
+              {props.unitPosition === 'right' && props.unit ? (
+                <Text style={{ color: accent, fontSize: config.amount * 0.55, fontWeight: '600' }}>{props.unit}</Text>
+              ) : null}
+            </View>
+            {props.limit ? <Text style={{ color: mainColor, fontSize: 11, marginTop: 4, opacity: 0.7 }}>{props.limit}</Text> : null}
+          </>
+        ) : typeof input.amountNode === 'function' ? (
+          input.amountNode(props.amount ?? '')
+        ) : (
+          input.amountNode
+        )}
       </View>
       <View style={{ flex: 2, height: '100%', justifyContent: 'center', paddingLeft: 14, paddingRight: 10 }}>
         <Text numberOfLines={1} style={{ color: mainColor, fontSize: config.title, fontWeight: '600' }} testID="up-coupon-title">
-          {props.title}
+          {input.titleNode === undefined
+            ? props.title
+            : typeof input.titleNode === 'function'
+              ? input.titleNode(props.title ?? '')
+              : input.titleNode}
         </Text>
         {props.desc ? (
           <Text numberOfLines={1} style={{ color: mainColor, fontSize: 12, marginTop: 4, opacity: 0.7 }}>
@@ -143,7 +163,9 @@ export function UPCoupon(input: UPCouponProps): React.JSX.Element {
           <View
             style={{
               backgroundColor: accent,
-              borderRadius: 14,
+              // Source demo's own `#action` slot maps this prop to
+              // `circle ? '50rpx' : '6rpx'`, i.e. 25dp pill vs 3dp corner.
+              borderRadius: props.circle ? 25 : 3,
               opacity: props.disabled ? 0.5 : 1,
               paddingHorizontal: 14,
               paddingVertical: 6,

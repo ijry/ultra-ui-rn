@@ -13,7 +13,7 @@ import { useUPTheme } from '../../theme';
 import { throttle, type UPDimension } from '../../utils';
 import { UPIcon } from '../icon';
 
-export type UPButtonType = 'info' | 'primary' | 'success' | 'warning' | 'error';
+export type UPButtonType = 'default' | 'info' | 'primary' | 'success' | 'warning' | 'error';
 export type UPButtonSize = 'large' | 'normal' | 'small' | 'mini';
 
 export type UPButtonProps = {
@@ -121,17 +121,17 @@ export function UPButton(input: UPButtonProps): React.JSX.Element {
     ? '#ffffff'
     : hasCustomColor
       ? customColor
-      : props.type === 'info'
+      : props.type === 'info' || props.type === 'default'
         ? '#ffffff'
         : typeColor;
   const borderColor = hasCustomColor
     ? customColor
-    : props.type === 'info'
+    : props.type === 'info' || props.type === 'default'
       ? colors.borderColor
       : typeColor;
   const textColor = props.plain
     ? plainColor
-    : hasCustomColor || props.type !== 'info'
+    : hasCustomColor || (props.type !== 'info' && props.type !== 'default')
       ? '#ffffff'
       : colors.mainColor;
   const buttonStyle: ViewStyle = {

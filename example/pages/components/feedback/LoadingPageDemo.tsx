@@ -1,57 +1,102 @@
 /**
- * UPLoadingPage 组件示例 — 加载页
- * 展示：不同加载模式、自定义文字
+ * LoadingPage 加载页
+ * 严格复刻 uview-plus pages/componentsA/loading-page/loading-page.nvue
  */
-import React, { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
-import { UPLoadingPage } from 'ultra-ui-rn';
-import { DemoPage, Section, PropsTable } from '../_shared';
+import React, { useRef, useState } from 'react';
+import { Image, StyleSheet, View } from 'react-native';
+import { UPCell, UPCellGroup, UPGap, UPLoadingPage } from 'ultra-ui-rn';
 
-const PROPS = [
- { prop: 'loading', type: 'boolean', default: 'true', desc: '是否显示加载' },
- { prop: 'loadingText', type: 'string | number', default: '—', desc: '加载文字' },
- { prop: 'loadingMode', type: 'spinner | circle | semicircle', default: 'spinner', desc: '加载动画类型' },
- { prop: 'bgColor', type: 'string', default: '—', desc: '背景色' },
- { prop: 'color', type: 'string', default: '—', desc: '文字颜色' },
- { prop: 'fontSize', type: 'number | string', default: '—', desc: '字体大小' },
- { prop: 'loadingColor', type: 'string', default: '—', desc: '加载动画颜色' },
+type LoadingPageData = {
+  loadingText?: string;
+  image?: string;
+  loadingMode?: 'spinner' | 'circle' | 'semicircle';
+  bgColor?: string;
+  iconSize?: number;
+  color?: string;
+  loadingColor?: string;
+};
+
+const list = [
+  {
+    title: '自定义提示内容',
+    iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/loading-page/promptContent.png',
+  },
+  {
+    title: '自定义图片',
+    iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/loading-page/customPicture.png',
+  },
+  {
+    title: '自定义加载动画模式',
+    iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/loading-page/customMode.png',
+  },
+  {
+    title: '自定义背景色',
+    iconUrl: 'https://uview-plus.jiangruyi.com/uview/demo/loading-page/customBgColor.png',
+  },
 ];
 
-function Btn({ label, onPress }: { label: string; onPress: () => void }) {
- return (
- <Pressable
- onPress={onPress}
- style={{ backgroundColor: '#3c9cff', borderRadius: 6, marginBottom: 8, paddingVertical: 10, paddingHorizontal: 16 }}
- >
- <Text style={{ color: '#fff', fontSize: 14, textAlign: 'center' }}>{label}</Text>
- </Pressable>
- );
-}
+/** Upstream resets every field before applying the per-item overrides. */
+const RESET: LoadingPageData = {
+  loadingText: '',
+  image: '',
+  loadingMode: undefined,
+  bgColor: '',
+  iconSize: 28,
+  color: '',
+};
+
+const PRESETS: LoadingPageData[] = [
+  { loadingMode: 'semicircle', loadingText: 'Hello uview-plus', color: '#C8C8C8', loadingColor: '#C8C8C8' },
+  // 源用 /static/uview/common/logo.png，本地示例改用同一张图的 CDN 地址。
+  { image: 'https://uview-plus.jiangruyi.com/uview/common/logo.png', loadingText: 'uview-plus', iconSize: 40, color: '#C8C8C8', loadingColor: '#C8C8C8' },
+  { loadingMode: 'circle', loadingText: 'uview-plus', color: '#C8C8C8', loadingColor: '#C8C8C8' },
+  { loadingMode: 'spinner', bgColor: 'rgba(0, 0, 0, 0.3)', loadingText: 'uview-plus', color: '#eee', loadingColor: '#ddd' },
+];
 
 export default function LoadingPageDemo() {
- const [show, setShow] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<LoadingPageData>(RESET);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
- return (
- <DemoPage>
- <Section title="切换显示">
- <Btn label={`${show ? '隐藏' : '显示'} Loading`} onPress={() => setShow((s) => !s)} />
- <View style={{ height: 10 }} />
- <UPLoadingPage loading={show} loadingText="加载中..." />
- </Section>
+  const openLoadingPage = (index: number) => {
+    setData({ ...RESET, ...PRESETS[index] });
+    setLoading(true);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setLoading(false), 2000);
+  };
 
- <Section title="circle 模式">
- <UPLoadingPage loadingMode="circle" loadingText="加载中..." />
- </Section>
+  return (
+    <View style={s.page}>
+      <UPGap height={20} />
+      <UPCellGroup>
+        {list.map((item, index) => (
+          <UPCell
+            iconNode={<Image resizeMode="contain" source={{ uri: item.iconUrl }} style={s.cellIcon} />}
+            isLink
+            key={item.title}
+            onClick={() => openLoadingPage(index)}
+            title={item.title}
+            titleStyle={s.cellTitle}
+          />
+        ))}
+      </UPCellGroup>
 
- <Section title="semicircle 模式">
- <UPLoadingPage loadingMode="semicircle" loadingText="请稍候..." />
- </Section>
-
- <Section title="自定义颜色">
- <UPLoadingPage loadingText="加载中" loadingColor="#07c160" color="#07c160" />
- </Section>
-
- <PropsTable rows={PROPS} />
- </DemoPage>
- );
+      <UPLoadingPage
+        bgColor={data.bgColor}
+        color={data.color}
+        iconSize={data.iconSize}
+        image={data.image}
+        loading={loading}
+        loadingColor={data.loadingColor}
+        loadingMode={data.loadingMode}
+        loadingText={data.loadingText}
+      />
+    </View>
+  );
 }
+
+const s = StyleSheet.create({
+  cellIcon: { height: 26, marginRight: 8, width: 26 },
+  cellTitle: { fontWeight: '500' },
+  page: { flex: 1 },
+});

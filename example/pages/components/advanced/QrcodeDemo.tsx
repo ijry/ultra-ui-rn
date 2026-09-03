@@ -1,47 +1,34 @@
 /**
- * UPQrcode 组件示例 — 二维码
- * 展示：基础二维码、自定义大小、颜色
+ * Qrcode 二维码
+ * 严格复刻 uview-plus pages/componentsD/qrcode/qrcode.nvue
  */
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
 import { UPQrcode } from 'ultra-ui-rn';
-import { DemoPage, Section, Value, PropsTable } from '../_shared';
+import { DemoPage, PageItem } from '../_shared';
 
-const PROPS = [
- { prop: 'value', type: 'string', default: '""', desc: '二维码内容' },
- { prop: 'size', type: 'number', default: '200', desc: '二维码大小' },
- { prop: 'color', type: 'string', default: "'#000'", desc: '前景色' },
- { prop: 'bgColor', type: 'string', default: "'#fff'", desc: '背景色' },
- { prop: 'level', type: "'L' | 'M' | 'Q' | 'H'", default: "'M'", desc: '容错级别' },
-];
+const VAL = 'https://click.meituan.com/t?t=1&c=2&p=WhaD2b5zGU-h';
 
 export default function QrcodeDemo() {
- return (
- <DemoPage>
- <Section title="基础二维码">
- <View style={qrc.center}>
- <UPQrcode val="https://ultra-ui-rn.example.com" size={160} />
- </View>
- <Value label="内容" value={"https://ultra-ui-rn.example.com"} />
- </Section>
+  return (
+    <DemoPage>
+      {/* 上游标题内含 #ifdef APP-NVUE 条件文本（gcanvas渲染 / webview渲染），
+          属 uni-app nvue 渲染器差异，React Native 无对应概念，故未复刻。 */}
+      <PageItem title="不带logo">
+        <UPQrcode cid="up1" size={150} val={VAL} />
+      </PageItem>
 
- <Section title="自定义颜色">
- <View style={qrc.center}>
- <UPQrcode val="Hello Ultra UI" size={160} foreground="#3c9cff" background="#f0f9ff" />
- </View>
- </Section>
+      <PageItem title="带logo">
+        <UPQrcode
+          cid="up2"
+          icon="https://uview-plus.jiangruyi.com/h5/static/uview/common/logo.png"
+          size={150}
+          val={VAL}
+        />
+      </PageItem>
 
- <Section title="高容错级别">
- <View style={qrc.center}>
- <UPQrcode val="https://example.com/product/123" size={120} lv={3} />
- </View>
- </Section>
-
- <PropsTable rows={PROPS} />
- </DemoPage>
- );
+      <PageItem title="二维码颜色">
+        <UPQrcode background="red" cid="up3" foreground="blue" size={150} val={VAL} />
+      </PageItem>
+    </DemoPage>
+  );
 }
-
-const qrc = StyleSheet.create({
- center: { alignItems: 'center', paddingVertical: 16 },
-});

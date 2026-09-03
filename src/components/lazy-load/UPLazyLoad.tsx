@@ -16,6 +16,7 @@ export type UPLazyLoadViewport = {
 };
 
 export type UPLazyLoadProps = {
+  borderRadius?: UPDimension;
   customClass?: string;
   customStyle?: StyleProp<ViewStyle>;
   error?: UPImageProps['error'];
@@ -92,10 +93,11 @@ export function UPLazyLoad(input: UPLazyLoadProps): React.JSX.Element {
   };
 
   const frameStyle = useMemo<ViewStyle>(() => ({
+    borderRadius: input.borderRadius !== undefined ? getPx(input.borderRadius) : undefined,
     height: resolveSize(props.height),
     overflow: 'hidden',
     width: resolveSize(props.width),
-  }), [props.height, props.width]);
+  }), [input.borderRadius, props.height, props.width]);
 
   const content = shouldRenderContent ? (
     <Pressable onPress={() => input.onClick?.(props.index)} testID="up-lazy-load-content">
