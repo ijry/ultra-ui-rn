@@ -24,20 +24,20 @@ Source: Strict replication of 17 advanced component demos
 - ~~**Image rendering**~~ — ✓ Fixed 2026-09-03: now renders `<img>` as actual Image components with loading/error states
 - ~~**Missing tag support**~~ — ✓ Fixed 2026-09-03: now renders `<ruby>`, `<rp>`, `<rt>`, `<sup>`, `<sub>`, `<s>`, `<big>`, `<small>`, `<section>` with proper styling (SVG remains unsupported in RN Text)
 
-**Needs device verification**: the `navigateTo` scroll path. The reason it could
-not be observed is now diagnosed — see "Scroll container composition" below. It
-is not merely a `measureLayout` limitation under jest.
+**Verified on device 2026-09-03**: `navigateTo` now scrolls on an Android
+emulator. See "Scroll container composition" for the four things that all had to
+be true.
 
 ---
 
-## Scroll container composition (diagnosed 2026-09-03, fix not yet applied)
+## Scroll container composition (fixed and device-verified 2026-09-03)
 
-`navigateTo(id)` computes the right offset and calls `scrollTo` on `UPParse`'s
-own `ScrollView` — which has **no scrollable extent**, so nothing moves.
+`navigateTo(id)` used to compute a correct offset and then call `scrollTo` on a
+container with **no scrollable extent**, so nothing moved. Reproduced identically
+on H5 and on Android before the fix.
 
-Measured on ParseDemo in the H5 harness (three nested vertical scrollers, none
-overflowing — each grows to its content height while an ancestor does the real
-scrolling):
+Measured on ParseDemo in the H5 harness — three nested vertical scrollers, none
+overflowing (each grew to its content height while an ancestor scrolled):
 
 | scroller | scrollHeight | clientHeight | overflows |
 |---|---|---|---|
@@ -47,31 +47,33 @@ scrolling):
 
 Root cause: **upstream `u-parse`'s root is a plain `<view id="_root">`, not a
 scroller** (u-parse.vue:2). The page owns scrolling, which is why upstream's
-`navigateTo` measures against the viewport and scrolls the *page*
-(`createSelectorQuery().selectViewport().scrollOffset()`). Our `UPParse` renders
-its own `ScrollView` root, so it both deviates from the source and gives
-`navigateTo` a container that cannot scroll.
+`navigateTo` measures against the viewport and scrolls the *page*.
 
-The same nesting affects the example broadly: `host.tsx` wraps every demo in a
-`ScrollView`, and 79 pages use `DemoPage` (itself a `ScrollView`) while 4 more
-bring their own scroller — so 83 of 95 pages are double-nested today. 12 pages
-have plain `View` roots and depend on `host.tsx`'s scroller, so it cannot simply
-be removed.
+Four separate causes, each masking the next:
 
-Proposed fix, in order:
+1. **`UPParse` root -> `View`**, matching upstream. Its own `ScrollView` both
+   deviated from the source and handed `navigateTo` a container that could not
+   move.
+2. **`scrollRef` prop.** RN has no page scroller, so the caller passes theirs.
+   `navigateTo` now rejects with a clear message when it is missing instead of
+   silently doing nothing.
+3. **`host.tsx` no longer wraps demos in a `ScrollView`.** Every page already
+   brings its own, so the wrapper only produced the nesting above.
+4. **Anchor registration was wiped by its own effect.** Anchors register through
+   ref callbacks during commit, and a `useEffect` keyed on `nodes` cleared the map
+   *after* that commit, destroying the registrations for the render that produced
+   them; every id reported `not found`. Ref callbacks already delete on unmount,
+   so the clearing effect is gone.
 
-1. `UPParse` root becomes a `View`, matching upstream. `navigateTo` then needs
-   the consumer's scroller — an optional `scrollRef` prop is the honest RN
-   translation of upstream's page-level scroll.
-2. Decide one owner of scrolling per demo page: either `host.tsx` scrolls and
-   `DemoPage` becomes a `View`, or `host.tsx` stops scrolling and the 12
-   plain-root pages adopt `DemoPage`. The second matches RN convention but
-   touches more files.
+Also required on Fabric: `measureLayout` needs the inner view **instance**
+(`getInnerViewRef()`), not the numeric handle from `getInnerViewNode()`. The
+handle warns `ref.measureLayout must be called with a ref to a native component`
+and never fires the callback.
 
-Deliberately not applied yet: both are behavioural changes to a component and to
-infrastructure shared by 95 pages, and the payoff is on native, which is
-currently unbuildable on this machine (Windows MAX_PATH). Applying them blind
-would mean shipping an unverifiable fix.
+Every one of these failed silently — the anchor tap did nothing and no error
+appeared. `navigateTo` rejections are now logged under `__DEV__`, which is what
+finally made the cause visible.
+
 
 ---
 
@@ -155,8 +157,8 @@ would mean shipping an unverifiable fix.
 - Enum corrections: 1 (already applied)
 
 **Components with most gaps**:
-1. ~~UPParse (6 gaps, all fixed)~~ ✓ — but see "Scroll container composition": its
-   `ScrollView` root deviates from upstream and is why `navigateTo` cannot scroll
+1. ~~UPParse (6 gaps, all fixed)~~ ✓ — `navigateTo` anchor scrolling verified on an
+   Android emulator; see "Scroll container composition"
 2. UPLazyLoad (2 upstream bugs) — statusChange/clickImg events referenced in demo but never emitted by component
 3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓ / ~~UPMarkdown~~ ✓ / ~~UPButton~~ ✓
 

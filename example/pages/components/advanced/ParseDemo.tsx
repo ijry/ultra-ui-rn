@@ -2,10 +2,9 @@
  * Parse 富文本解析
  * 严格复刻 uview-plus pages/componentsB/parse/parse.nvue
  */
-import React, { useEffect, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { ScrollView, StyleSheet } from 'react-native';
 import { UPParse } from 'ultra-ui-rn';
-import { DemoPage } from '../_shared';
 
 // Replicated from docs/uview-plus-demo-source/pages/componentsB/parse/content.js
 const parseContent = `<title>富文本示例</title>
@@ -218,6 +217,10 @@ const tagStyle = {
 
 export default function ParseDemo() {
   const [content, setContent] = useState('');
+  // UPParse renders a plain View (as upstream does), so `navigateTo` needs the
+  // enclosing scroller handed in. This page owns one instead of using DemoPage,
+  // otherwise it would be the third nested ScrollView and none would scroll.
+  const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     setTimeout(() => {
@@ -226,23 +229,26 @@ export default function ParseDemo() {
   }, []);
 
   return (
-    <DemoPage>
+    <ScrollView contentContainerStyle={s.page} ref={scrollRef} style={s.fill}>
       <UPParse
         containerStyle="padding: 20px" // CSS string from upstream; deprecated in RN (use customStyle)
         content={content}
         customStyle={s.parse}
         domain="https://6874-html-foe72-1259071903.tcb.qcloud.la/demo"
         lazyLoad
+        scrollRef={scrollRef}
         scrollTable
         selectable
         tagStyle={tagStyle}
         useAnchor
         // Upstream wires: @load, @ready, @imgTap, @linkTap as no-ops
       />
-    </DemoPage>
+    </ScrollView>
   );
 }
 
 const s = StyleSheet.create({
+  fill: { backgroundColor: '#f7f8fa', flex: 1 },
+  page: { paddingBottom: 40, paddingHorizontal: 15, paddingTop: 15 },
   parse: {},
 });

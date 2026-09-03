@@ -34,6 +34,11 @@ export type UPParseProps = {
   tagStyle?: Record<string, unknown>;
   /** Source accepts a number here too, used as the default `navigateTo` offset. */
   useAnchor?: boolean | number;
+  /**
+   * The enclosing `ScrollView` that `navigateTo` should scroll. Upstream scrolls
+   * the page; RN has no page scroller, so the caller supplies theirs.
+   */
+  scrollRef?: React.RefObject<ScrollView | null>;
   customStyle?: StyleProp<ViewStyle>;
   /** @deprecated React Native has no CSS class runtime. */
   customClass?: string;
@@ -241,10 +246,8 @@ type ParseRenderOptions = {
   scrollTable?: boolean;
   /** Inside `<pre>`, whitespace is significant and must not be collapsed. */
   preformatted?: boolean;
-  /** Set when `useAnchor` is on: records each `id`-bearing node's offset in the scroll content. */
-  registerAnchor?: (id: string, y: number) => void;
-  /** The ScrollView content view that anchor offsets are measured against. */
-  contentRef?: React.RefObject<View | null>;
+  /** Set when `useAnchor` is on: hands each `id`-bearing node's view to the root. */
+  registerAnchor?: (id: string, view: View | null) => void;
 };
 
 const ParseContext = createContext<ParseRenderOptions>({
@@ -254,9 +257,8 @@ const ParseContext = createContext<ParseRenderOptions>({
 
 function RenderNode({ node }: { node: ParseNode }): React.JSX.Element | null {
   const options = useContext(ParseContext);
-  const { onPress, textColor, mutedColor, domain, errorImg, loadingImg, scrollTable, preformatted, registerAnchor, contentRef } =
+  const { onPress, textColor, mutedColor, domain, errorImg, loadingImg, scrollTable, preformatted, registerAnchor } =
     options;
-  const anchorRef = useRef<View | null>(null);
   if (node.type === 'text') {
     // HTML collapses runs of whitespace; without this the source's newlines and
     // indentation render as real line breaks inside `<Text>`.
@@ -269,20 +271,10 @@ function RenderNode({ node }: { node: ParseNode }): React.JSX.Element | null {
   const { tag, attrs, children } = node;
   const style: Record<string, unknown> = { color: textColor, fontSize: 15, lineHeight: 22 };
 
-  // `useAnchor` support: measure this node's offset inside the scroll content so
-  // `navigateTo(id)` can scroll to it. Source resolves anchors through
-  // `createSelectorQuery`, which has no RN equivalent (u-parse.vue:184-195).
+  // `useAnchor` support: hand this node's view to the root so `navigateTo(id)`
+  // can measure it against the consumer's scroller. Source resolves anchors
+  // through `createSelectorQuery`, which has no RN equivalent (u-parse.vue:184).
   const anchorId = registerAnchor && attrs.id ? attrs.id : undefined;
-  const measureAnchor = () => {
-    const target = anchorRef.current;
-    const container = contentRef?.current;
-    if (!anchorId || !registerAnchor || !target || !container) return;
-    target.measureLayout(
-      container,
-      (_x, y) => registerAnchor(anchorId, y),
-      () => undefined,
-    );
-  };
 
   const wrap = (inner: React.ReactNode): React.JSX.Element => {
     const pressable = (
@@ -299,9 +291,13 @@ function RenderNode({ node }: { node: ParseNode }): React.JSX.Element | null {
         {inner}
       </Pressable>
     );
-    if (!anchorId) return pressable;
+    if (!anchorId || !registerAnchor) return pressable;
     return (
-      <View collapsable={false} onLayout={measureAnchor} ref={anchorRef} testID={`up-parse-anchor-${anchorId}`}>
+      <View
+        collapsable={false}
+        ref={(view) => registerAnchor(anchorId, view)}
+        testID={`up-parse-anchor-${anchorId}`}
+      >
         {pressable}
       </View>
     );
@@ -569,9 +565,7 @@ export const UPParse = forwardRef<UPParseRef, UPParseProps>(function UPParse(inp
   const props = { ...useUPConfig().props.parse, ...input } as UPParseProps;
   const textColor = '#303133';
   const mutedColor = '#909399';
-  const scrollRef = useRef<ScrollView>(null);
-  const contentRef = useRef<View | null>(null);
-  const anchorsRef = useRef<Record<string, number>>({});
+  const anchorsRef = useRef<Record<string, View>>({});
 
   const nodes = useMemo(() => {
     try {
@@ -583,10 +577,11 @@ export const UPParse = forwardRef<UPParseRef, UPParseProps>(function UPParse(inp
     }
   }, [props.content]);
 
-  useEffect(() => {
-    anchorsRef.current = {};
-  }, [nodes]);
-
+  // Anchors deliberately are not cleared here. Ref callbacks already delete an
+  // entry when its view unmounts, and wiping the map in an effect keyed on
+  // `nodes` would run *after* the commit that attached those refs — destroying
+  // the registrations for the very render that produced them, which made
+  // `navigateTo` report `Anchor "..." not found` for every id.
   useEffect(() => {
     input.onLoad?.({ content: props.content ?? '' });
     input.onReady?.();
@@ -600,7 +595,13 @@ export const UPParse = forwardRef<UPParseRef, UPParseProps>(function UPParse(inp
       input.onLinktap?.({ href: resolvedHref });
       // Source scrolls to in-page anchors itself when `useAnchor` is on.
       if (props.useAnchor && resolvedHref.startsWith('#')) {
-        void navigateTo(resolvedHref.slice(1)).catch(() => undefined);
+        void navigateTo(resolvedHref.slice(1)).catch((error: unknown) => {
+          // Surfacing this matters: a silent failure here is indistinguishable
+          // from a working anchor that had nowhere to scroll.
+          if (typeof __DEV__ !== 'undefined' && __DEV__) {
+            console.warn(`UPParse: anchor navigation failed — ${String(error)}`);
+          }
+        });
       }
     }
     if (detail.tag === 'img' && detail.attrs.src) {
@@ -609,11 +610,16 @@ export const UPParse = forwardRef<UPParseRef, UPParseProps>(function UPParse(inp
     }
   };
 
-  const registerAnchor = useCallback((id: string, y: number) => {
-    anchorsRef.current[id] = y;
+  const registerAnchor = useCallback((id: string, view: View | null) => {
+    if (view) anchorsRef.current[id] = view;
+    else delete anchorsRef.current[id];
   }, []);
 
-  /** Source `navigateTo(id, offset)` (u-parse.vue:157). Rejects when anchors are off or unknown. */
+  /**
+   * Source `navigateTo(id, offset)` (u-parse.vue:157). Upstream scrolls the page;
+   * in RN the scroller belongs to the caller, so it must be handed in via
+   * `scrollRef`. Offsets are measured live against that scroller's inner view.
+   */
   const navigateTo = useCallback(
     (id?: string, offset?: number) =>
       new Promise<void>((resolve, reject) => {
@@ -621,28 +627,49 @@ export const UPParse = forwardRef<UPParseRef, UPParseProps>(function UPParse(inp
           reject(new Error('Anchor is disabled'));
           return;
         }
+        const scroller = input.scrollRef?.current;
+        if (!scroller) {
+          reject(new Error('navigateTo needs a scrollRef pointing at the enclosing ScrollView'));
+          return;
+        }
         const extra = offset ?? (typeof props.useAnchor === 'number' ? props.useAnchor : 0);
         if (!id) {
-          scrollRef.current?.scrollTo({ animated: true, y: extra });
+          scroller.scrollTo({ animated: true, y: extra });
           resolve();
           return;
         }
-        const y = anchorsRef.current[id];
-        if (y === undefined) {
+        const target = anchorsRef.current[id];
+        if (!target) {
           reject(new Error(`Anchor "${id}" not found`));
           return;
         }
-        scrollRef.current?.scrollTo({ animated: true, y: y + extra });
-        resolve();
+        // Fabric's `measureLayout` needs the inner view *instance*, not the
+        // numeric node handle that `getInnerViewNode()` returns — passing the
+        // handle warns `ref.measureLayout must be called with a ref to a native
+        // component` and never fires the callback. `getInnerViewRef` is present
+        // at runtime but missing from ScrollView's public types.
+        const withRef = scroller as ScrollView & { getInnerViewRef?: () => View | null };
+        const inner = withRef.getInnerViewRef?.() ?? scroller.getInnerViewNode?.();
+        if (!inner) {
+          reject(new Error('Could not resolve the scroll content view'));
+          return;
+        }
+        target.measureLayout(
+          inner,
+          (_x, y) => {
+            scroller.scrollTo({ animated: true, y: y + extra });
+            resolve();
+          },
+          () => reject(new Error(`Could not measure anchor "${id}"`)),
+        );
       }),
-    [props.useAnchor],
+    [input.scrollRef, props.useAnchor],
   );
 
   useImperativeHandle(ref, () => ({ navigateTo }), [navigateTo]);
 
   const options = useMemo<ParseRenderOptions>(
     () => ({
-      contentRef,
       domain: props.domain,
       errorImg: props.errorImg,
       loadingImg: props.loadingImg,
@@ -656,13 +683,14 @@ export const UPParse = forwardRef<UPParseRef, UPParseProps>(function UPParse(inp
     [props.domain, props.errorImg, props.loadingImg, props.scrollTable, props.useAnchor, registerAnchor],
   );
 
+  // Source root is a plain `<view id="_root">` (u-parse.vue:2) — the page owns
+  // scrolling. Rendering a ScrollView here would nest inside the caller's and,
+  // having no scrollable extent of its own, would make `navigateTo` a no-op.
   return (
-    <ScrollView ref={scrollRef} style={input.customStyle} testID="up-parse">
-      <View collapsable={false} ref={contentRef}>
-        <ParseContext.Provider value={options}>
-          {renderBlockChildren(nodes, { color: textColor, fontSize: 15, lineHeight: 22 })}
-        </ParseContext.Provider>
-      </View>
-    </ScrollView>
+    <View collapsable={false} style={input.customStyle} testID="up-parse">
+      <ParseContext.Provider value={options}>
+        {renderBlockChildren(nodes, { color: textColor, fontSize: 15, lineHeight: 22 })}
+      </ParseContext.Provider>
+    </View>
   );
 });

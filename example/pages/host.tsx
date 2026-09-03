@@ -150,9 +150,16 @@ export function DemoPagesHost() {
           </Text>
         </View>
 
-        <ScrollView contentContainerStyle={s.demoBody} style={s.fill}>
+        {/*
+          Deliberately a View, not a ScrollView: every demo page brings its own
+          scroller (`DemoPage`, or its own ScrollView/FlashList). Wrapping them in
+          another one nested two scrollers, and the inner one then had no
+          scrollable extent — which silently broke anything calling `scrollTo`,
+          e.g. UPParse's `navigateTo` anchor jumps.
+        */}
+        <View style={[s.fill, s.demoBody]}>
           {Demo ? <Demo /> : <MissingDemo category={component.category} componentId={component.id} />}
-        </ScrollView>
+        </View>
       </View>
     );
   }

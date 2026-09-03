@@ -1,4 +1,5 @@
 import React from 'react';
+import type { ScrollView } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 import { UPParse, UPRoot, type UPParseRef } from '../../src';
 
@@ -155,14 +156,31 @@ it('rejects navigateTo when useAnchor is disabled', async () => {
   await expect(ref.current?.navigateTo('intro')).rejects.toThrow('Anchor is disabled');
 });
 
-it('rejects navigateTo for an unknown anchor id', async () => {
+it('rejects navigateTo when no scrollRef was supplied', async () => {
   const ref = React.createRef<UPParseRef>();
   renderRoot(<UPParse content={'<p id="intro">Intro</p>'} ref={ref} useAnchor />);
+  await expect(ref.current?.navigateTo('intro')).rejects.toThrow('scrollRef');
+});
+
+it('rejects navigateTo for an unknown anchor id', async () => {
+  const ref = React.createRef<UPParseRef>();
+  const scrollRef = { current: { scrollTo: jest.fn(), getInnerViewNode: () => 1 } } as unknown as React.RefObject<ScrollView>;
+  renderRoot(<UPParse content={'<p id="intro">Intro</p>'} ref={ref} scrollRef={scrollRef} useAnchor />);
   await expect(ref.current?.navigateTo('missing')).rejects.toThrow('not found');
 });
 
-it('scrolls to the top for navigateTo with no id', async () => {
+it('scrolls the supplied scroller for navigateTo with no id', async () => {
   const ref = React.createRef<UPParseRef>();
-  renderRoot(<UPParse content={'<p id="intro">Intro</p>'} ref={ref} useAnchor={40} />);
+  const scrollTo = jest.fn();
+  const scrollRef = { current: { scrollTo, getInnerViewNode: () => 1 } } as unknown as React.RefObject<ScrollView>;
+  renderRoot(<UPParse content={'<p id="intro">Intro</p>'} ref={ref} scrollRef={scrollRef} useAnchor={40} />);
   await expect(ref.current?.navigateTo()).resolves.toBeUndefined();
+  expect(scrollTo).toHaveBeenCalledWith({ animated: true, y: 40 });
+});
+
+it('renders a plain View root, not a scroller, matching upstream', () => {
+  const screen = renderRoot(<UPParse content={'<p>hi</p>'} />);
+  // A ScrollView root would nest inside the caller's scroller and have no
+  // scrollable extent of its own.
+  expect(screen.getByTestId('up-parse').props.scrollEnabled).toBeUndefined();
 });
