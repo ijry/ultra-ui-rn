@@ -170,6 +170,67 @@ function ImageRenderer({ src, alt, domain, errorImg, loadingImg, onPress }: {
   );
 }
 
+/**
+ * Drops whitespace-only text children. HTML discards these inside structural
+ * containers; here they would each become a `<Text>` line with its own
+ * lineHeight, which shows up as large empty gaps between table rows.
+ */
+function blockChildren(children: ParseNode[]): ParseNode[] {
+  return children.filter((child) => !(child.type === 'text' && child.text.trim() === ''));
+}
+
+/** Tags that flow inline and can therefore share one `<Text>` run. */
+const INLINE_TAGS = new Set([
+  'a', 'abbr', 'b', 'big', 'br', 'cite', 'code', 'del', 'em', 'font', 'i', 'label',
+  'mark', 'q', 'rp', 'rt', 'ruby', 's', 'small', 'span', 'strong', 'sub', 'sup', 'u',
+]);
+
+function isInline(node: ParseNode): boolean {
+  return node.type === 'text' || INLINE_TAGS.has(node.tag);
+}
+
+/**
+ * Renders the children of a block container: consecutive inline children are
+ * grouped into one `<Text>` so they flow as a line, while block children become
+ * siblings in the parent `View`. Without the grouping every inline fragment
+ * would stack vertically; without the split a nested `<View>` (table, list)
+ * would sit inside a `<Text>` and be laid out inline.
+ */
+function renderBlockChildren(children: ParseNode[], style: Record<string, unknown>): React.ReactNode[] {
+  // Keep whitespace only where it separates two inline siblings.
+  const kept = children.filter((child, index) => {
+    if (!(child.type === 'text' && child.text.trim() === '')) return true;
+    const prev = children[index - 1];
+    const next = children[index + 1];
+    return Boolean(prev && next && isInline(prev) && isInline(next));
+  });
+
+  const out: React.ReactNode[] = [];
+  let run: ParseNode[] = [];
+  const flush = () => {
+    if (!run.length) return;
+    const nodes = run;
+    run = [];
+    out.push(
+      <Text key={`run-${out.length}`} style={style}>
+        {nodes.map((child, index) => (
+          <RenderNode key={index} node={child} />
+        ))}
+      </Text>,
+    );
+  };
+  for (const child of kept) {
+    if (isInline(child)) {
+      run.push(child);
+      continue;
+    }
+    flush();
+    out.push(<RenderNode key={`block-${out.length}`} node={child} />);
+  }
+  flush();
+  return out;
+}
+
 type ParseRenderOptions = {
   onPress?: (detail: UPParseClickDetail) => void;
   textColor: string;
@@ -178,6 +239,8 @@ type ParseRenderOptions = {
   errorImg?: string;
   loadingImg?: string;
   scrollTable?: boolean;
+  /** Inside `<pre>`, whitespace is significant and must not be collapsed. */
+  preformatted?: boolean;
   /** Set when `useAnchor` is on: records each `id`-bearing node's offset in the scroll content. */
   registerAnchor?: (id: string, y: number) => void;
   /** The ScrollView content view that anchor offsets are measured against. */
@@ -191,12 +254,15 @@ const ParseContext = createContext<ParseRenderOptions>({
 
 function RenderNode({ node }: { node: ParseNode }): React.JSX.Element | null {
   const options = useContext(ParseContext);
-  const { onPress, textColor, mutedColor, domain, errorImg, loadingImg, scrollTable, registerAnchor, contentRef } =
+  const { onPress, textColor, mutedColor, domain, errorImg, loadingImg, scrollTable, preformatted, registerAnchor, contentRef } =
     options;
   const anchorRef = useRef<View | null>(null);
   if (node.type === 'text') {
+    // HTML collapses runs of whitespace; without this the source's newlines and
+    // indentation render as real line breaks inside `<Text>`.
+    const text = preformatted ? node.text : node.text.replace(/\s+/g, ' ');
     return (
-      <Text style={{ color: textColor, fontSize: 15, lineHeight: 22 }}>{node.text}</Text>
+      <Text style={{ color: textColor, fontSize: 15, lineHeight: 22 }}>{text}</Text>
     );
   }
 
@@ -259,6 +325,13 @@ function RenderNode({ node }: { node: ParseNode }): React.JSX.Element | null {
     }
     case 'p':
     case 'div':
+    case 'section':
+      // Block containers: a `View` so nested tables/lists lay out as blocks.
+      return wrap(
+        <View style={{ marginBottom: tag === 'p' ? 8 : 0 }}>
+          {renderBlockChildren(children, style)}
+        </View>,
+      );
     case 'span':
       return wrap(
         <Text style={style}>
@@ -344,13 +417,12 @@ function RenderNode({ node }: { node: ParseNode }): React.JSX.Element | null {
         </Text>,
       );
     case 'ruby':
-    case 'section':
       return wrap(
-        <View>
+        <Text style={style}>
           {children.map((child, index) => (
             <RenderNode key={index} node={child} />
           ))}
-        </View>,
+        </Text>,
       );
     case 'rp':
     case 'rt':
@@ -373,9 +445,12 @@ function RenderNode({ node }: { node: ParseNode }): React.JSX.Element | null {
       return wrap(
         <View style={{ backgroundColor: '#f6f8fa', borderRadius: 4, marginBottom: 8, padding: 10 }}>
           <Text style={{ color: '#24292e', fontFamily: 'monospace', fontSize: 13, lineHeight: 19 }}>
-            {children.map((child, index) => (
-              <RenderNode key={index} node={child} />
-            ))}
+            {/* Whitespace is significant here, so children opt out of collapsing. */}
+            <ParseContext.Provider value={{ ...options, preformatted: true }}>
+              {children.map((child, index) => (
+                <RenderNode key={index} node={child} />
+              ))}
+            </ParseContext.Provider>
           </Text>
         </View>,
       );
@@ -384,9 +459,7 @@ function RenderNode({ node }: { node: ParseNode }): React.JSX.Element | null {
         <View style={{ borderLeftColor: '#4da6ff', borderLeftWidth: 3, marginBottom: 8, paddingLeft: 10 }}>
           {/* Source renders quoted text muted; override the inherited text color. */}
           <ParseContext.Provider value={{ ...options, textColor: mutedColor }}>
-            {children.map((child, index) => (
-              <RenderNode key={index} node={child} />
-            ))}
+            {renderBlockChildren(children, { ...style, color: mutedColor })}
           </ParseContext.Provider>
         </View>,
       );
@@ -394,7 +467,7 @@ function RenderNode({ node }: { node: ParseNode }): React.JSX.Element | null {
     case 'ol':
       return wrap(
         <View style={{ marginBottom: 8, paddingLeft: 12 }}>
-          {children.map((child, index) => (
+          {blockChildren(children).map((child, index) => (
             <RenderNode key={index} node={child} />
           ))}
         </View>,
@@ -403,11 +476,7 @@ function RenderNode({ node }: { node: ParseNode }): React.JSX.Element | null {
       return wrap(
         <View style={{ flexDirection: 'row', marginBottom: 3 }}>
           <Text style={{ color: mutedColor, fontSize: 15, marginRight: 6, width: 16 }}>•</Text>
-          <View style={{ flex: 1 }}>
-            {children.map((child, childIndex) => (
-              <RenderNode key={childIndex} node={child} />
-            ))}
-          </View>
+          <View style={{ flex: 1 }}>{renderBlockChildren(children, style)}</View>
         </View>,
       );
     case 'a':
@@ -434,7 +503,7 @@ function RenderNode({ node }: { node: ParseNode }): React.JSX.Element | null {
     case 'table': {
       const table = (
         <View style={{ borderColor: '#e4e7ed', borderWidth: 1, marginBottom: 8 }}>
-          {children.map((child, index) => (
+          {blockChildren(children).map((child, index) => (
             <RenderNode key={index} node={child} />
           ))}
         </View>
@@ -449,10 +518,22 @@ function RenderNode({ node }: { node: ParseNode }): React.JSX.Element | null {
         </ScrollView>,
       );
     }
+    case 'thead':
+    case 'tbody':
+    case 'tfoot':
+    case 'colgroup':
+      // Structural table wrappers carry no layout of their own.
+      return (
+        <>
+          {blockChildren(children).map((child, index) => (
+            <RenderNode key={index} node={child} />
+          ))}
+        </>
+      );
     case 'tr':
       return wrap(
         <View style={{ flexDirection: 'row' }}>
-          {children.map((child, index) => (
+          {blockChildren(children).map((child, index) => (
             <RenderNode key={index} node={child} />
           ))}
         </View>,
@@ -470,9 +551,7 @@ function RenderNode({ node }: { node: ParseNode }): React.JSX.Element | null {
           }}
           testID="up-parse-cell"
         >
-          {children.map((child, index) => (
-            <RenderNode key={index} node={child} />
-          ))}
+          {renderBlockChildren(children, style)}
         </View>,
       );
     default:
@@ -581,9 +660,7 @@ export const UPParse = forwardRef<UPParseRef, UPParseProps>(function UPParse(inp
     <ScrollView ref={scrollRef} style={input.customStyle} testID="up-parse">
       <View collapsable={false} ref={contentRef}>
         <ParseContext.Provider value={options}>
-          {nodes.map((node, index) => (
-            <RenderNode key={index} node={node} />
-          ))}
+          {renderBlockChildren(nodes, { color: textColor, fontSize: 15, lineHeight: 22 })}
         </ParseContext.Provider>
       </View>
     </ScrollView>
