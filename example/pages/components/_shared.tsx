@@ -13,16 +13,25 @@ import { UPSubsection } from 'ultra-ui-rn';
 
 /* ─── Layout ─── */
 
+/**
+ * The demo host owns the single vertical scroller and shares its ref here, so a
+ * page that needs to scroll programmatically (e.g. UPParse's `navigateTo`
+ * anchors) can reach it. Nesting another ScrollView per page would leave the
+ * inner one with no scrollable extent, which silently breaks `scrollTo`.
+ */
+export const DemoScrollContext = React.createContext<React.RefObject<ScrollView | null> | null>(null);
+
+export function useDemoScrollRef(): React.RefObject<ScrollView | null> | null {
+  return React.useContext(DemoScrollContext);
+}
+
+/** A page body. The host provides the scroller; this only adds the page padding. */
 export function DemoPage({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <ScrollView style={s.container} contentContainerStyle={s.containerContent}>
-      {children}
-    </ScrollView>
-  );
+  return <View style={s.containerContent}>{children}</View>;
 }
 
 /**

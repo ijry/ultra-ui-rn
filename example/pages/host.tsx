@@ -2,7 +2,7 @@
  * DemoPagesHost - uview-plus 风格两级导航
  * 分类列表用 UPCellGroup/UPCell，图标用 UPIcon
  */
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -18,6 +18,7 @@ import {
   type ComponentMeta,
   type CategoryMeta,
 } from './registry';
+import { DemoScrollContext } from './components/_shared';
 import * as advanced from './components/advanced';
 import * as basic from './components/basic';
 import * as display from './components/display';
@@ -65,6 +66,7 @@ function MissingDemo({ componentId, category }: { componentId: string; category:
 
 export function DemoPagesHost() {
   const [view, setView] = useState<ViewState>({ type: 'categories' });
+  const demoScrollRef = useRef<ScrollView>(null);
 
   const goBack = () => {
     if (view.type === 'demo') {
@@ -151,15 +153,16 @@ export function DemoPagesHost() {
         </View>
 
         {/*
-          Deliberately a View, not a ScrollView: every demo page brings its own
-          scroller (`DemoPage`, or its own ScrollView/FlashList). Wrapping them in
-          another one nested two scrollers, and the inner one then had no
-          scrollable extent — which silently broke anything calling `scrollTo`,
-          e.g. UPParse's `navigateTo` anchor jumps.
+          The single scroller for demo pages. `DemoPage` is a plain View and the
+          pages that manage their own scrolling are the exception, so this is the
+          one place vertical scrolling happens — and its ref is shared through
+          DemoScrollContext for pages that need `scrollTo` (UPParse anchors).
         */}
-        <View style={[s.fill, s.demoBody]}>
-          {Demo ? <Demo /> : <MissingDemo category={component.category} componentId={component.id} />}
-        </View>
+        <ScrollView contentContainerStyle={s.demoBody} ref={demoScrollRef} style={s.fill}>
+          <DemoScrollContext.Provider value={demoScrollRef}>
+            {Demo ? <Demo /> : <MissingDemo category={component.category} componentId={component.id} />}
+          </DemoScrollContext.Provider>
+        </ScrollView>
       </View>
     );
   }
