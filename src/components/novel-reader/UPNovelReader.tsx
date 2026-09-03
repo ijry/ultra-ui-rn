@@ -31,6 +31,12 @@ export type UPNovelReaderProps = {
   customStyle?: StyleProp<ViewStyle>;
   /** @deprecated React Native has no CSS class runtime. */
   customClass?: string;
+  /**
+   * Source `toolbar-extra` slot: extra controls appended to the top toolbar,
+   * after the built-in catalog/settings/bookmark buttons (upstream demo uses it
+   * for a scroll/page mode toggle — novelReader.nvue:18-25).
+   */
+  toolbarExtraNode?: React.ReactNode;
   /** Source `chapter-request` event: fires when a chapter needs loading. */
   onChapterRequest?: (payload: { chapterIndex: number; chapter: NovelChapter }) => void;
   /** Source `chapter-prefetch` event: fires when neighbouring chapters are about to be needed. */
@@ -285,6 +291,14 @@ export function UPNovelReader(input: UPNovelReaderProps): React.JSX.Element {
           <Pressable onPress={toggleBookmark} style={{ paddingHorizontal: 8 }} testID="up-novel-reader-bookmark">
             <Text style={{ color: '#ffffff', fontSize: 14 }}>书签</Text>
           </Pressable>
+          {input.toolbarExtraNode ? (
+            <View
+              style={{ alignItems: 'center', height: 36, justifyContent: 'center', width: 36 }}
+              testID="up-novel-reader-toolbar-extra"
+            >
+              {input.toolbarExtraNode}
+            </View>
+          ) : null}
         </View>
       ) : null}
 

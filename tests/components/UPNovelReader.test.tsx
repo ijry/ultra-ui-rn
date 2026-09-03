@@ -1,4 +1,5 @@
 import React from 'react';
+import { Pressable, Text } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 import { UPNovelReader, UPRoot } from '../../src';
 
@@ -59,4 +60,28 @@ it('emits back when the back control is pressed', () => {
   fireEvent.press(screen.getByTestId('up-novel-reader-paragraph-0'));
   fireEvent.press(screen.getByTestId('up-novel-reader-back'));
   expect(onBack).toHaveBeenCalledTimes(1);
+});
+
+it('renders toolbarExtraNode inside the top toolbar', () => {
+  const onModeToggle = jest.fn();
+  const screen = renderRoot(
+    <UPNovelReader
+      chapters={chapters}
+      toolbarExtraNode={
+        <Pressable onPress={onModeToggle} testID="mode-toggle">
+          <Text>切换</Text>
+        </Pressable>
+      }
+    />,
+  );
+  fireEvent.press(screen.getByTestId('up-novel-reader-paragraph-0'));
+  expect(screen.getByTestId('up-novel-reader-toolbar-extra')).toBeTruthy();
+  fireEvent.press(screen.getByTestId('mode-toggle'));
+  expect(onModeToggle).toHaveBeenCalledTimes(1);
+});
+
+it('omits the toolbar-extra slot container when no node is passed', () => {
+  const screen = renderRoot(<UPNovelReader chapters={chapters} />);
+  fireEvent.press(screen.getByTestId('up-novel-reader-paragraph-0'));
+  expect(screen.queryByTestId('up-novel-reader-toolbar-extra')).toBeNull();
 });

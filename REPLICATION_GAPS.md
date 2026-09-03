@@ -43,7 +43,7 @@ Source: Strict replication of 17 advanced component demos
 - **vibrate** — upstream calls `uni.vibrateShort()` on drag start; RN has no cross-platform haptic API (deprecated as no-op)
 
 ### UPNovelReader
-- **toolbar slot** — upstream `#toolbar-extra` slot allows custom toolbar buttons; local component has no slot or children extension point
+- ~~**toolbar slot**~~ — ✓ Fixed 2026-09-03: added `toolbarExtraNode`, rendered after the built-in catalog/settings/bookmark buttons in the top toolbar (upstream: novelReader.nvue:18-25). Demo now wires the scroll/page mode toggle through it.
 
 ### UPLazyLoad
 - ~~**borderRadius** prop~~ — ✓ Fixed 2026-09-03: now accepts `borderRadius` prop directly (no longer requires `customStyle` workaround)
@@ -97,10 +97,10 @@ Source: Strict replication of 17 advanced component demos
 ## Summary
 
 **Total gaps identified**: 20  
-**Fixed**: 12 (UPMarkdown.showLineNumber, UPCoupon.circle, UPButton.type="default", UPLazyLoad.borderRadius, UPParse.containerStyle documented, UPParse.domain, UPParse.Image rendering, UPParse missing tags, UPCoupon.amountNode, UPCoupon.titleNode, UPColorPicker.children)
-**Remaining**: 8
+**Fixed**: 13 (UPMarkdown.showLineNumber, UPCoupon.circle, UPButton.type="default", UPLazyLoad.borderRadius, UPParse.containerStyle documented, UPParse.domain, UPParse.Image rendering, UPParse missing tags, UPCoupon.amountNode, UPCoupon.titleNode, UPColorPicker.children, UPNovelReader.toolbarExtraNode)
+**Remaining**: 7
 - Critical (defined but broken): 2 (UPParse.scrollTable, UPParse.useAnchor)
-- Missing props/events: 2 (UPSignature adapter/theme, UPNovelReader toolbar slot)
+- Missing props/events: 1 (UPSignature adapter/theme)
 - API discrepancies: 1  
 - Platform limitations: 6 (including 2 upstream bugs in UPLazyLoad)
 - Enum corrections: 1 (already applied)
@@ -108,6 +108,6 @@ Source: Strict replication of 17 advanced component demos
 **Components with most gaps**:
 1. UPParse (2 gaps remaining, down from 6) — scrollTable/useAnchor
 2. UPLazyLoad (2 upstream bugs) — statusChange/clickImg events referenced in demo but never emitted by component
-3. ~~UPCoupon (3 gaps, all fixed)~~ ✓ / ~~UPColorPicker (1 gap, fixed)~~ ✓
+3. ~~UPCoupon (3 gaps, all fixed)~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓
 
 **Next steps**: See task #2 "Fix library gaps surfaced by replication"

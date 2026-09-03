@@ -3,8 +3,8 @@
  * 严格复刻 uview-plus pages/componentsD/novelReader/novelReader.nvue
  */
 import React, { useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { UPNovelReader } from 'ultra-ui-rn';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { UPIcon, UPNovelReader } from 'ultra-ui-rn';
 import type { NovelChapter, NovelProgress, NovelReaderSettings } from 'ultra-ui-rn/src/components/novel-reader';
 
 const createParagraph = (title: string, body: string) => `${title}。${body} ${body}`;
@@ -70,6 +70,7 @@ export default function NovelReaderDemo() {
   const [currentChapter, setCurrentChapter] = useState<NovelChapter>(CHAPTERS[0]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<{ message?: string } | null>(null);
+  const [mode, setMode] = useState<'scroll' | 'page'>('scroll');
   const [progress, setProgress] = useState<NovelProgress>({
     chapterIndex: 0,
     offset: 0,
@@ -142,20 +143,28 @@ export default function NovelReaderDemo() {
         currentChapter={currentChapter}
         error={error}
         loading={loading}
-        mode="scroll"
+        mode={mode}
         progress={progress}
         settings={settings}
+        toolbarExtraNode={
+          <Pressable
+            onPress={() => setMode((prev) => (prev === 'scroll' ? 'page' : 'scroll'))}
+            style={s.novelReaderDemoMode}
+          >
+            <UPIcon color="#2979ff" name="order" size="18" />
+          </Pressable>
+        }
         onChapterPrefetch={handleChapterPrefetch}
         onChapterRequest={handleChapterRequest}
         onProgressChange={handleProgressChange}
         onRetry={handleRetry}
         onSettingsChange={handleSettingsChange}
       />
-      {/* // Upstream has toolbar-extra slot with mode toggle, but local component does not support children/slots */}
     </View>
   );
 }
 
 const s = StyleSheet.create({
   novelReaderDemo: { flex: 1, height: '100%', overflow: 'hidden', width: '100%' },
+  novelReaderDemoMode: { alignItems: 'center', flexDirection: 'row', height: 36, justifyContent: 'center', width: 36 },
 });
