@@ -4,8 +4,13 @@
  */
 import React, { useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { UPIcon, UPNovelReader } from 'ultra-ui-rn';
-import type { NovelChapter, NovelProgress, NovelReaderSettings } from 'ultra-ui-rn/src/components/novel-reader';
+import {
+  UPIcon,
+  UPNovelReader,
+  type NovelChapter,
+  type NovelProgress,
+  type NovelReaderSettings,
+} from 'ultra-ui-rn';
 
 const createParagraph = (title: string, body: string) => `${title}。${body} ${body}`;
 

@@ -83,7 +83,11 @@ category (`高级组件` / `表单组件` / …) → component (Chinese name, e.
   `New-Item -ItemType Junction -Path example/node_modules/ultra-ui-rn -Target <repo root>`
 - **example typecheck reads `lib/typescript/`, not `src/`.** After changing the
   library you must `npm run build` at the root, or `example`'s `tsc` checks
-  against stale types and misses real prop errors.
+  against stale types and misses real prop errors. Corollary: never import
+  `ultra-ui-rn/src/...` from a demo page — a deep import drags the whole library
+  source tree into example's program (bypassing the built declarations, and
+  pulling in files whose ambient `.d.ts` lives outside example's `include`).
+  Import types from `'ultra-ui-rn'` instead.
 - **`react-native-web` is not native.** The parse/scroll containers are not the
   scrolling element under RNW, so `ScrollView.scrollTo` has no observable
   effect. Anything that depends on a ScrollView actually scrolling has to be
