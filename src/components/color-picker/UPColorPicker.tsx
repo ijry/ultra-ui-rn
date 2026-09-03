@@ -13,6 +13,12 @@ export type UPColorPickerProps = {
   defaultValue?: string;
   commonColors?: readonly string[];
   show?: boolean;
+  /**
+   * Source default slot: replaces the built-in swatch as the trigger that opens
+   * the panel. Upstream wraps its own preview markup inside `<up-color-picker>`
+   * (colorPicker.nvue:13-16); pass that markup here.
+   */
+  children?: React.ReactNode;
   customStyle?: StyleProp<ViewStyle>;
   /** @deprecated React Native has no CSS class runtime. */
   customClass?: string;
@@ -123,16 +129,18 @@ export function UPColorPicker(input: UPColorPickerProps): React.JSX.Element {
   return (
     <View style={input.customStyle} testID="up-color-picker">
       <Pressable onPress={() => setShow(true)} testID="up-color-picker-trigger">
-        <View
-          style={{
-            backgroundColor: currentHex,
-            borderColor: '#dcdfe6',
-            borderRadius: 4,
-            borderWidth: 1,
-            height: 36,
-            width: 64,
-          }}
-        />
+        {input.children ?? (
+          <View
+            style={{
+              backgroundColor: currentHex,
+              borderColor: '#dcdfe6',
+              borderRadius: 4,
+              borderWidth: 1,
+              height: 36,
+              width: 64,
+            }}
+          />
+        )}
       </Pressable>
       <UPPopup mode="center" onChangeShow={(next) => setShow(next)} onClose={input.onClose} show={show}>
         <View style={{ padding: 16, width: PANEL_WIDTH + 32 }}>

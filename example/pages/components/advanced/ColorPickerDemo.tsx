@@ -3,7 +3,7 @@
  * 严格复刻 uview-plus pages/componentsD/colorPicker/colorPicker.nvue
  */
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { UPColorPicker } from 'ultra-ui-rn';
 import { DemoPage } from '../_shared';
 
@@ -36,36 +36,34 @@ export default function ColorPickerDemo() {
     <DemoPage>
       <View style={s.card}>
         <Text style={s.title}>颜色选择器示例</Text>
-        <Pressable onPress={() => setShowColorPicker(true)}>
-          <View style={s.colorPreview}>
-            <View style={[s.colorBlock, { backgroundColor: selectedColor }]} />
-            <Text style={s.colorText}>{selectedColor}</Text>
-          </View>
-        </Pressable>
         <UPColorPicker
           onClose={() => setShowColorPicker(false)}
           onConfirm={confirmColor}
           show={showColorPicker}
           value={selectedColor}
-        />
+        >
+          <View style={s.colorPreview}>
+            <View style={[s.colorBlock, { backgroundColor: selectedColor }]} />
+            <Text style={s.colorText}>{selectedColor}</Text>
+          </View>
+        </UPColorPicker>
         <Text style={s.desc}>点击上方色块选择颜色</Text>
       </View>
 
       <View style={s.card}>
         <Text style={s.title}>带常用颜色的示例</Text>
-        <Pressable onPress={() => setShowColorPickerWithCommon(true)}>
-          <View style={s.colorPreview}>
-            <View style={[s.colorBlock, { backgroundColor: selectedColor2 }]} />
-            <Text style={s.colorText}>{selectedColor2}</Text>
-          </View>
-        </Pressable>
         <UPColorPicker
           commonColors={commonColors}
           onClose={() => setShowColorPickerWithCommon(false)}
           onConfirm={confirmColor2}
           show={showColorPickerWithCommon}
           value={selectedColor2}
-        />
+        >
+          <View style={s.colorPreview}>
+            <View style={[s.colorBlock, { backgroundColor: selectedColor2 }]} />
+            <Text style={s.colorText}>{selectedColor2}</Text>
+          </View>
+        </UPColorPicker>
         <Text style={s.desc}>包含常用颜色选项</Text>
       </View>
     </DemoPage>

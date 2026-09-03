@@ -38,26 +38,30 @@ it('emits imgtap with src on image press', () => {
   expect(onImgtap).toHaveBeenCalledWith({ src: 'https://img.example.com/a.png', alt: 'alt' });
 });
 
+type RenderedNode = {
+  type?: string;
+  children?: Array<RenderedNode | string> | null;
+};
+
+/** Walks the rendered tree for the `<Text>` node holding the code block. */
+function findCodeText(node: RenderedNode | string | null): string | null {
+  if (!node || typeof node === 'string') return null;
+  if (node.type === 'Text' && node.children) {
+    const content = node.children.join('');
+    if (content.includes('first')) return content;
+  }
+  if (node.children) {
+    for (const child of node.children) {
+      const result = findCodeText(child);
+      if (result) return result;
+    }
+  }
+  return null;
+}
+
 it('renders line numbers in code blocks when showLineNumber is true', () => {
   const screen = renderRoot(<UPMarkdown content={'```\nfirst\nsecond\nthird\n```'} showLineNumber={true} />);
-  const markdown = screen.getByTestId('up-markdown');
-  const text = screen.toJSON();
-  // Find the Text node containing the code
-  const findText = (node: any): string | null => {
-    if (!node) return null;
-    if (node.type === 'Text' && node.children) {
-      const content = node.children.join('');
-      if (content.includes('first')) return content;
-    }
-    if (node.children) {
-      for (const child of node.children) {
-        const result = findText(child);
-        if (result) return result;
-      }
-    }
-    return null;
-  };
-  const codeText = findText(text);
+  const codeText = findCodeText(screen.toJSON() as RenderedNode);
   expect(codeText).toContain('1  first');
   expect(codeText).toContain('2  second');
   expect(codeText).toContain('3  third');
@@ -65,22 +69,7 @@ it('renders line numbers in code blocks when showLineNumber is true', () => {
 
 it('omits line numbers when showLineNumber is false', () => {
   const screen = renderRoot(<UPMarkdown content={'```\nfirst\nsecond\n```'} showLineNumber={false} />);
-  const text = screen.toJSON();
-  const findText = (node: any): string | null => {
-    if (!node) return null;
-    if (node.type === 'Text' && node.children) {
-      const content = node.children.join('');
-      if (content.includes('first')) return content;
-    }
-    if (node.children) {
-      for (const child of node.children) {
-        const result = findText(child);
-        if (result) return result;
-      }
-    }
-    return null;
-  };
-  const codeText = findText(text);
+  const codeText = findCodeText(screen.toJSON() as RenderedNode);
   expect(codeText).toContain('first');
   expect(codeText).not.toContain('1  first');
 });

@@ -33,7 +33,7 @@ Source: Strict replication of 17 advanced component demos
 - ~~**titleNode** slot~~ — ✓ Fixed 2026-09-03: upstream `#title` slot replaces title text; implemented as `titleNode?: React.ReactNode | ((title: string) => React.ReactNode)`
 
 ### UPColorPicker
-- **children** slot — upstream wraps trigger in `<up-color-picker>` default slot; RN component renders internal trigger only, no children accepted (upstream: colorPicker.nvue:7-17)
+- ~~**children** slot~~ — ✓ Fixed 2026-09-03: default slot now accepted as the trigger, replacing the built-in swatch (upstream: colorPicker.nvue:13-16)
 
 ### UPSignature
 - **Canvas adapter requirement** — RN component requires explicit canvas adapter configuration; upstream `.nvue` works with built-in `uni.createCanvasContext`
@@ -97,10 +97,10 @@ Source: Strict replication of 17 advanced component demos
 ## Summary
 
 **Total gaps identified**: 20  
-**Fixed**: 11 (UPMarkdown.showLineNumber, UPCoupon.circle, UPButton.type="default", UPLazyLoad.borderRadius, UPParse.containerStyle documented, UPParse.domain, UPParse.Image rendering, UPParse missing tags, UPCoupon.amountNode, UPCoupon.titleNode)
-**Remaining**: 9
+**Fixed**: 12 (UPMarkdown.showLineNumber, UPCoupon.circle, UPButton.type="default", UPLazyLoad.borderRadius, UPParse.containerStyle documented, UPParse.domain, UPParse.Image rendering, UPParse missing tags, UPCoupon.amountNode, UPCoupon.titleNode, UPColorPicker.children)
+**Remaining**: 8
 - Critical (defined but broken): 2 (UPParse.scrollTable, UPParse.useAnchor)
-- Missing props/events: 3  
+- Missing props/events: 2 (UPSignature adapter/theme, UPNovelReader toolbar slot)
 - API discrepancies: 1  
 - Platform limitations: 6 (including 2 upstream bugs in UPLazyLoad)
 - Enum corrections: 1 (already applied)
@@ -108,6 +108,6 @@ Source: Strict replication of 17 advanced component demos
 **Components with most gaps**:
 1. UPParse (2 gaps remaining, down from 6) — scrollTable/useAnchor
 2. UPLazyLoad (2 upstream bugs) — statusChange/clickImg events referenced in demo but never emitted by component
-3. ~~UPCoupon (3 gaps, all fixed)~~ ✓
+3. ~~UPCoupon (3 gaps, all fixed)~~ ✓ / ~~UPColorPicker (1 gap, fixed)~~ ✓
 
 **Next steps**: See task #2 "Fix library gaps surfaced by replication"
