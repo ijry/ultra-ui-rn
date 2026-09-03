@@ -24,7 +24,54 @@ Source: Strict replication of 17 advanced component demos
 - ~~**Image rendering**~~ — ✓ Fixed 2026-09-03: now renders `<img>` as actual Image components with loading/error states
 - ~~**Missing tag support**~~ — ✓ Fixed 2026-09-03: now renders `<ruby>`, `<rp>`, `<rt>`, `<sup>`, `<sub>`, `<s>`, `<big>`, `<small>`, `<section>` with proper styling (SVG remains unsupported in RN Text)
 
-**Needs device verification**: the `navigateTo` scroll path depends on `measureLayout`, which is a no-op in the jest environment. Tests cover the reject paths and anchor registration wiring; the actual scroll has not been observed on a device.
+**Needs device verification**: the `navigateTo` scroll path. The reason it could
+not be observed is now diagnosed — see "Scroll container composition" below. It
+is not merely a `measureLayout` limitation under jest.
+
+---
+
+## Scroll container composition (diagnosed 2026-09-03, fix not yet applied)
+
+`navigateTo(id)` computes the right offset and calls `scrollTo` on `UPParse`'s
+own `ScrollView` — which has **no scrollable extent**, so nothing moves.
+
+Measured on ParseDemo in the H5 harness (three nested vertical scrollers, none
+overflowing — each grows to its content height while an ancestor does the real
+scrolling):
+
+| scroller | scrollHeight | clientHeight | overflows |
+|---|---|---|---|
+| `host.tsx` ScrollView | 1750 | 1750 | no |
+| `DemoPage` ScrollView | 1694 | 1694 | no |
+| `up-parse` ScrollView | 1639 | 1639 | no |
+
+Root cause: **upstream `u-parse`'s root is a plain `<view id="_root">`, not a
+scroller** (u-parse.vue:2). The page owns scrolling, which is why upstream's
+`navigateTo` measures against the viewport and scrolls the *page*
+(`createSelectorQuery().selectViewport().scrollOffset()`). Our `UPParse` renders
+its own `ScrollView` root, so it both deviates from the source and gives
+`navigateTo` a container that cannot scroll.
+
+The same nesting affects the example broadly: `host.tsx` wraps every demo in a
+`ScrollView`, and 79 pages use `DemoPage` (itself a `ScrollView`) while 4 more
+bring their own scroller — so 83 of 95 pages are double-nested today. 12 pages
+have plain `View` roots and depend on `host.tsx`'s scroller, so it cannot simply
+be removed.
+
+Proposed fix, in order:
+
+1. `UPParse` root becomes a `View`, matching upstream. `navigateTo` then needs
+   the consumer's scroller — an optional `scrollRef` prop is the honest RN
+   translation of upstream's page-level scroll.
+2. Decide one owner of scrolling per demo page: either `host.tsx` scrolls and
+   `DemoPage` becomes a `View`, or `host.tsx` stops scrolling and the 12
+   plain-root pages adopt `DemoPage`. The second matches RN convention but
+   touches more files.
+
+Deliberately not applied yet: both are behavioural changes to a component and to
+infrastructure shared by 95 pages, and the payoff is on native, which is
+currently unbuildable on this machine (Windows MAX_PATH). Applying them blind
+would mean shipping an unverifiable fix.
 
 ---
 
@@ -108,7 +155,8 @@ Source: Strict replication of 17 advanced component demos
 - Enum corrections: 1 (already applied)
 
 **Components with most gaps**:
-1. ~~UPParse (6 gaps, all fixed)~~ ✓ — `navigateTo` scroll path still needs device verification
+1. ~~UPParse (6 gaps, all fixed)~~ ✓ — but see "Scroll container composition": its
+   `ScrollView` root deviates from upstream and is why `navigateTo` cannot scroll
 2. UPLazyLoad (2 upstream bugs) — statusChange/clickImg events referenced in demo but never emitted by component
 3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓ / ~~UPMarkdown~~ ✓ / ~~UPButton~~ ✓
 
