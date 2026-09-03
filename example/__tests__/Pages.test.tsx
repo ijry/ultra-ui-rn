@@ -30,17 +30,17 @@ test('index lists every category and opening one shows component list', async ()
   let tree = renderer.toJSON();
   expect(tree).toBeTruthy();
   const asJson = JSON.stringify(tree);
-  
+
   // Check all categories are listed
   for (const cat of CATEGORIES) {
     expect(asJson).toContain(cat.title);
   }
 
-  // Open the basic category
+  // Open the basic category. The host renders each category as a UPCell and
+  // passes navigation through its `onClick`, so drive that.
+  const basic = CATEGORIES.find((cat) => cat.id === 'basic')!;
   await ReactTestRenderer.act(() => {
-    renderer.root
-      .findByProps({ testID: 'category-basic' })
-      .props.onPress();
+    renderer.root.findByProps({ title: basic.title }).props.onClick();
   });
   tree = renderer.toJSON();
   expect(JSON.stringify(tree)).toContain('Button');
@@ -53,15 +53,17 @@ test('index lists every category and opening one shows component list', async ()
 
 test('component categories render correctly', async () => {
   const renderer = await render(<DemoPagesHost />);
-  
-  // Check that the title renders
+
   const tree = renderer.toJSON();
   const asJson = JSON.stringify(tree);
   expect(asJson).toContain('组件示例');
-  
-  // React splits text nodes, so we check for just the number
-  expect(asJson).toContain('95');
-  
+
+  // The index shows a per-category count, not a grand total.
+  for (const cat of CATEGORIES) {
+    const count = COMPONENTS.filter((comp) => comp.category === cat.id).length;
+    expect(asJson).toContain(`${count} 个组件`);
+  }
+
   await ReactTestRenderer.act(() => {
     renderer.unmount();
   });
