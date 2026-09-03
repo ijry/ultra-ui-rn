@@ -71,8 +71,43 @@ No URL deep links — navigation is in-app state. Always: 组件 tab (default) �
 category (`高级组件` / `表单组件` / …) → component (Chinese name, e.g. `优惠券`).
 `nav` reloads back to the category index, which is the cheapest way to reset.
 
-## Gotchas that cost real time
+## Sweeping every page on a device
 
+`sweep.cjs` walks every registered demo page and records a health signal per page,
+so failures get triaged instead of eyeballing 94 screenshots. It reads the
+component list out of `example/pages/registry.ts`.
+
+```bash
+export PATH="$PATH:$LOCALAPPDATA/Android/Sdk/platform-tools"
+SHOT_DIR=./sweep node .claude/skills/run-example/sweep.cjs            # all 7 categories
+SHOT_DIR=./sweep node .claude/skills/run-example/sweep.cjs advanced   # one category
+```
+
+A page is flagged when navigation failed, a `ReactNativeJS` error was logged while
+it was open, or the dump came back empty. Every page's screenshot lands in
+`SHOT_DIR` alongside `sweep.json`.
+
+How to read the output — these are the false positives it produced on its first
+run, all four worth knowing before trusting a flag:
+
+- **An empty dump is inconclusive, not a failure.** `uiautomator` only dumps once
+  the window is idle, so a continuously animating page (CountDownDemo's
+  millisecond counters) yields nothing while rendering perfectly. The tool retries
+  twice then labels it `hierarchy never idle` — open the screenshot instead.
+- **One crashed page cascades.** When SignatureDemo died, the 13 pages after it in
+  that category all reported `LINK NOT FOUND` because navigation was stuck. Fix
+  the first failure and re-run before counting the rest.
+- **LogBox entries outlive the page that caused them.** logcat is cleared per page,
+  but the on-screen red box does not reset on in-app navigation, so an error
+  visible on page N may belong to page N-1.
+- **Never edit source while it runs.** A save triggers a Metro reload that blanks
+  whatever page is open; that invalidated an entire run here.
+
+Navigation is by the component's English id (unique). Don't switch it to the
+Chinese label — `Choose` and `Picker` are both `选择器`, and matching on that
+always opened Picker.
+
+## Gotchas that cost real time
 - **Stale HMR errors.** After editing a file, `console-errors` can report an
   exception from the pre-edit module (its URL carries a `?t=<timestamp>`).
   Re-run the driver in a fresh session before believing it.
