@@ -2,9 +2,8 @@
  * DemoPagesHost - uview-plus 风格两级导航
  * 分类列表用 UPCellGroup/UPCell，图标用 UPIcon
  */
-import React, { Suspense, useState } from 'react';
+import React, { useState } from 'react';
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -19,6 +18,13 @@ import {
   type ComponentMeta,
   type CategoryMeta,
 } from './registry';
+import * as advanced from './components/advanced';
+import * as basic from './components/basic';
+import * as display from './components/display';
+import * as feedback from './components/feedback';
+import * as form from './components/form';
+import * as layout from './components/layout';
+import * as navigation from './components/navigation';
 
 // 页面状态
 type ViewState =
@@ -26,41 +32,33 @@ type ViewState =
   | { type: 'components'; category: CategoryMeta }
   | { type: 'demo'; component: ComponentMeta };
 
-// 预加载所有演示组件
-const DEMO_MODULES: Record<string, React.LazyExoticComponent<any>> = {};
+type DemoComponent = React.ComponentType<Record<string, never>>;
 
-function createLazyDemo(componentId: string, category: ComponentCategory) {
-  const key = `${category}/${componentId}`;
-  if (!DEMO_MODULES[key]) {
-    DEMO_MODULES[key] = React.lazy(() => {
-      switch (category) {
-        case 'basic':
-          return import(`./components/basic/${componentId}Demo`);
-        case 'form':
-          return import(`./components/form/${componentId}Demo`);
-        case 'navigation':
-          return import(`./components/navigation/${componentId}Demo`);
-        case 'display':
-          return import(`./components/display/${componentId}Demo`);
-        case 'feedback':
-          return import(`./components/feedback/${componentId}Demo`);
-        case 'advanced':
-          return import(`./components/advanced/${componentId}Demo`);
-        case 'layout':
-          return import(`./components/layout/${componentId}Demo`);
-        default:
-          throw new Error(`Unknown category: ${category}`);
-      }
-    });
-  }
-  return DEMO_MODULES[key];
+/**
+ * Static per-category module map. Metro cannot resolve `import()` with a
+ * template literal, so the demo pages must be reachable through static
+ * imports — and an RN bundle is monolithic anyway, so lazy loading bought
+ * nothing here.
+ */
+const DEMOS: Record<ComponentCategory, Record<string, unknown>> = {
+  advanced,
+  basic,
+  display,
+  feedback,
+  form,
+  layout,
+  navigation,
+};
+
+function resolveDemo(componentId: string, category: ComponentCategory): DemoComponent | null {
+  const found = DEMOS[category]?.[`${componentId}Demo`];
+  return typeof found === 'function' ? (found as DemoComponent) : null;
 }
 
-function LoadingFallback() {
+function MissingDemo({ componentId, category }: { componentId: string; category: string }) {
   return (
     <View style={s.loadingContainer}>
-      <ActivityIndicator size="large" color="#3c9cff" />
-      <Text style={s.loadingText}>加载中...</Text>
+      <Text style={s.loadingText}>{`未找到 ${category}/${componentId}Demo`}</Text>
     </View>
   );
 }
@@ -139,7 +137,7 @@ export function DemoPagesHost() {
   // 演示页
   if (view.type === 'demo') {
     const component = view.component;
-    const Demo = createLazyDemo(component.id, component.category);
+    const Demo = resolveDemo(component.id, component.category);
 
     return (
       <View style={s.fill}>
@@ -153,9 +151,7 @@ export function DemoPagesHost() {
         </View>
 
         <ScrollView contentContainerStyle={s.demoBody} style={s.fill}>
-          <Suspense fallback={<LoadingFallback />}>
-            <Demo />
-          </Suspense>
+          {Demo ? <Demo /> : <MissingDemo category={component.category} componentId={component.id} />}
         </ScrollView>
       </View>
     );
