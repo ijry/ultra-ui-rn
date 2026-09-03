@@ -47,8 +47,8 @@ Source: Strict replication of 17 advanced component demos
 
 ### UPLazyLoad
 - ~~**borderRadius** prop~~ — ✓ Fixed 2026-09-03: now accepts `borderRadius` prop directly (no longer requires `customStyle` workaround)
-- **onStatusChange** event — upstream `@statusChange` tracks load state transitions; local has `onClick` only
-- **onClickImg** event — upstream `@clickImg` separate from generic click; local has no image-specific handler
+- **onStatusChange** event — upstream demo (lazyLoad.nvue:6) references `@statusChange` but component source never emits it; appears to be upstream bug (component only emits `click`, `load`, `error`)
+- **onClickImg** event — upstream demo (lazyLoad.nvue:6) references `@clickImg` but component source never emits it; the actual event is `@click` (u-lazy-load.vue:172)
 
 ---
 
@@ -79,6 +79,10 @@ Source: Strict replication of 17 advanced component demos
 ### UPSignature
 - **Fixed demo dimensions** — upstream `width="700"` `height="200"` are literal pixels for H5; may overflow on narrow RN devices
 
+### UPLazyLoad (Upstream Bugs)
+- **@statusChange event** — upstream demo (lazyLoad.nvue:6) references this event but component (u-lazy-load.vue) never emits it; component only emits `@click`, `@load`, `@error`
+- **@clickImg event** — upstream demo (lazyLoad.nvue:6) references this event but component never emits it; the actual click event is `@click` (u-lazy-load.vue:172)
+
 ---
 
 ## Enum Corrections Made
@@ -93,17 +97,17 @@ Source: Strict replication of 17 advanced component demos
 ## Summary
 
 **Total gaps identified**: 20  
-**Fixed**: 6 (UPMarkdown.showLineNumber, UPCoupon.circle, UPButton.type="default", UPLazyLoad.borderRadius, UPParse.containerStyle documented, UPParse missing tags)
-**Remaining**: 14
-- Critical (defined but broken): 4  
-- Missing props/events: 7  
+**Fixed**: 9 (UPMarkdown.showLineNumber, UPCoupon.circle, UPButton.type="default", UPLazyLoad.borderRadius, UPParse.containerStyle documented, UPParse.domain, UPParse.Image rendering, UPParse missing tags)
+**Remaining**: 11
+- Critical (defined but broken): 2 (UPParse.scrollTable, UPParse.useAnchor)
+- Missing props/events: 5  
 - API discrepancies: 1  
-- Platform limitations: 4  
+- Platform limitations: 6 (including 2 upstream bugs in UPLazyLoad)
 - Enum corrections: 1 (already applied)
 
 **Components with most gaps**:
-1. UPParse (4 gaps remaining, down from 6) — domain/scrollTable/useAnchor/image rendering
-2. UPLazyLoad (2 gaps remaining, borderRadius fixed)
+1. UPParse (2 gaps remaining, down from 6) — scrollTable/useAnchor
+2. UPLazyLoad (2 upstream bugs) — statusChange/clickImg events referenced in demo but never emitted by component
 3. ~~UPCoupon (3 gaps, all fixed)~~ ✓
 
 **Next steps**: See task #2 "Fix library gaps surfaced by replication"
