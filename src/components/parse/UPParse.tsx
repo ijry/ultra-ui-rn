@@ -54,6 +54,19 @@ function nodeText(node: ParseNode): string {
   return node.children.map(nodeText).join('');
 }
 
+function resolveUrl(url: string, domain?: string): string {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('#')) {
+    return url;
+  }
+  if (domain) {
+    const base = domain.endsWith('/') ? domain.slice(0, -1) : domain;
+    const path = url.startsWith('/') ? url : `/${url}`;
+    return base + path;
+  }
+  return url;
+}
+
 function ImageRenderer({ src, alt, domain, errorImg, loadingImg, onPress }: {
   src: string;
   alt?: string;
@@ -66,18 +79,7 @@ function ImageRenderer({ src, alt, domain, errorImg, loadingImg, onPress }: {
   const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null);
 
   // Resolve relative URLs with domain
-  const resolvedSrc = useMemo(() => {
-    if (!src) return '';
-    if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:')) {
-      return src;
-    }
-    if (domain) {
-      const base = domain.endsWith('/') ? domain.slice(0, -1) : domain;
-      const path = src.startsWith('/') ? src : `/${src}`;
-      return base + path;
-    }
-    return src;
-  }, [src, domain]);
+  const resolvedSrc = useMemo(() => resolveUrl(src, domain), [src, domain]);
 
   useEffect(() => {
     if (!resolvedSrc) {
@@ -441,8 +443,14 @@ export function UPParse(input: UPParseProps): React.JSX.Element {
   const press = (detail: UPParseClickDetail) => {
     input.onClick?.(detail);
     input.onTap?.(detail);
-    if (detail.tag === 'a' && detail.attrs.href) input.onLinktap?.({ href: detail.attrs.href });
-    if (detail.tag === 'img' && detail.attrs.src) input.onImgtap?.({ src: detail.attrs.src, alt: detail.attrs.alt });
+    if (detail.tag === 'a' && detail.attrs.href) {
+      const resolvedHref = resolveUrl(detail.attrs.href, props.domain);
+      input.onLinktap?.({ href: resolvedHref });
+    }
+    if (detail.tag === 'img' && detail.attrs.src) {
+      const resolvedSrc = resolveUrl(detail.attrs.src, props.domain);
+      input.onImgtap?.({ src: resolvedSrc, alt: detail.attrs.alt });
+    }
   };
 
   return (

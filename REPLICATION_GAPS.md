@@ -18,10 +18,10 @@ Source: Strict replication of 17 advanced component demos
 
 ### UPParse (Major Implementation Gap)
 - ~~**containerStyle**~~ — ✓ Documented 2026-09-03: CSS string syntax incompatible with RN; marked `@deprecated`, use `customStyle` instead
-- **domain** — prop accepted but unused; relative image/link URLs cannot resolve — parse.nvue:3
+- ~~**domain**~~ — ✓ Fixed 2026-09-03: now resolves relative image/link URLs with domain prefix; `onLinktap` and `onImgtap` receive resolved URLs
 - **scrollTable** — prop accepted but not implemented; wide tables cannot scroll horizontally — parse.nvue:3
 - **useAnchor** — prop accepted but not implemented; `<a href="#id">` anchor navigation broken — parse.nvue:3
-- **Image rendering** — upstream renders `<img>` as actual images with preview; local renders as `[图片:filename]` text placeholder
+- ~~**Image rendering**~~ — ✓ Fixed 2026-09-03: now renders `<img>` as actual Image components with loading/error states
 - ~~**Missing tag support**~~ — ✓ Fixed 2026-09-03: now renders `<ruby>`, `<rp>`, `<rt>`, `<sup>`, `<sub>`, `<s>`, `<big>`, `<small>`, `<section>` with proper styling (SVG remains unsupported in RN Text)
 
 ---

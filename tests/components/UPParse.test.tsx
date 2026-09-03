@@ -75,3 +75,43 @@ it('displays error state when image fails to load', () => {
   // Empty src should trigger error state
   expect(screen.getByText(/图片加载失败/)).toBeTruthy();
 });
+
+it('resolves relative link URLs with domain prop', () => {
+  const onLinktap = jest.fn();
+  const screen = renderRoot(
+    <UPParse content={'<a href="/docs/guide">Guide</a>'} domain="https://example.com" onLinktap={onLinktap} />,
+  );
+  const node = screen.getAllByTestId('up-parse-node-a')[0];
+  fireEvent.press(node);
+  expect(onLinktap).toHaveBeenCalledWith({ href: 'https://example.com/docs/guide' });
+});
+
+it('does not modify absolute URLs with domain prop', () => {
+  const onLinktap = jest.fn();
+  const screen = renderRoot(
+    <UPParse content={'<a href="https://other.com/page">Page</a>'} domain="https://example.com" onLinktap={onLinktap} />,
+  );
+  const node = screen.getAllByTestId('up-parse-node-a')[0];
+  fireEvent.press(node);
+  expect(onLinktap).toHaveBeenCalledWith({ href: 'https://other.com/page' });
+});
+
+it('does not modify anchor links with domain prop', () => {
+  const onLinktap = jest.fn();
+  const screen = renderRoot(
+    <UPParse content={'<a href="#section">Section</a>'} domain="https://example.com" onLinktap={onLinktap} />,
+  );
+  const node = screen.getAllByTestId('up-parse-node-a')[0];
+  fireEvent.press(node);
+  expect(onLinktap).toHaveBeenCalledWith({ href: '#section' });
+});
+
+it('resolves relative image URLs in imgtap event', () => {
+  const onImgtap = jest.fn();
+  const screen = renderRoot(
+    <UPParse content={'<img src="/images/pic.png" alt="pic" />'} domain="https://example.com" onImgtap={onImgtap} />,
+  );
+  const node = screen.getAllByTestId('up-parse-node-img')[0];
+  fireEvent.press(node);
+  expect(onImgtap).toHaveBeenCalledWith({ src: 'https://example.com/images/pic.png', alt: 'pic' });
+});
