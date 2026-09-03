@@ -29,8 +29,8 @@ Source: Strict replication of 17 advanced component demos
 ## Missing Props
 
 ### UPCoupon
-- **amountNode** slot — upstream `#amount` slot replaces amount display; added during this replication
-- **titleNode** slot — upstream `#title` slot replaces title text; added during this replication
+- ~~**amountNode** slot~~ — ✓ Fixed 2026-09-03: upstream `#amount` slot replaces amount display; implemented as `amountNode?: React.ReactNode | ((amount: string | number) => React.ReactNode)`
+- ~~**titleNode** slot~~ — ✓ Fixed 2026-09-03: upstream `#title` slot replaces title text; implemented as `titleNode?: React.ReactNode | ((title: string) => React.ReactNode)`
 
 ### UPColorPicker
 - **children** slot — upstream wraps trigger in `<up-color-picker>` default slot; RN component renders internal trigger only, no children accepted (upstream: colorPicker.nvue:7-17)
@@ -97,10 +97,10 @@ Source: Strict replication of 17 advanced component demos
 ## Summary
 
 **Total gaps identified**: 20  
-**Fixed**: 9 (UPMarkdown.showLineNumber, UPCoupon.circle, UPButton.type="default", UPLazyLoad.borderRadius, UPParse.containerStyle documented, UPParse.domain, UPParse.Image rendering, UPParse missing tags)
-**Remaining**: 11
+**Fixed**: 11 (UPMarkdown.showLineNumber, UPCoupon.circle, UPButton.type="default", UPLazyLoad.borderRadius, UPParse.containerStyle documented, UPParse.domain, UPParse.Image rendering, UPParse missing tags, UPCoupon.amountNode, UPCoupon.titleNode)
+**Remaining**: 9
 - Critical (defined but broken): 2 (UPParse.scrollTable, UPParse.useAnchor)
-- Missing props/events: 5  
+- Missing props/events: 3  
 - API discrepancies: 1  
 - Platform limitations: 6 (including 2 upstream bugs in UPLazyLoad)
 - Enum corrections: 1 (already applied)
