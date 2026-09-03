@@ -19,8 +19,8 @@ Source: Strict replication of 17 advanced component demos
 ### UPParse (Major Implementation Gap)
 - ~~**containerStyle**~~ — ✓ Documented 2026-09-03: CSS string syntax incompatible with RN; marked `@deprecated`, use `customStyle` instead
 - ~~**domain**~~ — ✓ Fixed 2026-09-03: now resolves relative image/link URLs with domain prefix; `onLinktap` and `onImgtap` receive resolved URLs
-- **scrollTable** — prop accepted but not implemented; wide tables cannot scroll horizontally — parse.nvue:3
-- **useAnchor** — prop accepted but not implemented; `<a href="#id">` anchor navigation broken — parse.nvue:3
+- **scrollTable** — prop accepted but not implemented; upstream (parser.js:6-18) wraps `<table>` in `<div style="overflow:auto">` for horizontal scroll; RN would need ScrollView wrapper with width measurement
+- **useAnchor** — prop accepted but not implemented; upstream (u-parse.vue:157-220) exposes `navigateTo(id, offset)` method that scrolls to anchor elements; RN would need element position measurement + ScrollView.scrollTo
 - ~~**Image rendering**~~ — ✓ Fixed 2026-09-03: now renders `<img>` as actual Image components with loading/error states
 - ~~**Missing tag support**~~ — ✓ Fixed 2026-09-03: now renders `<ruby>`, `<rp>`, `<rt>`, `<sup>`, `<sub>`, `<s>`, `<big>`, `<small>`, `<section>` with proper styling (SVG remains unsupported in RN Text)
 
