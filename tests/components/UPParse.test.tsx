@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
-import { UPParse, UPRoot } from '../../src';
+import { UPParse, UPRoot, type UPParseRef } from '../../src';
 
 function renderRoot(node: React.ReactElement) {
   return render(<UPRoot>{node}</UPRoot>);
@@ -114,4 +114,55 @@ it('resolves relative image URLs in imgtap event', () => {
   const node = screen.getAllByTestId('up-parse-node-img')[0];
   fireEvent.press(node);
   expect(onImgtap).toHaveBeenCalledWith({ src: 'https://example.com/images/pic.png', alt: 'pic' });
+});
+
+const TABLE = '<table><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></table>';
+
+it('wraps tables in a horizontal ScrollView when scrollTable is on', () => {
+  const screen = renderRoot(<UPParse content={TABLE} scrollTable />);
+  const scroll = screen.getByTestId('up-parse-table-scroll');
+  expect(scroll).toBeTruthy();
+  expect(scroll.props.horizontal).toBe(true);
+});
+
+it('leaves tables unwrapped when scrollTable is off', () => {
+  const screen = renderRoot(<UPParse content={TABLE} />);
+  expect(screen.queryByTestId('up-parse-table-scroll')).toBeNull();
+  expect(screen.getByTestId('up-parse')).toHaveTextContent(/A/);
+});
+
+it('gives cells a fixed minWidth under scrollTable instead of flex', () => {
+  const flexed = renderRoot(<UPParse content={TABLE} />);
+  expect(flexed.getAllByTestId('up-parse-cell')[0].props.style).toMatchObject({ flex: 1 });
+
+  const scrolled = renderRoot(<UPParse content={TABLE} scrollTable />);
+  expect(scrolled.getAllByTestId('up-parse-cell')[0].props.style).toMatchObject({ minWidth: 100 });
+});
+
+it('wraps id-bearing nodes in an anchor container when useAnchor is on', () => {
+  const screen = renderRoot(<UPParse content={'<p id="intro">Intro</p>'} useAnchor />);
+  expect(screen.getByTestId('up-parse-anchor-intro')).toBeTruthy();
+});
+
+it('does not wrap anchors when useAnchor is off', () => {
+  const screen = renderRoot(<UPParse content={'<p id="intro">Intro</p>'} useAnchor={false} />);
+  expect(screen.queryByTestId('up-parse-anchor-intro')).toBeNull();
+});
+
+it('rejects navigateTo when useAnchor is disabled', async () => {
+  const ref = React.createRef<UPParseRef>();
+  renderRoot(<UPParse content={'<p id="intro">Intro</p>'} ref={ref} />);
+  await expect(ref.current?.navigateTo('intro')).rejects.toThrow('Anchor is disabled');
+});
+
+it('rejects navigateTo for an unknown anchor id', async () => {
+  const ref = React.createRef<UPParseRef>();
+  renderRoot(<UPParse content={'<p id="intro">Intro</p>'} ref={ref} useAnchor />);
+  await expect(ref.current?.navigateTo('missing')).rejects.toThrow('not found');
+});
+
+it('scrolls to the top for navigateTo with no id', async () => {
+  const ref = React.createRef<UPParseRef>();
+  renderRoot(<UPParse content={'<p id="intro">Intro</p>'} ref={ref} useAnchor={40} />);
+  await expect(ref.current?.navigateTo()).resolves.toBeUndefined();
 });

@@ -19,10 +19,12 @@ Source: Strict replication of 17 advanced component demos
 ### UPParse (Major Implementation Gap)
 - ~~**containerStyle**~~ — ✓ Documented 2026-09-03: CSS string syntax incompatible with RN; marked `@deprecated`, use `customStyle` instead
 - ~~**domain**~~ — ✓ Fixed 2026-09-03: now resolves relative image/link URLs with domain prefix; `onLinktap` and `onImgtap` receive resolved URLs
-- **scrollTable** — prop accepted but not implemented; upstream (parser.js:6-18) wraps `<table>` in `<div style="overflow:auto">` for horizontal scroll; RN would need ScrollView wrapper with width measurement
-- **useAnchor** — prop accepted but not implemented; upstream (u-parse.vue:157-220) exposes `navigateTo(id, offset)` method that scrolls to anchor elements; RN would need element position measurement + ScrollView.scrollTo
+- ~~**scrollTable**~~ — ✓ Fixed 2026-09-03: tables wrap in a horizontal `ScrollView` and cells switch from `flex: 1` to `minWidth: 100`, since RN has no auto table layout (upstream uses an `overflow:auto` div — parser.js)
+- ~~**useAnchor**~~ — ✓ Fixed 2026-09-03: `id`-bearing nodes register their offset via `measureLayout`; component exposes `navigateTo(id, offset)` through a ref, and in-page `#id` links scroll automatically (upstream: u-parse.vue:157)
 - ~~**Image rendering**~~ — ✓ Fixed 2026-09-03: now renders `<img>` as actual Image components with loading/error states
 - ~~**Missing tag support**~~ — ✓ Fixed 2026-09-03: now renders `<ruby>`, `<rp>`, `<rt>`, `<sup>`, `<sub>`, `<s>`, `<big>`, `<small>`, `<section>` with proper styling (SVG remains unsupported in RN Text)
+
+**Needs device verification**: the `navigateTo` scroll path depends on `measureLayout`, which is a no-op in the jest environment. Tests cover the reject paths and anchor registration wiring; the actual scroll has not been observed on a device.
 
 ---
 
@@ -97,17 +99,17 @@ Source: Strict replication of 17 advanced component demos
 ## Summary
 
 **Total gaps identified**: 20  
-**Fixed**: 13 (UPMarkdown.showLineNumber, UPCoupon.circle, UPButton.type="default", UPLazyLoad.borderRadius, UPParse.containerStyle documented, UPParse.domain, UPParse.Image rendering, UPParse missing tags, UPCoupon.amountNode, UPCoupon.titleNode, UPColorPicker.children, UPNovelReader.toolbarExtraNode)
-**Remaining**: 7
-- Critical (defined but broken): 2 (UPParse.scrollTable, UPParse.useAnchor)
+**Fixed**: 15 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags)
+**Remaining**: 5
+- Critical (defined but broken): 0
 - Missing props/events: 1 (UPSignature adapter/theme)
-- API discrepancies: 1  
+- API discrepancies: 1 (UPVirtualList.scrollTop)
 - Platform limitations: 6 (including 2 upstream bugs in UPLazyLoad)
 - Enum corrections: 1 (already applied)
 
 **Components with most gaps**:
-1. UPParse (2 gaps remaining, down from 6) — scrollTable/useAnchor
+1. ~~UPParse (6 gaps, all fixed)~~ ✓ — `navigateTo` scroll path still needs device verification
 2. UPLazyLoad (2 upstream bugs) — statusChange/clickImg events referenced in demo but never emitted by component
-3. ~~UPCoupon (3 gaps, all fixed)~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓
+3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓
 
 **Next steps**: See task #2 "Fix library gaps surfaced by replication"

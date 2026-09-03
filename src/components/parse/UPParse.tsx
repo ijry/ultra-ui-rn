@@ -1,9 +1,14 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { createContext, forwardRef, useCallback, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { Image, Pressable, ScrollView, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useUPConfig } from '../../config/useUPConfig';
 import { parseHtml, type ParseNode } from './htmlParser';
 
 export type UPParseNode = ParseNode;
+
+export type UPParseRef = {
+  /** Source instance method: scrolls to the element with `id`, plus an extra offset. */
+  navigateTo: (id?: string, offset?: number) => Promise<void>;
+};
 
 export type UPParseClickDetail = {
   tag: string;
@@ -27,7 +32,8 @@ export type UPParseProps = {
   setTitle?: boolean;
   showImgMenu?: boolean;
   tagStyle?: Record<string, unknown>;
-  useAnchor?: boolean;
+  /** Source accepts a number here too, used as the default `navigateTo` offset. */
+  useAnchor?: boolean | number;
   customStyle?: StyleProp<ViewStyle>;
   /** @deprecated React Native has no CSS class runtime. */
   customClass?: string;
@@ -164,15 +170,30 @@ function ImageRenderer({ src, alt, domain, errorImg, loadingImg, onPress }: {
   );
 }
 
-function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, loadingImg }: {
-  node: ParseNode;
+type ParseRenderOptions = {
   onPress?: (detail: UPParseClickDetail) => void;
   textColor: string;
   mutedColor: string;
   domain?: string;
   errorImg?: string;
   loadingImg?: string;
-}): React.JSX.Element | null {
+  scrollTable?: boolean;
+  /** Set when `useAnchor` is on: records each `id`-bearing node's offset in the scroll content. */
+  registerAnchor?: (id: string, y: number) => void;
+  /** The ScrollView content view that anchor offsets are measured against. */
+  contentRef?: React.RefObject<View | null>;
+};
+
+const ParseContext = createContext<ParseRenderOptions>({
+  mutedColor: '#909399',
+  textColor: '#303133',
+});
+
+function RenderNode({ node }: { node: ParseNode }): React.JSX.Element | null {
+  const options = useContext(ParseContext);
+  const { onPress, textColor, mutedColor, domain, errorImg, loadingImg, scrollTable, registerAnchor, contentRef } =
+    options;
+  const anchorRef = useRef<View | null>(null);
   if (node.type === 'text') {
     return (
       <Text style={{ color: textColor, fontSize: 15, lineHeight: 22 }}>{node.text}</Text>
@@ -182,20 +203,43 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
   const { tag, attrs, children } = node;
   const style: Record<string, unknown> = { color: textColor, fontSize: 15, lineHeight: 22 };
 
-  const wrap = (inner: React.ReactNode): React.JSX.Element => (
-    <Pressable
-      onPress={() =>
-        onPress?.({
-          tag,
-          attrs,
-          text: nodeText(node),
-        })
-      }
-      testID={`up-parse-node-${tag}`}
-    >
-      {inner}
-    </Pressable>
-  );
+  // `useAnchor` support: measure this node's offset inside the scroll content so
+  // `navigateTo(id)` can scroll to it. Source resolves anchors through
+  // `createSelectorQuery`, which has no RN equivalent (u-parse.vue:184-195).
+  const anchorId = registerAnchor && attrs.id ? attrs.id : undefined;
+  const measureAnchor = () => {
+    const target = anchorRef.current;
+    const container = contentRef?.current;
+    if (!anchorId || !registerAnchor || !target || !container) return;
+    target.measureLayout(
+      container,
+      (_x, y) => registerAnchor(anchorId, y),
+      () => undefined,
+    );
+  };
+
+  const wrap = (inner: React.ReactNode): React.JSX.Element => {
+    const pressable = (
+      <Pressable
+        onPress={() =>
+          onPress?.({
+            tag,
+            attrs,
+            text: nodeText(node),
+          })
+        }
+        testID={`up-parse-node-${tag}`}
+      >
+        {inner}
+      </Pressable>
+    );
+    if (!anchorId) return pressable;
+    return (
+      <View collapsable={false} onLayout={measureAnchor} ref={anchorRef} testID={`up-parse-anchor-${anchorId}`}>
+        {pressable}
+      </View>
+    );
+  };
 
   switch (tag) {
     case 'h1':
@@ -208,7 +252,7 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
       return wrap(
         <Text style={{ color: textColor, fontSize: size, fontWeight: '700', marginBottom: 6, marginTop: 10 }}>
           {children.map((child, index) => (
-            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} node={child} />
           ))}
         </Text>,
       );
@@ -219,7 +263,7 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
       return wrap(
         <Text style={style}>
           {children.map((child, index) => (
-            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} node={child} />
           ))}
         </Text>,
       );
@@ -230,7 +274,7 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
       return wrap(
         <Text style={{ color: textColor, fontSize: 15, fontWeight: '700' }}>
           {children.map((child, index) => (
-            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} node={child} />
           ))}
         </Text>,
       );
@@ -239,7 +283,7 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
       return wrap(
         <Text style={{ color: textColor, fontSize: 15, fontStyle: 'italic' }}>
           {children.map((child, index) => (
-            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} node={child} />
           ))}
         </Text>,
       );
@@ -247,7 +291,7 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
       return wrap(
         <Text style={{ color: textColor, fontSize: 15, textDecorationLine: 'underline' }}>
           {children.map((child, index) => (
-            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} node={child} />
           ))}
         </Text>,
       );
@@ -255,7 +299,7 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
       return wrap(
         <Text style={{ color: mutedColor, fontSize: 15, textDecorationLine: 'line-through' }}>
           {children.map((child, index) => (
-            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} node={child} />
           ))}
         </Text>,
       );
@@ -263,7 +307,7 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
       return wrap(
         <Text style={{ color: mutedColor, fontSize: 15, textDecorationLine: 'line-through' }}>
           {children.map((child, index) => (
-            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} node={child} />
           ))}
         </Text>,
       );
@@ -271,7 +315,7 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
       return wrap(
         <Text style={{ color: textColor, fontSize: 11, lineHeight: 15 }}>
           {children.map((child, index) => (
-            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} node={child} />
           ))}
         </Text>,
       );
@@ -279,7 +323,7 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
       return wrap(
         <Text style={{ color: textColor, fontSize: 11, lineHeight: 15 }}>
           {children.map((child, index) => (
-            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} node={child} />
           ))}
         </Text>,
       );
@@ -287,7 +331,7 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
       return wrap(
         <Text style={{ color: textColor, fontSize: 13 }}>
           {children.map((child, index) => (
-            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} node={child} />
           ))}
         </Text>,
       );
@@ -295,7 +339,7 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
       return wrap(
         <Text style={{ color: textColor, fontSize: 17 }}>
           {children.map((child, index) => (
-            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} node={child} />
           ))}
         </Text>,
       );
@@ -304,7 +348,7 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
       return wrap(
         <View>
           {children.map((child, index) => (
-            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} node={child} />
           ))}
         </View>,
       );
@@ -313,7 +357,7 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
       return wrap(
         <Text style={{ color: mutedColor, fontSize: 11 }}>
           {children.map((child, index) => (
-            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} node={child} />
           ))}
         </Text>,
       );
@@ -321,7 +365,7 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
       return wrap(
         <Text style={{ backgroundColor: '#f2f3f5', borderRadius: 3, color: '#476582', fontFamily: 'monospace', fontSize: 13, paddingHorizontal: 3 }}>
           {children.map((child, index) => (
-            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} node={child} />
           ))}
         </Text>,
       );
@@ -330,7 +374,7 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
         <View style={{ backgroundColor: '#f6f8fa', borderRadius: 4, marginBottom: 8, padding: 10 }}>
           <Text style={{ color: '#24292e', fontFamily: 'monospace', fontSize: 13, lineHeight: 19 }}>
             {children.map((child, index) => (
-              <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+              <RenderNode key={index} node={child} />
             ))}
           </Text>
         </View>,
@@ -338,9 +382,12 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
     case 'blockquote':
       return wrap(
         <View style={{ borderLeftColor: '#4da6ff', borderLeftWidth: 3, marginBottom: 8, paddingLeft: 10 }}>
-          {children.map((child, index) => (
-            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={mutedColor} />
-          ))}
+          {/* Source renders quoted text muted; override the inherited text color. */}
+          <ParseContext.Provider value={{ ...options, textColor: mutedColor }}>
+            {children.map((child, index) => (
+              <RenderNode key={index} node={child} />
+            ))}
+          </ParseContext.Provider>
         </View>,
       );
     case 'ul':
@@ -348,7 +395,7 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
       return wrap(
         <View style={{ marginBottom: 8, paddingLeft: 12 }}>
           {children.map((child, index) => (
-            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} node={child} />
           ))}
         </View>,
       );
@@ -358,7 +405,7 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
           <Text style={{ color: mutedColor, fontSize: 15, marginRight: 6, width: 16 }}>•</Text>
           <View style={{ flex: 1 }}>
             {children.map((child, childIndex) => (
-              <RenderNode key={childIndex} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+              <RenderNode key={childIndex} node={child} />
             ))}
           </View>
         </View>,
@@ -368,7 +415,7 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
         <Pressable onPress={() => onPress?.({ tag, attrs, text: nodeText(node) })}>
           <Text style={{ color: '#4da6ff', fontSize: 15, textDecorationLine: 'underline' }}>
             {children.map((child, index) => (
-              <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+              <RenderNode key={index} node={child} />
             ))}
           </Text>
         </Pressable>,
@@ -384,28 +431,47 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
           src={attrs.src || ''}
         />
       );
-    case 'table':
-      return wrap(
+    case 'table': {
+      const table = (
         <View style={{ borderColor: '#e4e7ed', borderWidth: 1, marginBottom: 8 }}>
           {children.map((child, index) => (
-            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} node={child} />
           ))}
-        </View>,
+        </View>
       );
+      // Source wraps wide tables in an `overflow:auto` div (parser.js). RN has no
+      // auto table layout, so cells switch from `flex: 1` to a fixed minWidth and
+      // the table is placed in a horizontal ScrollView.
+      if (!scrollTable) return wrap(table);
+      return wrap(
+        <ScrollView horizontal showsHorizontalScrollIndicator testID="up-parse-table-scroll">
+          {table}
+        </ScrollView>,
+      );
+    }
     case 'tr':
       return wrap(
         <View style={{ flexDirection: 'row' }}>
           {children.map((child, index) => (
-            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} node={child} />
           ))}
         </View>,
       );
     case 'td':
     case 'th':
       return wrap(
-        <View style={{ borderColor: '#e4e7ed', borderWidth: 0.5, flex: 1, padding: 6 }}>
+        <View
+          style={{
+            borderColor: '#e4e7ed',
+            borderWidth: 0.5,
+            flex: scrollTable ? undefined : 1,
+            minWidth: scrollTable ? 100 : undefined,
+            padding: 6,
+          }}
+          testID="up-parse-cell"
+        >
           {children.map((child, index) => (
-            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} node={child} />
           ))}
         </View>,
       );
@@ -413,17 +479,20 @@ function RenderNode({ node, onPress, textColor, mutedColor, domain, errorImg, lo
       return (
         <>
           {children.map((child, index) => (
-            <RenderNode key={index} domain={domain} errorImg={errorImg} loadingImg={loadingImg} mutedColor={mutedColor} node={child} onPress={onPress} textColor={textColor} />
+            <RenderNode key={index} node={child} />
           ))}
         </>
       );
   }
 }
 
-export function UPParse(input: UPParseProps): React.JSX.Element {
+export const UPParse = forwardRef<UPParseRef, UPParseProps>(function UPParse(input, ref) {
   const props = { ...useUPConfig().props.parse, ...input } as UPParseProps;
   const textColor = '#303133';
   const mutedColor = '#909399';
+  const scrollRef = useRef<ScrollView>(null);
+  const contentRef = useRef<View | null>(null);
+  const anchorsRef = useRef<Record<string, number>>({});
 
   const nodes = useMemo(() => {
     try {
@@ -436,6 +505,10 @@ export function UPParse(input: UPParseProps): React.JSX.Element {
   }, [props.content]);
 
   useEffect(() => {
+    anchorsRef.current = {};
+  }, [nodes]);
+
+  useEffect(() => {
     input.onLoad?.({ content: props.content ?? '' });
     input.onReady?.();
   }, [nodes]);
@@ -446,6 +519,10 @@ export function UPParse(input: UPParseProps): React.JSX.Element {
     if (detail.tag === 'a' && detail.attrs.href) {
       const resolvedHref = resolveUrl(detail.attrs.href, props.domain);
       input.onLinktap?.({ href: resolvedHref });
+      // Source scrolls to in-page anchors itself when `useAnchor` is on.
+      if (props.useAnchor && resolvedHref.startsWith('#')) {
+        void navigateTo(resolvedHref.slice(1)).catch(() => undefined);
+      }
     }
     if (detail.tag === 'img' && detail.attrs.src) {
       const resolvedSrc = resolveUrl(detail.attrs.src, props.domain);
@@ -453,11 +530,62 @@ export function UPParse(input: UPParseProps): React.JSX.Element {
     }
   };
 
+  const registerAnchor = useCallback((id: string, y: number) => {
+    anchorsRef.current[id] = y;
+  }, []);
+
+  /** Source `navigateTo(id, offset)` (u-parse.vue:157). Rejects when anchors are off or unknown. */
+  const navigateTo = useCallback(
+    (id?: string, offset?: number) =>
+      new Promise<void>((resolve, reject) => {
+        if (!props.useAnchor) {
+          reject(new Error('Anchor is disabled'));
+          return;
+        }
+        const extra = offset ?? (typeof props.useAnchor === 'number' ? props.useAnchor : 0);
+        if (!id) {
+          scrollRef.current?.scrollTo({ animated: true, y: extra });
+          resolve();
+          return;
+        }
+        const y = anchorsRef.current[id];
+        if (y === undefined) {
+          reject(new Error(`Anchor "${id}" not found`));
+          return;
+        }
+        scrollRef.current?.scrollTo({ animated: true, y: y + extra });
+        resolve();
+      }),
+    [props.useAnchor],
+  );
+
+  useImperativeHandle(ref, () => ({ navigateTo }), [navigateTo]);
+
+  const options = useMemo<ParseRenderOptions>(
+    () => ({
+      contentRef,
+      domain: props.domain,
+      errorImg: props.errorImg,
+      loadingImg: props.loadingImg,
+      mutedColor,
+      onPress: press,
+      registerAnchor: props.useAnchor ? registerAnchor : undefined,
+      scrollTable: props.scrollTable,
+      textColor,
+    }),
+    // `press` is recreated per render by design; the rest are the real inputs.
+    [props.domain, props.errorImg, props.loadingImg, props.scrollTable, props.useAnchor, registerAnchor],
+  );
+
   return (
-    <ScrollView style={input.customStyle} testID="up-parse">
-      {nodes.map((node, index) => (
-        <RenderNode key={index} domain={props.domain} errorImg={props.errorImg} loadingImg={props.loadingImg} mutedColor={mutedColor} node={node} onPress={press} textColor={textColor} />
-      ))}
+    <ScrollView ref={scrollRef} style={input.customStyle} testID="up-parse">
+      <View collapsable={false} ref={contentRef}>
+        <ParseContext.Provider value={options}>
+          {nodes.map((node, index) => (
+            <RenderNode key={index} node={node} />
+          ))}
+        </ParseContext.Provider>
+      </View>
     </ScrollView>
   );
-}
+});
