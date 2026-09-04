@@ -87,7 +87,7 @@ finally made the cause visible.
 - ~~**children** slot~~ — ✓ Fixed 2026-09-03: default slot now accepted as the trigger, replacing the built-in swatch (upstream: colorPicker.nvue:13-16)
 
 ### UPSignature
-- **Canvas adapter requirement** — RN component requires explicit canvas adapter configuration; upstream `.nvue` works with built-in `uni.createCanvasContext`
+- ~~**Canvas adapter requirement**~~ — ✓ Fixed 2026-09-03, and it was **misdescribed**. It was recorded as "requires explicit canvas adapter configuration", i.e. a design choice. On a device it was a hard crash: `UPCanvas`'s default adapter uses `react-native-canvas`, whose peer is `react-native-webview >= 5.10`. The root declared it but `example` did not, so autolinking never saw it and the page died with `TypeError: Cannot read property 'WebView' of undefined`. No adapter configuration is needed — the peer just has to be declared where autolinking can see it. Found by the native sweep.
 - ~~**Theme reactivity**~~ — ✓ Fixed 2026-09-03, and it was **misclassified as a library gap**. Upstream's component takes a plain `bgColor` prop too; it is the *demo* that computes `upThemeIsDark ? '#1c1c1e' : '#f5f5f5'` (signature.nvue:11,34). The local demo had hardcoded the light branch. Fixed in `SignatureDemo` by deriving it from `useUPTheme().mode` — no library change needed.
 
 ### UPDragsort
@@ -154,10 +154,10 @@ finally made the cause visible.
 ## Summary
 
 **Total gaps identified**: 20  
-**Fixed**: 17 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor (demo-side), UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags)
-**Remaining**: 3
+**Fixed**: 18 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor + canvas peer, UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags)
+**Remaining**: 2
 - Critical (defined but broken): 0
-- Missing props/events: 1 (UPSignature canvas adapter — a design question, not a defect)
+- Missing props/events: 0
 - API discrepancies: 0
 - Platform limitations: 6 (including 2 upstream bugs in UPLazyLoad)
 - Enum corrections: 1 (already applied)
@@ -166,15 +166,19 @@ finally made the cause visible.
 1. ~~UPParse (6 gaps, all fixed)~~ ✓ — `navigateTo` anchor scrolling verified on an
    Android emulator; see "Scroll container composition"
 2. UPLazyLoad (2 upstream bugs) — statusChange/clickImg events referenced in demo but never emitted by component
-3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓ / ~~UPMarkdown~~ ✓ / ~~UPButton~~ ✓ / ~~UPVirtualList~~ ✓
+3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓ / ~~UPMarkdown~~ ✓ / ~~UPButton~~ ✓ / ~~UPVirtualList~~ ✓ / ~~UPSignature~~ ✓
 
-**One classification lesson**: three entries on this list were never what they
-claimed. `UPSignature` theme reactivity was the local *demo* failing to replicate
-what the upstream *demo* computes. `UPLazyLoad`'s `@statusChange` / `@clickImg`
-are upstream referencing events its own component never emits. `UPVirtualList`'s
-`scrollTop` was described as write-only when both directions already worked — the
-actual defect was the feedback echo. When an entry reads "upstream does X and we
-don't", check whether X lives in upstream's component or only in its demo, and
-re-read the local source before trusting the description.
+**The classification lesson**: four entries on this list were not what they said.
+`UPSignature` theme reactivity was the local *demo* failing to replicate what the
+upstream *demo* computes. `UPSignature`'s "canvas adapter requirement" was framed
+as a design choice but was a hard native crash from an undeclared peer.
+`UPLazyLoad`'s `@statusChange` / `@clickImg` are upstream referencing events its
+own component never emits. `UPVirtualList`'s `scrollTop` was called write-only
+when both directions worked — the defect was the feedback echo.
+
+Three of those four only became visible by running the app on a device; none of
+them failed a unit test or a typecheck. When an entry reads "upstream does X and
+we don't", check whether X lives in upstream's component or only in its demo,
+re-read the local source, and run the page.
 
 **Next steps**: See task #2 "Fix library gaps surfaced by replication"
