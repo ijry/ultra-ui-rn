@@ -16,3 +16,4 @@ export { default as BackTopDemo } from './BackTopDemo';
 export { default as ListDemo } from './ListDemo';
 
 export const LAYOUT_COMPONENTS = ['Row', 'Col', 'Grid', 'GridItem', 'View', 'Box', 'Gap', 'Line', 'ScrollHost', 'Sticky', 'SafeBottom', 'BackTop', 'List'] as const;
+export { default as ScrollListDemo } from './ScrollListDemo';

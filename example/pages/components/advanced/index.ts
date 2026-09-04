@@ -24,3 +24,7 @@ export { default as ParseDemo } from './ParseDemo';
 export { default as NovelReaderDemo } from './NovelReaderDemo';
 
 export const ADVANCED_COMPONENTS = ['Upload', 'Album', 'Swiper', 'Table', 'IndexList', 'Waterfall', 'Tree', 'Dragsort', 'Signature', 'VirtualList', 'PullRefresh', 'LazyLoad', 'Canvas', 'Qrcode', 'Barcode', 'Coupon', 'ColorPicker', 'GoodsSku', 'Markdown', 'Parse', 'NovelReader'] as const;
+export { default as CropperDemo } from './CropperDemo';
+export { default as PdfReaderDemo } from './PdfReaderDemo';
+export { default as PosterDemo } from './PosterDemo';
+export { default as ShortVideoDemo } from './ShortVideoDemo';

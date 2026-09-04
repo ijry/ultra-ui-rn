@@ -12,3 +12,4 @@ export { default as PaginationDemo } from './PaginationDemo';
 export { default as ToolbarDemo } from './ToolbarDemo';
 
 export const NAVIGATION_COMPONENTS = ['Navbar', 'NavbarMini', 'Tabbar', 'Tabs', 'Steps', 'Dropdown', 'Subsection', 'Pagination', 'Toolbar'] as const;
+export { default as CateTabDemo } from './CateTabDemo';

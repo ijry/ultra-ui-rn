@@ -21,3 +21,6 @@ export { default as CodeDemo } from './CodeDemo';
 export { default as ChooseDemo } from './ChooseDemo';
 
 export const FORM_COMPONENTS = ['Input', 'Textarea', 'Search', 'Switch', 'Checkbox', 'Radio', 'Slider', 'Rate', 'NumberBox', 'Picker', 'DatetimePicker', 'Cascader', 'Form', 'FormItem', 'CodeInput', 'Keyboard', 'Code', 'Choose'] as const;
+export { default as CalendarDemo } from './CalendarDemo';
+export { default as CityLocateDemo } from './CityLocateDemo';
+export { default as SelectDemo } from './SelectDemo';

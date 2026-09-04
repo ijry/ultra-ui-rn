@@ -17,3 +17,7 @@ export { default as TitleDemo } from './TitleDemo';
 export { default as AlertDemo } from './AlertDemo';
 
 export const DISPLAY_COMPONENTS = ['Card', 'Cell', 'CellGroup', 'Collapse', 'LineProgress', 'CircleProgress', 'CountDown', 'CountTo', 'Skeleton', 'Empty', 'Divider', 'Section', 'Title', 'Alert'] as const;
+export { default as LoadmoreDemo } from './LoadmoreDemo';
+export { default as NoticeBarDemo } from './NoticeBarDemo';
+export { default as ReadMoreDemo } from './ReadMoreDemo';
+export { default as Table2Demo } from './Table2Demo';

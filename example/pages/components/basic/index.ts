@@ -12,3 +12,6 @@ export { default as AvatarDemo } from './AvatarDemo';
 export { default as AvatarGroupDemo } from './AvatarGroupDemo';
 
 export const BASIC_COMPONENTS = ['Button', 'Icon', 'Text', 'Tag', 'Badge', 'Link', 'Image', 'Avatar', 'AvatarGroup'] as const;
+export { default as CopyDemo } from './CopyDemo';
+export { default as LoadingIconDemo } from './LoadingIconDemo';
+export { default as TransitionDemo } from './TransitionDemo';
