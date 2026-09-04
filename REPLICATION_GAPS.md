@@ -67,6 +67,54 @@ what made it a real bug. `adb exec-out uiautomator dump` returning
 `ERROR: could not get idle state` on a static page is now documented as a
 loop signature rather than an artifact.
 
+## The root overlay host gave entries no containing block (fixed 2026-09-04)
+
+`OverlayProvider` wrapped each entry in `<View style={{ zIndex }}>` — a z-index
+and nothing else. Overlay nodes are `position: absolute` with
+`top/right/bottom/left: 0`, so they resolved their edges against that wrapper,
+whose only child is out of flow: **it collapsed to zero height.** The backdrop
+covered nothing while the text children overflowed and still painted, and on
+Android the zero-size box was skipped by hit testing and the accessibility tree.
+
+Measured in H5 before and after, which is what confirmed it:
+
+| | backdrop box | bottom-popup panel |
+|---|---|---|
+| before | 485 × **0** | y = **−144** (off-screen above) |
+| after | 485 × 979 | inside the layer |
+
+**Why only NoNetwork looked broken:** the other five consumers each hand-roll
+their own full-screen wrapper before handing the node over — `UPPopup`'s
+`PopupLayer`, `UPSelect`'s `SelectLayer`, `UPDropdown`/`UPTooltip`'s `layerStyle`,
+`UPGuide`'s layer root. They were compensating for the host. `UPNoNetwork` passes
+a bare `UPOverlay`, so it was the one that showed the defect. Fixing the host
+rather than the component removes the trap for the next consumer; the five
+existing wrappers stay harmless.
+
+Verified on an Android emulator across all six: NoNetwork now shows an opaque
+full-screen backdrop with a hit-testable 重试 that dismisses; bottom-mode popup
+still anchors to the screen bottom over a dimmed backdrop; Select's menu still
+anchors under its trigger; Guide's overlay is hit-testable. Sweep of all six
+pages: zero JS errors.
+
+### UPPopup announced open on every render (fixed 2026-09-04)
+
+Its effect deps include `props` and `input`, and unlike the other cases they
+*have to* — the overlay node carries children and styles that must stay current.
+Only `onOpen` was wrong to ride along, since it reports a transition rather than a
+state; it fired 3 times after two parent re-renders. Now latched to the open edge.
+
+### UPPopup centre mode is not vertically centred (found 2026-09-04, NOT fixed)
+
+`panelPosition`'s fallback branch returns `{ alignSelf: 'center', maxWidth: '92%' }`
+(`src/components/popup/UPPopup.tsx:68`) with no vertical rule, and the layer
+applies it alongside `position: 'absolute'` — so a `mode="center"` popup pins to
+the top edge of the layer instead of the middle of the screen. Confirmed on
+device. Pre-existing and unchanged by the host fix (with the old zero-height
+wrapper it also landed at the top), so it is recorded rather than bundled in.
+
+---
+
 ## Gaps recorded from the 20 new demo pages (2026-09-04, not yet fixed)
 
 Surfaced while replicating the demos for the components that previously had no
@@ -127,36 +175,6 @@ example page. None is a blocker; all are documented in the demo pages themselves
 placeholder, PosterDemo's generate button always ends in a toast with no image,
 and ShortVideoDemo shows a glyph instead of video. Honest, but the seam-injection
 API has no worked example.
-
----
-
-## Open: the root overlay host does not present a full-screen backdrop (2026-09-04, NOT root-caused)
-
-Observed on NoNetworkDemo after wiring the disconnect path. Tapping 模拟断网 adds
-the overlay and the effect fires exactly once (no loop, no JS errors), but on
-screen the result is wrong:
-
-- the tips text and 重试 button **paint faintly over the page** instead of on top
-  of an opaque backdrop
-- neither appears in the `uiautomator` hierarchy, and `tap-text 重试` cannot find
-  them — so they are not hit-testable either
-- the content sits near the top of the screen rather than centred
-
-**Leading hypothesis, not confirmed:** `OverlayProvider` wraps each entry in
-`<View style={{ zIndex: entry.zIndex }}>` with no layout of its own
-(`src/overlay/OverlayProvider.tsx:56`), and `UPOverlay` is
-`position: 'absolute'` with `top/right/bottom/left: 0`
-(`src/components/overlay/UPOverlay.tsx:28-36`). An absolutely-positioned only
-child is out of flow, so the wrapper's height collapses to 0 and the backdrop
-resolves against a zero-height containing block — the background covers nothing
-while the text children overflow and still paint, and the zero-size box is
-skipped by hit-testing and the accessibility tree.
-
-**Why this was not fixed here:** six components route through this host
-(`dropdown`, `guide`, `no-network`, `popup`, `select`, `tooltip`), and `UPPopup`
-is used by many demo pages that currently render correctly — so the hypothesis
-does not yet explain everything, and a change here needs its own device sweep
-across all six. Investigate before touching it.
 
 ---
 
@@ -305,11 +323,11 @@ finally made the cause visible.
 
 ## Summary
 
-**Total gaps identified**: 37 (20 from the first replication rounds, 17 added 2026-09-04)  
-**Fixed**: 22 — the original 18 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor + canvas peer, UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags) plus the four found on 2026-09-04 (UPTransition, UPNoNetwork, UPReadMore, UPSelect)
-**Remaining**: 15
+**Total gaps identified**: 40 (20 from the first replication rounds, 20 added 2026-09-04)  
+**Fixed**: 24 — the original 18 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor + canvas peer, UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags) plus the six found on 2026-09-04 (UPTransition, UPNoNetwork, UPReadMore, UPSelect, the overlay host's missing containing block, UPPopup.onOpen)
+**Remaining**: 16
 - Critical (defined but broken): 0
-- **Open, not root-caused: 1** — the root overlay host's missing backdrop (see its own section; blocks NoNetworkDemo from looking right)
+- Layout bugs, found and located, not fixed: 1 — `UPPopup` centre mode is not vertically centred (`panelPosition` fallback, one line)
 - Missing props/events: 6 (UPPoster.onExport + radius, UPTable2 text colour + required key + loose expandRowKeys, UPCityLocate.hotCity, UPCropper slot/seam)
 - API discrepancies: 4 (UPCopy nested press, UPCateTab slot width + calc height, UPShortVideo ignored item fields)
 - Platform limitations: 6 (including 2 upstream bugs in UPLazyLoad)
@@ -320,7 +338,7 @@ finally made the cause visible.
 1. ~~UPParse (6 gaps, all fixed)~~ ✓ — `navigateTo` anchor scrolling verified on an
    Android emulator; see "Scroll container composition"
 2. UPLazyLoad (2 upstream bugs) — statusChange/clickImg events referenced in demo but never emitted by component
-3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓ / ~~UPMarkdown~~ ✓ / ~~UPButton~~ ✓ / ~~UPVirtualList~~ ✓ / ~~UPSignature~~ ✓ / ~~UPTransition~~ ✓ / ~~UPNoNetwork~~ ✓ / ~~UPReadMore~~ ✓ / ~~UPSelect~~ ✓
+3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓ / ~~UPMarkdown~~ ✓ / ~~UPButton~~ ✓ / ~~UPVirtualList~~ ✓ / ~~UPSignature~~ ✓ / ~~UPTransition~~ ✓ / ~~UPNoNetwork~~ ✓ / ~~UPReadMore~~ ✓ / ~~UPSelect~~ ✓ / ~~OverlayProvider~~ ✓
 
 **The classification lesson**: four entries on this list were not what they said.
 `UPSignature` theme reactivity was the local *demo* failing to replicate what the

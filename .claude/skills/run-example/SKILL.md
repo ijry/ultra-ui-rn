@@ -149,9 +149,40 @@ always opened Picker.
 - **`react-native-web` is not native.** The parse/scroll containers are not the
   scrolling element under RNW, so `ScrollView.scrollTo` has no observable
   effect. Anything that depends on a ScrollView actually scrolling has to be
-  checked on Android.
+  checked on Android. RNW's root also **grows with content**, while native's root
+  is the screen — so `position: absolute` geometry differs. A bottom-anchored
+  popup sits at the document bottom in H5 and at the screen bottom on native;
+  don't read an H5 offset as a native bug.
 - **`npm install` in `example` needs `--legacy-peer-deps`**
   (`react-native-web@0.19.13` peers on react ^18; the project uses 19.2.8).
+
+## Measuring a layout fix instead of eyeballing it
+
+H5 can measure geometry, which turns "this looks wrong" into a number. Use
+`eval` with `getBoundingClientRect`, and `document.elementFromPoint` for whether
+something is actually on top:
+
+```bash
+node .claude/skills/run-example/cdp.cjs <<'EOF'
+eval (()=>{const o=document.querySelector('[data-testid="up-no-network-overlay"]');const r=o.getBoundingClientRect();return JSON.stringify([Math.round(r.width),Math.round(r.height)]);})()
+EOF
+```
+
+For a before/after comparison, stash just the file you changed — Vite aliases
+`ultra-ui-rn` to `../src`, so HMR picks it up in a couple of seconds with no
+rebuild:
+
+```bash
+git stash push -- src/overlay/OverlayProvider.tsx   # measure the "before"
+git stash pop                                        # restore the fix
+```
+
+That is how the overlay-host backdrop was pinned down: `485 × 0` before,
+`485 × 979` after. A zero dimension is the signature of an absolutely-positioned
+child resolving against a parent that collapsed.
+
+RN testIDs surface as `data-testid` under RNW, so any testID in the component is
+a selector here.
 
 ## Android
 

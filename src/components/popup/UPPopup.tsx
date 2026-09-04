@@ -155,13 +155,23 @@ export function UPPopup(input: UPPopupProps): React.JSX.Element | null {
       {input.trigger}
     </Pressable>
   ) : null;
+  // This effect has to re-run on every render: the overlay node carries children
+  // and styles that must stay current. `onOpen` must not ride along, though —
+  // it announces a transition, not a state, so it is latched to the open edge.
+  const announcedOpen = useRef(false);
+  const onOpenRef = useRef(input.onOpen);
+  onOpenRef.current = input.onOpen;
 
   useEffect(() => {
     if (!shown) {
+      announcedOpen.current = false;
       overlay.remove(id);
       return;
     }
-    input.onOpen?.();
+    if (!announcedOpen.current) {
+      announcedOpen.current = true;
+      onOpenRef.current?.();
+    }
     overlay.add({
       id,
       node: <PopupLayer props={props} requestClose={requestClose} />,

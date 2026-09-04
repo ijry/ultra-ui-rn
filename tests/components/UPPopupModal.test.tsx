@@ -78,3 +78,25 @@ it('emits modal cancelOnAsync when cancel is pressed during a pending async conf
   expect(onCancel).toHaveBeenCalledTimes(1);
   expect(onChangeShow).not.toHaveBeenCalled();
 });
+
+it('reports popup open once per open, not once per parent render', () => {
+  // The effect that adds the overlay depends on `props`/`input`, which are fresh
+  // objects every render — it has to, since the popup's node carries children and
+  // styles that must stay current. But `onOpen` rode along, so every parent
+  // re-render re-announced an already-open popup.
+  const onOpen = jest.fn();
+  const screen = renderRoot(
+    <UPPopup onOpen={onOpen} show>
+      Panel
+    </UPPopup>,
+  );
+  expect(onOpen).toHaveBeenCalledTimes(1);
+
+  screen.update(<UPRoot><UPPopup onOpen={onOpen} show>Panel</UPPopup></UPRoot>);
+  screen.update(<UPRoot><UPPopup onOpen={onOpen} show>Panel</UPPopup></UPRoot>);
+  expect(onOpen).toHaveBeenCalledTimes(1);
+
+  screen.update(<UPRoot><UPPopup onOpen={onOpen} show={false}>Panel</UPPopup></UPRoot>);
+  screen.update(<UPRoot><UPPopup onOpen={onOpen} show>Panel</UPPopup></UPRoot>);
+  expect(onOpen).toHaveBeenCalledTimes(2);
+});
