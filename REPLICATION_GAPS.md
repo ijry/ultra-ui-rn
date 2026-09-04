@@ -104,14 +104,23 @@ Its effect deps include `props` and `input`, and unlike the other cases they
 Only `onOpen` was wrong to ride along, since it reports a transition rather than a
 state; it fired 3 times after two parent re-renders. Now latched to the open edge.
 
-### UPPopup centre mode is not vertically centred (found 2026-09-04, NOT fixed)
+### UPPopup centre mode was not vertically centred (fixed 2026-09-04)
 
-`panelPosition`'s fallback branch returns `{ alignSelf: 'center', maxWidth: '92%' }`
-(`src/components/popup/UPPopup.tsx:68`) with no vertical rule, and the layer
-applies it alongside `position: 'absolute'` — so a `mode="center"` popup pins to
-the top edge of the layer instead of the middle of the screen. Confirmed on
-device. Pre-existing and unchanged by the host fix (with the old zero-height
-wrapper it also landed at the top), so it is recorded rather than bundled in.
+`panelPosition`'s fallback branch returned only `{ alignSelf: 'center', maxWidth: '92%' }`,
+and the layer applied it alongside `position: 'absolute'` — an absolute box with
+no vertical rule pins to the top edge of its containing block, so a
+`mode="center"` popup sat at the top of the screen rather than the middle.
+
+Fixed by laying the centre-mode panel out **in flow** inside a full-screen
+`alignItems/justifyContent: 'center'` wrapper, instead of absolutely. Translate-based
+centring was the obvious alternative and is wrong here: the `fade-zoom`
+transition already owns `transform`, so the two would collide.
+
+The wrapper is `pointerEvents="box-none"`, which is load-bearing — upstream's
+centre demo passes `closeOnClickOverlay: true`
+(`popup.nvue:133-137`), so a full-screen wrapper that swallowed presses would
+break closing by tapping the backdrop. The regression test asserts both the
+centring style and that pressing the overlay still closes.
 
 ---
 
@@ -324,10 +333,9 @@ finally made the cause visible.
 ## Summary
 
 **Total gaps identified**: 40 (20 from the first replication rounds, 20 added 2026-09-04)  
-**Fixed**: 24 — the original 18 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor + canvas peer, UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags) plus the six found on 2026-09-04 (UPTransition, UPNoNetwork, UPReadMore, UPSelect, the overlay host's missing containing block, UPPopup.onOpen)
-**Remaining**: 16
+**Fixed**: 25 — the original 18 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor + canvas peer, UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags) plus the seven found on 2026-09-04 (UPTransition, UPNoNetwork, UPReadMore, UPSelect, the overlay host's missing containing block, UPPopup.onOpen, UPPopup centre mode)
+**Remaining**: 15
 - Critical (defined but broken): 0
-- Layout bugs, found and located, not fixed: 1 — `UPPopup` centre mode is not vertically centred (`panelPosition` fallback, one line)
 - Missing props/events: 6 (UPPoster.onExport + radius, UPTable2 text colour + required key + loose expandRowKeys, UPCityLocate.hotCity, UPCropper slot/seam)
 - API discrepancies: 4 (UPCopy nested press, UPCateTab slot width + calc height, UPShortVideo ignored item fields)
 - Platform limitations: 6 (including 2 upstream bugs in UPLazyLoad)
@@ -338,7 +346,7 @@ finally made the cause visible.
 1. ~~UPParse (6 gaps, all fixed)~~ ✓ — `navigateTo` anchor scrolling verified on an
    Android emulator; see "Scroll container composition"
 2. UPLazyLoad (2 upstream bugs) — statusChange/clickImg events referenced in demo but never emitted by component
-3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓ / ~~UPMarkdown~~ ✓ / ~~UPButton~~ ✓ / ~~UPVirtualList~~ ✓ / ~~UPSignature~~ ✓ / ~~UPTransition~~ ✓ / ~~UPNoNetwork~~ ✓ / ~~UPReadMore~~ ✓ / ~~UPSelect~~ ✓ / ~~OverlayProvider~~ ✓
+3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓ / ~~UPMarkdown~~ ✓ / ~~UPButton~~ ✓ / ~~UPVirtualList~~ ✓ / ~~UPSignature~~ ✓ / ~~UPTransition~~ ✓ / ~~UPNoNetwork~~ ✓ / ~~UPReadMore~~ ✓ / ~~UPSelect~~ ✓ / ~~OverlayProvider~~ ✓ / ~~UPPopup~~ ✓
 
 **The classification lesson**: four entries on this list were not what they said.
 `UPSignature` theme reactivity was the local *demo* failing to replicate what the

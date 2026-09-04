@@ -65,8 +65,24 @@ function panelPosition(mode: NonNullable<UPPopupProps['mode']>): ViewStyle {
   if (mode === 'top') return { left: 0, right: 0, top: 0 };
   if (mode === 'left') return { bottom: 0, left: 0, top: 0 };
   if (mode === 'right') return { bottom: 0, right: 0, top: 0 };
-  return { alignSelf: 'center', maxWidth: '92%' };
+  // Centre mode is the one that cannot anchor to an edge. It is laid out in flow
+  // inside `centreStyle` below rather than absolutely, because the fade-zoom
+  // transition already owns `transform` — a translate-based centring would
+  // collide with it.
+  return { maxWidth: '92%' };
 }
+
+// `box-none` matters: upstream's centre demo passes `closeOnClickOverlay`, so this
+// full-screen wrapper must not intercept presses meant for the backdrop.
+const centreStyle: ViewStyle = {
+  alignItems: 'center',
+  bottom: 0,
+  justifyContent: 'center',
+  left: 0,
+  position: 'absolute',
+  right: 0,
+  top: 0,
+};
 
 function closePosition(position: NonNullable<UPPopupProps['closeIconPos']>): ViewStyle {
   const bottom = position.startsWith('bottom');
@@ -115,6 +131,21 @@ function PopupLayer({ props, requestClose }: PopupLayerProps): React.JSX.Element
       ) : null}
     </Pressable>
   );
+  const centred = props.mode === 'center';
+  const transition = (
+    <UPTransition
+      customStyle={{
+        ...(centred ? null : { position: 'absolute' }),
+        ...panelPosition(props.mode ?? 'bottom'),
+        zIndex: getPx(props.zIndex ?? 10075) + 1,
+      }}
+      duration={props.duration}
+      mode={transitionMode(props.mode, Boolean(props.zoom))}
+      show
+    >
+      {panel}
+    </UPTransition>
+  );
   return (
     <View pointerEvents="box-none" style={{ bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 }}>
       {props.overlay ? (
@@ -127,14 +158,13 @@ function PopupLayer({ props, requestClose }: PopupLayerProps): React.JSX.Element
           zIndex={props.zIndex}
         />
       ) : null}
-      <UPTransition
-        customStyle={{ position: 'absolute', ...panelPosition(props.mode ?? 'bottom'), zIndex: getPx(props.zIndex ?? 10075) + 1 }}
-        duration={props.duration}
-        mode={transitionMode(props.mode, Boolean(props.zoom))}
-        show
-      >
-        {panel}
-      </UPTransition>
+      {centred ? (
+        <View pointerEvents="box-none" style={centreStyle} testID="up-popup-center">
+          {transition}
+        </View>
+      ) : (
+        transition
+      )}
       {props.bottom}
     </View>
   );

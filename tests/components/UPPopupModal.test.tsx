@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 import { UP, UPModal, UPPopup, UPRoot } from '../../src';
 
@@ -99,4 +99,36 @@ it('reports popup open once per open, not once per parent render', () => {
   screen.update(<UPRoot><UPPopup onOpen={onOpen} show={false}>Panel</UPPopup></UPRoot>);
   screen.update(<UPRoot><UPPopup onOpen={onOpen} show>Panel</UPPopup></UPRoot>);
   expect(onOpen).toHaveBeenCalledTimes(2);
+});
+
+it('centres a center-mode popup in the viewport and keeps the overlay tappable', () => {
+  // `panelPosition`'s fallback branch only set `alignSelf: 'center'`, so an
+  // absolutely-positioned panel with no vertical rule pinned to the top edge of
+  // the layer instead of the middle of the screen. Upstream's demo passes
+  // `mode: 'center'` with `closeOnClickOverlay`, so the backdrop behind the
+  // centred panel has to stay pressable.
+  const onChangeShow = jest.fn();
+  const screen = renderRoot(
+    <UPPopup closeOnClickOverlay mode="center" onChangeShow={onChangeShow} show>
+      Panel
+    </UPPopup>,
+  );
+
+  const centred = screen.getByTestId('up-popup-center');
+  const style = StyleSheet.flatten(centred.props.style);
+  expect(style).toEqual(
+    expect.objectContaining({
+      alignItems: 'center',
+      bottom: 0,
+      justifyContent: 'center',
+      left: 0,
+      position: 'absolute',
+      right: 0,
+      top: 0,
+    }),
+  );
+  expect(centred.props.pointerEvents).toBe('box-none');
+
+  fireEvent.press(screen.getByTestId('up-popup-overlay'));
+  expect(onChangeShow).toHaveBeenCalledWith(false);
 });
