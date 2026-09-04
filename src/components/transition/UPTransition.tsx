@@ -71,29 +71,39 @@ export function UPTransition(input: UPTransitionProps): React.JSX.Element | null
   const [mounted, setMounted] = useState(props.show);
   const progress = useRef(new Animated.Value(props.show ? 1 : 0)).current;
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The callbacks live in a ref so the effect can depend on `show`/`duration`
+  // alone. Depending on `input` re-ran this on every parent render — re-firing
+  // enter/leave and restarting the animation, and looping forever if a handler
+  // set parent state.
+  const handlers = useRef(input);
+  handlers.current = input;
+  // `show === false` on mount is not a leave: nothing was ever shown.
+  const settled = useRef(false);
 
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current);
     const duration = Math.max(0, getPx(props.duration));
+    const cb = handlers.current;
     if (props.show) {
       setMounted(true);
-      input.onBeforeEnter?.();
-      input.onEnter?.();
+      cb.onBeforeEnter?.();
+      cb.onEnter?.();
       Animated.timing(progress, { duration, easing: Easing.out(Easing.ease), toValue: 1, useNativeDriver: true }).start();
-      timer.current = setTimeout(() => input.onAfterEnter?.(), duration);
-    } else {
-      input.onBeforeLeave?.();
-      input.onLeave?.();
+      timer.current = setTimeout(() => cb.onAfterEnter?.(), duration);
+    } else if (settled.current) {
+      cb.onBeforeLeave?.();
+      cb.onLeave?.();
       Animated.timing(progress, { duration, easing: Easing.out(Easing.ease), toValue: 0, useNativeDriver: true }).start();
       timer.current = setTimeout(() => {
         setMounted(false);
-        input.onAfterLeave?.();
+        cb.onAfterLeave?.();
       }, duration);
     }
+    settled.current = true;
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
-  }, [input, progress, props.duration, props.show]);
+  }, [progress, props.duration, props.show]);
 
   if (!mounted) return null;
   const content = (
