@@ -34,9 +34,9 @@ export default function CopyDemo() {
       </PageItem>
 
       <PageItem title="点击按钮复制">
-        {/* 源 up-copy 把 @tap 挂在包裹层，uni-app 中按钮的 tap 会冒泡到包裹层；
-            RN 版 UPCopy 同样用 Pressable 包裹，但嵌套的 UPButton 自身是 Pressable，
-            原生端会抢走手势，点击按钮不会触发复制（H5 靠 DOM 冒泡才生效）。 */}
+        {/* 源 up-copy 把 @tap 挂在包裹层，uni-app 中按钮的 tap 会冒泡上来。RN 把手势
+            交给最内层 Pressable，嵌套的 UPButton 会抢走它，所以 UPCopy 的包裹层同时
+            监听原生 touch 事件（祖先即使不是 responder 也能收到）来复现这个冒泡。 */}
         <UPCopy content="uview-plus is great !" writeText={writeText}>
           <UPButton type="primary">点击复制</UPButton>
         </UPCopy>

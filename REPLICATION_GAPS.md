@@ -122,6 +122,32 @@ centre demo passes `closeOnClickOverlay: true`
 break closing by tapping the backdrop. The regression test asserts both the
 centring style and that pressing the overlay still closes.
 
+### UPCopy swallowed the press of a nested pressable child (fixed 2026-09-04)
+
+Upstream nests `<up-button>` inside `<up-copy>` and relies on tap bubbling
+(`copy.nvue:12-14`). RN hands the gesture to the innermost pressable, so the
+nested `UPButton` — itself a `Pressable` — took it and `UPCopy`'s wrapper never
+fired. 点击按钮复制 was dead on device.
+
+Measured rather than assumed, with a calibration pass: tapping the plain-`Text`
+child produced the 复制成功 toast **and** the Android clipboard chip showing
+`uview-plus is great !`; tapping the nested button produced neither, across three
+consecutive frames. (A screenshot taken after a `sleep` misses the 2 s toast —
+tap and grab frames back-to-back in the same adb round trips.)
+
+Fixed by having the wrapper also watch raw touch events, which reach an ancestor
+even when a descendant is the responder. Two details make it safe rather than a
+blunt `pointerEvents="box-only"`, which would have been one line but would have
+killed nested children's own handlers:
+
+- `onPressIn` on our own `Pressable` records whether it claimed the gesture. If it
+  did, `onPress` copies and the touch path stands down — so one tap never copies
+  twice, and the ordering of the two callbacks does not matter.
+- A 12 dp / 600 ms tap threshold, because `onTouchEnd` also fires at the end of a
+  scroll that began on the copy area, and a scroll must not copy.
+
+Nested children keep their own interactivity, which `box-only` would have removed.
+
 ---
 
 ## Gaps recorded from the 20 new demo pages (2026-09-04, not yet fixed)
@@ -144,12 +170,6 @@ example page. None is a blocker; all are documented in the demo pages themselves
   unexpanded. Upstream's own tree section has its `type: 'expand'` column
   commented out (`table2.nvue:202`), so neither version expands interactively —
   the difference is only the pre-expanded row.
-
-### UPCopy
-- **Nested pressables swallow the gesture on native.** Upstream relies on tap
-  bubbling; the local component wraps children in a `Pressable`, so a nested
-  `UPButton` (itself a `Pressable`) intercepts the press. "Tap the button to
-  copy" therefore works only on H5, via DOM bubbling.
 
 ### UPCateTab
 - **`renderPageItem` slot content is forced into a 33.33%-wide cell**; upstream
@@ -333,11 +353,11 @@ finally made the cause visible.
 ## Summary
 
 **Total gaps identified**: 40 (20 from the first replication rounds, 20 added 2026-09-04)  
-**Fixed**: 25 — the original 18 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor + canvas peer, UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags) plus the seven found on 2026-09-04 (UPTransition, UPNoNetwork, UPReadMore, UPSelect, the overlay host's missing containing block, UPPopup.onOpen, UPPopup centre mode)
-**Remaining**: 15
+**Fixed**: 26 — the original 18 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor + canvas peer, UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags) plus the eight found on 2026-09-04 (UPTransition, UPNoNetwork, UPReadMore, UPSelect, the overlay host's missing containing block, UPPopup.onOpen, UPPopup centre mode, UPCopy nested press)
+**Remaining**: 14
 - Critical (defined but broken): 0
 - Missing props/events: 6 (UPPoster.onExport + radius, UPTable2 text colour + required key + loose expandRowKeys, UPCityLocate.hotCity, UPCropper slot/seam)
-- API discrepancies: 4 (UPCopy nested press, UPCateTab slot width + calc height, UPShortVideo ignored item fields)
+- API discrepancies: 3 (UPCateTab slot width + calc height, UPShortVideo ignored item fields)
 - Platform limitations: 6 (including 2 upstream bugs in UPLazyLoad)
 - Recorded boundaries, not defects: UPLoadingIcon.mode (already `@deprecated`), UPShortVideo's own progress bar
 - Enum corrections: 1 (already applied)
@@ -346,7 +366,7 @@ finally made the cause visible.
 1. ~~UPParse (6 gaps, all fixed)~~ ✓ — `navigateTo` anchor scrolling verified on an
    Android emulator; see "Scroll container composition"
 2. UPLazyLoad (2 upstream bugs) — statusChange/clickImg events referenced in demo but never emitted by component
-3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓ / ~~UPMarkdown~~ ✓ / ~~UPButton~~ ✓ / ~~UPVirtualList~~ ✓ / ~~UPSignature~~ ✓ / ~~UPTransition~~ ✓ / ~~UPNoNetwork~~ ✓ / ~~UPReadMore~~ ✓ / ~~UPSelect~~ ✓ / ~~OverlayProvider~~ ✓ / ~~UPPopup~~ ✓
+3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓ / ~~UPMarkdown~~ ✓ / ~~UPButton~~ ✓ / ~~UPVirtualList~~ ✓ / ~~UPSignature~~ ✓ / ~~UPTransition~~ ✓ / ~~UPNoNetwork~~ ✓ / ~~UPReadMore~~ ✓ / ~~UPSelect~~ ✓ / ~~OverlayProvider~~ ✓ / ~~UPPopup~~ ✓ / ~~UPCopy~~ ✓
 
 **The classification lesson**: four entries on this list were not what they said.
 `UPSignature` theme reactivity was the local *demo* failing to replicate what the

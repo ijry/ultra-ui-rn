@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Pressable, Text } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { Pressable, Text, View, type GestureResponderEvent } from 'react-native';
 import { useUPConfig } from '../../config/useUPConfig';
 import { toast } from '../../feedback';
 import { UPModal } from '../modal';
@@ -18,9 +18,21 @@ export type UPCopyProps = {
   customClass?: string;
 };
 
+/** Movement and duration past which a touch is a scroll, not a tap. */
+const TAP_SLOP = 12;
+const TAP_MS = 600;
+
 export function UPCopy(input: UPCopyProps): React.JSX.Element {
   const props = { ...useUPConfig().props.copy, ...input } as UPCopyProps;
   const [showModal, setShowModal] = useState(false);
+  // Upstream hangs `@tap` on the wrapper and lets a nested button's tap bubble up
+  // (copy.nvue:12-14). RN hands the gesture to the innermost pressable instead, so
+  // a nested `UPButton` — itself a Pressable — swallowed the press and the wrapper
+  // never fired. Raw touch events still reach an ancestor when a descendant is the
+  // responder, so the wrapper watches those as well. `pressedIn` records whether
+  // our own Pressable claimed the gesture; if it did, `onPress` handles the copy
+  // and the touch path stands down, so one tap can never copy twice.
+  const gesture = useRef({ at: 0, pressedIn: false, x: 0, y: 0 });
 
   const handlePress = async () => {
     const content = props.content;
@@ -45,11 +57,38 @@ export function UPCopy(input: UPCopyProps): React.JSX.Element {
     }
   };
 
+  const onTouchStart = (event: GestureResponderEvent) => {
+    const { pageX, pageY } = event.nativeEvent;
+    gesture.current = { at: Date.now(), pressedIn: false, x: pageX, y: pageY };
+  };
+
+  const onTouchEnd = (event: GestureResponderEvent) => {
+    const state = gesture.current;
+    if (state.pressedIn) return;
+    if (Date.now() - state.at > TAP_MS) return;
+    const { pageX, pageY } = event.nativeEvent;
+    if (Math.abs(pageX - state.x) > TAP_SLOP || Math.abs(pageY - state.y) > TAP_SLOP) return;
+    void handlePress();
+  };
+
   return (
     <>
-      <Pressable accessibilityRole="button" onPress={handlePress} testID="up-copy">
-        {input.children ?? <Text testID="up-copy-default-label">复制</Text>}
-      </Pressable>
+      <View
+        onTouchEnd={onTouchEnd}
+        onTouchStart={onTouchStart}
+        testID="up-copy-bubble"
+      >
+        <Pressable
+          accessibilityRole="button"
+          onPress={handlePress}
+          onPressIn={() => {
+            gesture.current.pressedIn = true;
+          }}
+          testID="up-copy"
+        >
+          {input.children ?? <Text testID="up-copy-default-label">复制</Text>}
+        </Pressable>
+      </View>
       <UPModal
         content={props.notice}
         onChangeShow={setShowModal}
