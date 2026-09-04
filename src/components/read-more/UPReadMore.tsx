@@ -46,7 +46,15 @@ export const UPReadMore = forwardRef<UPReadMoreRef, UPReadMoreProps>(function UP
   const collapsed = isLongContent && !open;
 
   const onLayout = (event: LayoutChangeEvent) => {
-    setContentHeight(event.nativeEvent.layout.height);
+    const { height } = event.nativeEvent.layout;
+    // The measured node sits *inside* the node this component clamps, so as soon
+    // as it collapses the next layout pass reports the clipped height instead of
+    // the natural one. Feeding that back in would flip `isLongContent` to false,
+    // un-clamp, re-measure tall, clamp again — a relayout loop that leaves the
+    // content fully expanded with no toggle. Keeping the tallest height seen
+    // since the last `init()` breaks the cycle; shrinking content is `init()`'s
+    // job, exactly as upstream requires.
+    setContentHeight((prev) => (height > prev ? height : prev));
   };
   const init = useCallback(() => {
     setHideToggle(false);
@@ -71,6 +79,7 @@ export const UPReadMore = forwardRef<UPReadMoreRef, UPReadMoreProps>(function UP
     <View style={input.customStyle} testID="up-read-more">
       <View
         style={{ maxHeight: collapsed ? getPx(props.showHeight ?? 400) : undefined, overflow: 'hidden' }}
+        testID="up-read-more-clamp"
       >
         <View onLayout={onLayout} testID="up-read-more-content">
           {input.children}

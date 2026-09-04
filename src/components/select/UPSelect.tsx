@@ -215,7 +215,10 @@ export function UPSelect(input: UPSelectProps): React.JSX.Element {
     }
   };
 
-  const label = props.showOptionsLabel ? currentLabel : props.label;
+  // `showOptionsLabel` replaces the label with the *selected* option's text; with
+  // nothing selected there is no such text, so fall back to the label rather than
+  // rendering an empty trigger.
+  const label = props.showOptionsLabel && currentLabel !== '' ? currentLabel : props.label;
   const text = input.renderText?.(currentLabel) ?? <Text style={{ color: '#303133', flex: 1, fontSize: 14 }}>{label}</Text>;
   const icon = input.icon ?? <UPIcon color={props.iconColor || '#606266'} name="arrow-down" size={props.iconSize} />;
 

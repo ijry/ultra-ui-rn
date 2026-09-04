@@ -11,7 +11,7 @@ under a second and needs no build step.
 | Target | State | Use for |
 |---|---|---|
 | H5 (`npm run web`) | ✅ works | layout, slots, props, interaction, console errors |
-| Android | ⚠️ blocked on Windows MAX_PATH, see below | anything scroll-container- or native-module-dependent |
+| Android | ✅ works (emulator, built and installed) | anything scroll-container- or native-module-dependent |
 
 ## H5: launch
 
@@ -79,21 +79,42 @@ component list out of `example/pages/registry.ts`.
 
 ```bash
 export PATH="$PATH:$LOCALAPPDATA/Android/Sdk/platform-tools"
-SHOT_DIR=./sweep node .claude/skills/run-example/sweep.cjs            # all 7 categories
-SHOT_DIR=./sweep node .claude/skills/run-example/sweep.cjs advanced   # one category
+export ANDROID_SERIAL=emulator-5554        # a physical phone is also on wireless adb
+SHOT_DIR=/d/tmp/sweep node .claude/skills/run-example/sweep.cjs            # all 7 categories
+SHOT_DIR=/d/tmp/sweep node .claude/skills/run-example/sweep.cjs advanced   # one category
+ONLY_IDS=Copy,Overlay SHOT_DIR=/d/tmp/sweep node .../sweep.cjs             # a few pages
 ```
+
+**Pin `ANDROID_SERIAL`** — `sweep.cjs` shells out to bare `adb`, and this machine
+usually has the user's real phone attached over wireless adb as well. Put
+`SHOT_DIR` on `D:`; `C:` runs out of space.
+
+Use `ONLY_IDS` to re-verify a handful of pages instead of paying for a 10-minute
+full run.
 
 A page is flagged when navigation failed, a `ReactNativeJS` error was logged while
 it was open, or the dump came back empty. Every page's screenshot lands in
 `SHOT_DIR` alongside `sweep.json`.
 
-How to read the output — these are the false positives it produced on its first
-run, all four worth knowing before trusting a flag:
+How to read the output — every flag below has produced both a false positive and
+a real bug, so triage by asking what the page *should* be doing:
 
-- **An empty dump is inconclusive, not a failure.** `uiautomator` only dumps once
-  the window is idle, so a continuously animating page (CountDownDemo's
-  millisecond counters) yields nothing while rendering perfectly. The tool retries
-  twice then labels it `hierarchy never idle` — open the screenshot instead.
+- **An empty dump means "never idle", which is a false positive only if the page
+  actually animates.** `uiautomator` dumps only when the window idles, so
+  CountDownDemo's millisecond counters or NoticeBarDemo's marquee legitimately
+  yield nothing while rendering perfectly. But ReadMoreDemo has nothing to
+  animate, and its empty dump turned out to be an endless relayout loop
+  (`UPReadMore` measured content *inside* the node it clamps, so each collapse
+  changed the measurement that caused it). Ask "what on this page could still be
+  moving?" — if the answer is nothing, you have a render/layout loop, not a
+  tooling artifact. `adb exec-out uiautomator dump /dev/tty` printing
+  `ERROR: could not get idle state` on a static page confirms it.
+- **`LINK NOT FOUND` is usually the scroll direction, not a crash.** `tapText`
+  only ever swipes *upward* (list scrolls down), so a target above the current
+  scroll position is unreachable. Returning from page N leaves the list scrolled
+  near N, so a page immediately *before* it can vanish while its neighbours are
+  found fine — that is how PdfReader was flagged with Cropper and Poster both
+  passing. Re-navigate by hand before believing it.
 - **One crashed page cascades.** When SignatureDemo died, the 13 pages after it in
   that category all reported `LINK NOT FOUND` because navigation was stuck. Fix
   the first failure and re-run before counting the rest.
@@ -101,7 +122,9 @@ run, all four worth knowing before trusting a flag:
   but the on-screen red box does not reset on in-app navigation, so an error
   visible on page N may belong to page N-1.
 - **Never edit source while it runs.** A save triggers a Metro reload that blanks
-  whatever page is open; that invalidated an entire run here.
+  whatever page is open; that invalidated an entire run here. `npm run build`
+  counts too — Metro resolves `ultra-ui-rn` through `lib/commonjs`, so a rebuild
+  reloads the app just like editing a demo page would.
 
 Navigation is by the component's English id (unique). Don't switch it to the
 Chinese label — `Choose` and `Picker` are both `选择器`, and matching on that
@@ -162,13 +185,23 @@ export PATH="$JAVA_HOME/bin:$PATH"
 cd example/android && ./gradlew installDebug --console=plain
 ```
 
-### Known blocker
+### The MAX_PATH blocker (resolved — keep the workaround)
 
-`:app:buildCMakeDebug[arm64-v8a]` fails with
-`ninja: error: Stat(...RNGestureHandlerDetectorShadowNode.cpp.o): Filename
-longer than 260 characters`.
+`:app:buildCMakeDebug` used to fail with `ninja: error: Stat(...
+RNGestureHandlerDetectorShadowNode.cpp.o): Filename longer than 260
+characters`. It builds now; the fix is a newer ninja, and it lives in
+`example/android/local.properties`:
 
-Measured, so nobody re-litigates it:
+```
+cmake.dir=C:/Users/Admin/AppData/Local/Android/Sdk/cmake/3.31.6
+```
+
+That CMake ships ninja 1.12.1. **ninja 1.10.2 has its own hardcoded
+`> MAX_PATH` check that ignores the OS `LongPathsEnabled` flag** (which was
+already 1 on this machine), so the registry setting was never the lever —
+upgrading ninja was.
+
+Measured, so nobody re-litigates the path-shortening idea:
 
 ```
 ninja cwd prefix                    86
@@ -180,21 +213,12 @@ total                              378   (limit 260)
 CMake mirrors the full source path under the object directory, and that
 mirrored portion is 156 chars of gesture-handler's own
 `shared/shadowNodes/react/renderer/components/rngesturehandler_codegen/` tree.
+The relative object path alone is 292 chars, so even a one-character build root
+stays over the limit; moving the whole repo to `D:\u\` only reaches ~346.
 
-**Path shortening cannot fix this.** The relative object path alone is 292
-chars, so even a one-character build root leaves it over the limit; relocating
-the native build dir gets to ~322, and moving the whole repo to `D:\u\` only
-reaches ~346.
-
-The one real fix is enabling Windows long paths (`LongPathsEnabled`) —
-system-wide and needs admin, so ask before doing it. CMake 3.22 and ninja both
-honour it once the OS flag is set.
-
-reanimated, worklets and gesture-handler all compile fine on their own —
-autolinking is working. Only the app module's codegen step trips the limit.
-
-Restricting `abiFilters` to `x86_64` cuts build time roughly 4× for emulator
-work but saves only 3 characters, so it is a speed change, not a fix.
+Restricting `abiFilters`/`-PreactNativeArchitectures` to `x86_64` cuts build
+time roughly 4× for emulator work (12 min → ~4 min) but saves only 3
+characters, so it is a speed change, not a fix.
 
 ### If you touch the native setup
 

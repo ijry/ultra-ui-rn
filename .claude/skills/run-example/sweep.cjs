@@ -8,6 +8,7 @@
  * any ReactNativeJS error logged while it was open.
  *
  * Usage: node sweep.cjs [categoryFilter]
+ *        ONLY_IDS=Copy,Overlay node sweep.cjs   # just those component ids
  */
 const { execFileSync } = require('child_process');
 const fs = require('fs');
@@ -71,11 +72,14 @@ const home = () => { back(); back(); wait(400); };
 
 const { cats, comps } = registry();
 const only = process.argv[2];
+// Re-verifying a handful of pages should not cost a 10-minute full sweep.
+const onlyIds = process.env.ONLY_IDS ? new Set(process.env.ONLY_IDS.split(',').map((s) => s.trim())) : null;
 const results = [];
 
 for (const cat of cats) {
   if (only && cat.id !== only) continue;
-  const pages = comps.filter((c) => c.category === cat.id);
+  const pages = comps.filter((c) => c.category === cat.id && (!onlyIds || onlyIds.has(c.id)));
+  if (!pages.length) continue;
   home();
   if (!tapText(cat.title)) {
     results.push({ page: cat.title, status: 'CATEGORY NOT FOUND' });

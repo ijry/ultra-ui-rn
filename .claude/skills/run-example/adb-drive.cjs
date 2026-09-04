@@ -22,11 +22,16 @@ const path = require('path');
 const ADB = process.env.ADB || 'adb';
 const OUT = process.env.SHOT_DIR || path.join(process.cwd(), 'shots');
 fs.mkdirSync(OUT, { recursive: true });
-const startedAt = new Date();
 
 const adb = (args, opts = {}) =>
   execFileSync(ADB, args, { encoding: 'buffer', maxBuffer: 64 * 1024 * 1024, ...opts });
 const adbText = (args) => adb(args).toString('utf8');
+
+// `logcat-errors` used to pass `-t "<MM-DD HH:MM:SS>"`, which adb rejects (it
+// wants millisecond precision) and which compared a UTC clock against the
+// device's local one. Clearing the buffer up front makes a plain `-d` mean
+// "since this driver started" with no format or timezone to get wrong.
+adb(['logcat', '-c']);
 
 function hierarchy() {
   // exec-out avoids the /sdcard round trip and the CRLF mangling that comes with it.
@@ -108,8 +113,7 @@ for (const line of script) {
       fs.writeFileSync(file, png);
       console.log(`screenshot ${file}`);
     } else if (cmd === 'logcat-errors') {
-      const since = startedAt.toISOString().slice(5, 19).replace('T', ' ');
-      const log = adbText(['logcat', '-d', '-t', since]);
+      const log = adbText(['logcat', '-d']);
       const errs = log
         .split('\n')
         .filter((l) => /ReactNativeJS|FATAL|AndroidRuntime/.test(l) && /\bE\b|Error|Exception/.test(l));

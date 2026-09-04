@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import {
   UPBackTop,
   UPNoticeBar,
@@ -10,6 +10,7 @@ import {
   UPStatusBar,
   UPSticky,
   UPRoot,
+  type UPReadMoreRef,
 } from '../../src';
 
 function renderRoot(node: React.ReactElement) {
@@ -68,6 +69,47 @@ it('measures source read-more content and emits open or close names', () => {
   expect(onOpen).toHaveBeenCalledWith('article');
   fireEvent.press(screen.getByText('收起'));
   expect(onClose).toHaveBeenCalledWith('article');
+});
+
+it('keeps read-more collapsed when the clamped content re-reports its clipped height', () => {
+  // The measured node lives *inside* the node that gets `maxHeight`, so once the
+  // component collapses, the next layout pass reports the clipped height rather
+  // than the natural one. Treating that as the content height flips
+  // `isLongContent` back to false, which un-clamps, which re-measures tall —
+  // an endless relayout that on a device leaves the content fully expanded with
+  // no toggle, and keeps the window from ever going idle.
+  const screen = renderRoot(
+    <UPReadMore showHeight={200} toggle>
+      <Text>Long source-compatible content</Text>
+    </UPReadMore>,
+  );
+  const content = screen.getByTestId('up-read-more-content');
+
+  fireEvent(content, 'layout', { nativeEvent: { layout: { height: 1800, width: 320, x: 0, y: 0 } } });
+  expect(screen.getByTestId('up-read-more-toggle')).toBeTruthy();
+
+  fireEvent(content, 'layout', { nativeEvent: { layout: { height: 200, width: 320, x: 0, y: 0 } } });
+  expect(screen.getByTestId('up-read-more-toggle')).toBeTruthy();
+  expect(
+    StyleSheet.flatten(screen.getByTestId('up-read-more-clamp').props.style).maxHeight,
+  ).toBe(200);
+});
+
+it('re-measures from scratch after init so shortened content drops the toggle', () => {
+  const ref = React.createRef<UPReadMoreRef>();
+  const screen = renderRoot(
+    <UPReadMore ref={ref} showHeight={200} toggle>
+      <Text>Long source-compatible content</Text>
+    </UPReadMore>,
+  );
+  const content = screen.getByTestId('up-read-more-content');
+
+  fireEvent(content, 'layout', { nativeEvent: { layout: { height: 1800, width: 320, x: 0, y: 0 } } });
+  expect(screen.getByTestId('up-read-more-toggle')).toBeTruthy();
+
+  act(() => ref.current?.init());
+  fireEvent(content, 'layout', { nativeEvent: { layout: { height: 80, width: 320, x: 0, y: 0 } } });
+  expect(screen.queryByTestId('up-read-more-toggle')).toBeNull();
 });
 
 it('uses the explicit scroll host for sticky state and back-top visibility', () => {

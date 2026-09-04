@@ -239,6 +239,22 @@ it('opens select through the root overlay and preserves option identity', () => 
   expect(onSelect).toHaveBeenCalledWith(options[1]);
 });
 
+it('falls back to the select label when showOptionsLabel has nothing selected', () => {
+  // `showOptionsLabel` swaps the label for the *selected* option's text. With no
+  // selection there is no such text, and returning it unguarded left the trigger
+  // completely blank — SelectDemo rendered three chevrons and no words on device.
+  const screen = renderRoot(
+    <UPSelect
+      current=""
+      label="分类"
+      options={[{ id: '1', name: '分类1' }]}
+      showOptionsLabel
+    />,
+  );
+
+  expect(screen.getByText('分类')).toBeTruthy();
+});
+
 it('honors select disabled and render replacement contracts', () => {
   const screen = renderRoot(
     <UPSelect

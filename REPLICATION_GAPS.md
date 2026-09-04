@@ -3,8 +3,160 @@
 This document tracks component features present in the upstream uview-plus demos but missing or incomplete in the ultra-ui-rn port.
 
 Generated: 2026-09-03  
-Last updated: 2026-09-03
-Source: Strict replication of 17 advanced component demos
+Last updated: 2026-09-04
+Source: Strict replication of 17 advanced component demos, extended 2026-09-04 by
+the 20 demo pages that closed the example-coverage gap
+
+---
+
+## Effects keyed on the props object (3 found, all fixed 2026-09-04)
+
+Three components listed `input` — the raw props object, a fresh identity on every
+render — in a `useEffect` dependency array. The consequence is the same each
+time: **any parent re-render re-runs the effect**, so callbacks re-fire and
+animations/overlays restart, and a handler that sets parent state loops forever.
+
+| Component | Effect re-fired | Fixed in |
+|---|---|---|
+| `UPTransition` | all 7 lifecycle callbacks, plus the animation | `fc166e8` |
+| `UPNoNetwork` | `onDisconnected` / `onConnected`, plus re-adding the overlay | 2026-09-04 |
+| `UPReadMore` | (different mechanism — see below) | 2026-09-04 |
+
+The fix pattern, now used by all three: hold the callbacks in a
+`useRef(input)` updated on every render, and depend only on the values that
+should genuinely re-trigger the effect. Where a captured node has to call back
+out (`UPNoNetwork`'s retry button lives inside an overlay node built once per
+`overlay.add`), route the call through the ref so it cannot freeze the first
+render's closure.
+
+**Why unit tests missed all three:** every existing test rendered once and
+asserted the callback fired once. None re-rendered the parent. The regression
+tests added alongside each fix all take the same shape — re-render the parent and
+assert the call count did *not* grow.
+
+### UPSelect rendered a blank trigger (fixed 2026-09-04)
+
+`showOptionsLabel` swaps the label for the selected option's text. With nothing
+selected that text is `''`, and it was returned unguarded — so a select with
+`showOptionsLabel` and no initial value rendered **only a chevron and no words**.
+Upstream's demo passes `showOptionsLabel` on all three selects, so all three of
+SelectDemo's triggers were blank on device. Now falls back to `label`.
+
+Same test-shape lesson: the existing test passed `current="first"`, i.e. only the
+already-selected path.
+
+### UPReadMore measured inside the node it clamps (fixed 2026-09-04)
+
+`showHeight` was never honoured: content rendered in full with no
+展开阅读全文 button, and the page's window never went idle.
+
+The `onLayout` that measured content height was attached to a `View` **inside**
+the `View` that receives `maxHeight`. So the measurement depended on its own
+outcome: measure tall → collapse → the clamped subtree reports the *clipped*
+height → `contentHeight > showHeight` becomes false → un-clamp → measure tall →
+… an endless relayout with no fixed point.
+
+Fixed by latching the tallest height seen since the last `init()`, so a clipped
+re-measure cannot lower the value that produced the clip. Shrinking content is
+`init()`'s job, which is upstream's contract too.
+
+**How it was found:** the device sweep flagged the page as
+`hierarchy never idle`, which the tooling notes had recorded as a benign
+false positive for animating pages. ReadMore has nothing to animate — that is
+what made it a real bug. `adb exec-out uiautomator dump` returning
+`ERROR: could not get idle state` on a static page is now documented as a
+loop signature rather than an artifact.
+
+## Gaps recorded from the 20 new demo pages (2026-09-04, not yet fixed)
+
+Surfaced while replicating the demos for the components that previously had no
+example page. None is a blocker; all are documented in the demo pages themselves.
+
+### UPPoster
+- **No `onExport` event** — upstream `poster.nvue:29` binds `@export`;
+  `UPPosterProps` has none, so `PosterDemo` calls its handler by hand
+- **`radius` in a view's css is ignored** — the renderer reads `borderRadius` only
+
+### UPTable2
+- **`column.style` / `cellStyle` are `ViewStyle`**, so upstream's per-column and
+  per-cell **text** colours (`table2.nvue:154-164`) cannot be expressed
+- **`UPTable2Column.key` is required**; upstream's selection columns carry no key
+- **`expandRowKeys` compares keys by identity, not loosely.** Upstream passes
+  `['1']` (a string) against numeric `id`s and still pre-expands; locally the
+  resolved key is the number `1`, so nothing matches and 树形结构 renders
+  unexpanded. Upstream's own tree section has its `type: 'expand'` column
+  commented out (`table2.nvue:202`), so neither version expands interactively —
+  the difference is only the pre-expanded row.
+
+### UPCopy
+- **Nested pressables swallow the gesture on native.** Upstream relies on tap
+  bubbling; the local component wraps children in a `Pressable`, so a nested
+  `UPButton` (itself a `Pressable`) intercepts the press. "Tap the button to
+  copy" therefore works only on H5, via DOM bubbling.
+
+### UPCateTab
+- **`renderPageItem` slot content is forced into a 33.33%-wide cell**; upstream
+  gives the slot the full row
+- **`height` does not accept CSS `calc()`** — upstream passes
+  `calc(100vh - 150px)`; the demo substitutes `useWindowDimensions().height - 150`
+
+### UPCityLocate
+- **No `hotCity` prop** — upstream `cityLocate.nvue:10` passes one. The demo
+  folds the same entries into `cityList[0]`, which preserves behaviour
+
+### UPShortVideo
+- **Reads only `item.id` and `item.title`** — upstream's `videoUrl`, `progress`,
+  `bgColor` and `author` fields are ignored
+- **Renders its own progress bar with a `+10%` button** that has no upstream
+  counterpart and overlaps an injected tabbar
+
+### UPCropper
+- **No default slot and no adapter seam.** Upstream nests the trigger inside
+  `<up-cropper>` and drives selection through `uni.chooseImage`; the local
+  component accepts neither `children` nor an injection prop, so the demo places
+  the trigger outside it
+
+### UPLoadingIcon
+- **`mode` renders identically for all three values** (one `ActivityIndicator`),
+  so 3 of the demo's 6 sections look the same. Already marked `@deprecated`, so
+  this is a recorded boundary rather than a new defect.
+
+### Native seams are documented but undemonstrated
+`renderPdf`, `exportImageAdapter` and `renderVideo` appear nowhere in
+`example/` — only in `src/` and `tests/`. On a device, PdfReaderDemo shows a
+placeholder, PosterDemo's generate button always ends in a toast with no image,
+and ShortVideoDemo shows a glyph instead of video. Honest, but the seam-injection
+API has no worked example.
+
+---
+
+## Open: the root overlay host does not present a full-screen backdrop (2026-09-04, NOT root-caused)
+
+Observed on NoNetworkDemo after wiring the disconnect path. Tapping 模拟断网 adds
+the overlay and the effect fires exactly once (no loop, no JS errors), but on
+screen the result is wrong:
+
+- the tips text and 重试 button **paint faintly over the page** instead of on top
+  of an opaque backdrop
+- neither appears in the `uiautomator` hierarchy, and `tap-text 重试` cannot find
+  them — so they are not hit-testable either
+- the content sits near the top of the screen rather than centred
+
+**Leading hypothesis, not confirmed:** `OverlayProvider` wraps each entry in
+`<View style={{ zIndex: entry.zIndex }}>` with no layout of its own
+(`src/overlay/OverlayProvider.tsx:56`), and `UPOverlay` is
+`position: 'absolute'` with `top/right/bottom/left: 0`
+(`src/components/overlay/UPOverlay.tsx:28-36`). An absolutely-positioned only
+child is out of flow, so the wrapper's height collapses to 0 and the backdrop
+resolves against a zero-height containing block — the background covers nothing
+while the text children overflow and still paint, and the zero-size box is
+skipped by hit-testing and the accessibility tree.
+
+**Why this was not fixed here:** six components route through this host
+(`dropdown`, `guide`, `no-network`, `popup`, `select`, `tooltip`), and `UPPopup`
+is used by many demo pages that currently render correctly — so the hypothesis
+does not yet explain everything, and a change here needs its own device sweep
+across all six. Investigate before touching it.
 
 ---
 
@@ -153,20 +305,22 @@ finally made the cause visible.
 
 ## Summary
 
-**Total gaps identified**: 20  
-**Fixed**: 18 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor + canvas peer, UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags)
-**Remaining**: 2
+**Total gaps identified**: 37 (20 from the first replication rounds, 17 added 2026-09-04)  
+**Fixed**: 22 — the original 18 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor + canvas peer, UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags) plus the four found on 2026-09-04 (UPTransition, UPNoNetwork, UPReadMore, UPSelect)
+**Remaining**: 15
 - Critical (defined but broken): 0
-- Missing props/events: 0
-- API discrepancies: 0
+- **Open, not root-caused: 1** — the root overlay host's missing backdrop (see its own section; blocks NoNetworkDemo from looking right)
+- Missing props/events: 6 (UPPoster.onExport + radius, UPTable2 text colour + required key + loose expandRowKeys, UPCityLocate.hotCity, UPCropper slot/seam)
+- API discrepancies: 4 (UPCopy nested press, UPCateTab slot width + calc height, UPShortVideo ignored item fields)
 - Platform limitations: 6 (including 2 upstream bugs in UPLazyLoad)
+- Recorded boundaries, not defects: UPLoadingIcon.mode (already `@deprecated`), UPShortVideo's own progress bar
 - Enum corrections: 1 (already applied)
 
 **Components with most gaps**:
 1. ~~UPParse (6 gaps, all fixed)~~ ✓ — `navigateTo` anchor scrolling verified on an
    Android emulator; see "Scroll container composition"
 2. UPLazyLoad (2 upstream bugs) — statusChange/clickImg events referenced in demo but never emitted by component
-3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓ / ~~UPMarkdown~~ ✓ / ~~UPButton~~ ✓ / ~~UPVirtualList~~ ✓ / ~~UPSignature~~ ✓
+3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓ / ~~UPMarkdown~~ ✓ / ~~UPButton~~ ✓ / ~~UPVirtualList~~ ✓ / ~~UPSignature~~ ✓ / ~~UPTransition~~ ✓ / ~~UPNoNetwork~~ ✓ / ~~UPReadMore~~ ✓ / ~~UPSelect~~ ✓
 
 **The classification lesson**: four entries on this list were not what they said.
 `UPSignature` theme reactivity was the local *demo* failing to replicate what the
@@ -180,5 +334,13 @@ Three of those four only became visible by running the app on a device; none of
 them failed a unit test or a typecheck. When an entry reads "upstream does X and
 we don't", check whether X lives in upstream's component or only in its demo,
 re-read the local source, and run the page.
+
+**The 2026-09-04 lesson is narrower and sharper**: all three bugs found that day
+were *state-machine* defects that a single-render test cannot see. Two were the
+identical mistake (`input` in a dep array) in different files, and the third was
+a measurement that fed back into the layout it controlled. When reviewing a
+component, read its `useEffect` dependency arrays and ask what a second render
+would do; when a measurement drives a style, check whether that style can change
+the measurement.
 
 **Next steps**: See task #2 "Fix library gaps surfaced by replication"
