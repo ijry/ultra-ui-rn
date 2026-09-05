@@ -21,6 +21,7 @@ import {
   type ComponentMeta,
 } from './registry';
 import { DemoScrollContext } from './components/_shared';
+import { iconGlyphFor } from './icon-glyphs';
 import * as advanced from './components/advanced';
 import * as basic from './components/basic';
 import * as display from './components/display';
@@ -93,11 +94,12 @@ export function DemoPagesHost() {
               return (
                 <UPCell
                   disabled={!comp}
+                  // 上游每行图标是 /static/uview/demo/<icon>.png，那批 PNG 没进仓库，
+                  // 用字体里最接近的字形代替（映射与理由见 icon-glyphs.ts）。
+                  icon={iconGlyphFor(item.icon)}
+                  iconStyle={s.cellIcon}
                   isLink={Boolean(comp)}
                   key={item.title}
-                  // 上游用 /static/uview/demo/<icon>.png 作行首图标，那批 PNG 没有随
-                  // demo 源码一起进仓库（只有图标字体进来了），所以这里不放图标；
-                  // icon 名仍保留在 SOURCE_GROUPS 里，assets 补齐后可直接接上。
                   label={comp ? undefined : '暂无本地 demo'}
                   onClick={comp ? () => setView({ type: 'demo', component: comp }) : undefined}
                   title={item.title}
@@ -151,6 +153,7 @@ export function DemoPagesHost() {
 
 const s = StyleSheet.create({
   backBtn: { paddingHorizontal: 12, paddingVertical: 8 },
+  cellIcon: { color: '#3c9cff' },
   cellTitle: { fontWeight: '500' },
   demoBody: {
     backgroundColor: '#f7f8fa',

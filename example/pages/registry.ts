@@ -112,6 +112,7 @@ export const COMPONENTS: readonly ComponentMeta[] = [
   { id: 'Image', title: 'Image 图片', category: 'basic', sourceComponent: 'UPImage', description: '图片组件' },
   { id: 'Avatar', title: 'Avatar 头像', category: 'basic', sourceComponent: 'UPAvatar', description: '头像组件' },
   { id: 'AvatarGroup', title: 'AvatarGroup 头像组', category: 'basic', sourceComponent: 'UPAvatarGroup', description: '头像组组件' },
+  { id: 'LoadingIcon', title: 'Loading 加载动画', category: 'basic', sourceComponent: 'UPLoadingIcon', description: '加载图标组件' },
 
   // Form (19)
   { id: 'Input', title: 'Input 输入框', category: 'form', sourceComponent: 'UPInput', description: '输入框组件' },
@@ -166,7 +167,7 @@ export const COMPONENTS: readonly ComponentMeta[] = [
   { id: 'Popup', title: 'Popup 弹出层', category: 'feedback', sourceComponent: 'UPPopup', description: '弹出层组件' },
   { id: 'Modal', title: 'Modal 模态框', category: 'feedback', sourceComponent: 'UPModal', description: '模态框组件' },
   { id: 'ActionSheet', title: 'ActionSheet 上拉菜单', category: 'feedback', sourceComponent: 'UPActionSheet', description: '操作面板组件' },
-  { id: 'LoadingPage', title: 'LoadingPage 加载页', category: 'feedback', sourceComponent: 'UPLoadingPage', description: '加载页组件' },
+  { id: 'LoadingPage', title: 'Loading page 加载页', category: 'feedback', sourceComponent: 'UPLoadingPage', description: '加载页组件' },
   { id: 'Guide', title: 'Guide 首屏引导', category: 'feedback', sourceComponent: 'UPGuide', description: '引导组件' },
   { id: 'Tooltip', title: 'Tooltip 长按提示', category: 'feedback', sourceComponent: 'UPTooltip', description: '文字提示组件' },
   { id: 'Popover', title: 'Popover 弹窗提示', category: 'feedback', sourceComponent: 'UPPopover', description: '气泡弹出组件' },
