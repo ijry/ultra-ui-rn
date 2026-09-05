@@ -51,3 +51,37 @@ it('allows currentCity to supersede a stale lookup and reruns lookup from the he
   fireEvent.press(screen.getByTestId('up-city-locate-location'));
   expect(locate).toHaveBeenCalledTimes(2);
 });
+
+it('renders source hotCity as its own chip grid and leaves every cityList group as rows', () => {
+  // Upstream's demo passes `hotCity` alongside `cityList` (cityLocate.nvue:10).
+  // Without the prop the demo had to fold those entries into `cityList[0]`, which
+  // this component special-cased into the chip grid.
+  const onSelectCity = jest.fn();
+  const screen = renderRoot(
+    <UPCityLocate
+      cityList={[[{ name: '北京' }], [{ name: '苏州' }]]}
+      hotCity={[{ name: '上海', value: 'shanghai' }]}
+      indexList={['🔥', 'S']}
+      onSelectCity={onSelectCity}
+    />,
+  );
+
+  expect(screen.getByTestId('up-city-locate-hot-city')).toBeTruthy();
+  fireEvent.press(screen.getByTestId('up-city-locate-hot-0-0'));
+  expect(onSelectCity).toHaveBeenCalledWith({ locationCity: '上海' });
+
+  // cityList[0] is no longer promoted to chips once hotCity owns that slot.
+  fireEvent.press(screen.getByTestId('up-city-locate-city-0-0'));
+  expect(onSelectCity).toHaveBeenLastCalledWith({ locationCity: '北京' });
+});
+
+it('keeps promoting cityList[0] to chips when hotCity is absent', () => {
+  const onSelectCity = jest.fn();
+  const screen = renderRoot(
+    <UPCityLocate cityList={[[{ name: '北京' }]]} indexList={['🔥']} onSelectCity={onSelectCity} />,
+  );
+
+  expect(screen.queryByTestId('up-city-locate-hot-city')).toBeNull();
+  fireEvent.press(screen.getByTestId('up-city-locate-hot-0-0'));
+  expect(onSelectCity).toHaveBeenCalledWith({ locationCity: '北京' });
+});

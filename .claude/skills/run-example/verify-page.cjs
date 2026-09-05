@@ -53,15 +53,27 @@ function tap(n) {
   adb(['shell', 'input', 'tap', String(Math.round((n.x1 + n.x2) / 2)), String(Math.round((n.y1 + n.y2) / 2))]);
 }
 
-/** Leave a demo page if we are on one; the index is whatever has UPCell rows. */
-function backOutIfOnDemoPage() {
-  const seen = readScreen();
-  // Demo pages have a centred title and a back arrow; the index has neither, but
-  // it always has at least one row whose text ends in a Chinese label. Cheapest
-  // reliable signal: the index's own nav title, or any known first-group row.
-  if (seen.some((n) => n.text === 'ultra-ui-rn' || n.text === 'Color 色彩')) return;
-  adb(['shell', 'input', 'tap', '60', '195']);
-  wait(1200);
+/**
+ * Decide whether a demo page is open, structurally rather than by text.
+ *
+ * A demo page has its title *centred* in the top bar; the index has only
+ * left-aligned content there (its nav title and the cell rows). Matching on text
+ * was the first attempt and it backfired: the sentinel used was `Color 色彩`,
+ * which is both an index row *and* the title of the page that row opens — so
+ * ColorDemo was mistaken for the index and never backed out of.
+ */
+function looksLikeDemoPage(seen) {
+  return seen.some((n) => n.y1 < 260 && n.text.trim() !== '' && Math.abs((n.x1 + n.x2) / 2 - 540) < 80);
+}
+
+/** Leave a demo page if one is open, so the search runs against the index. */
+function backOutIfOnDemoPage({ tries = 3 } = {}) {
+  for (let i = 0; i < tries; i++) {
+    const seen = readScreen();
+    if (seen.length === 0 || !looksLikeDemoPage(seen)) return;
+    adb(['shell', 'input', 'tap', '60', '195']);
+    wait(1200);
+  }
 }
 
 /**

@@ -62,21 +62,52 @@ export function UPCityLocate(input: UPCityLocateProps): React.JSX.Element {
 
   const cityList = (props.cityList ?? []) as readonly (readonly UPCityItem[])[];
   const indexes = props.indexList ?? [];
+  const hotCity = props.hotCity as readonly UPCityItem[] | undefined;
+  // `hotCity` given → it owns the chip grid and every cityList group renders as
+  // rows. Not given → cityList[0] is the chip grid, which is what this component
+  // did before the prop existed.
+  const chipsFromCityList = !hotCity;
+
+  const chipGrid = (cities: readonly UPCityItem[], groupIndex: number) => (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 10, paddingVertical: 8 }}>
+      {cities.map((city, cityIndex) => {
+        const name = String(city[props.nameKey ?? 'name'] ?? '');
+        return (
+          <Pressable
+            accessibilityLabel={name}
+            accessibilityRole="button"
+            key={`${name}-${cityIndex}`}
+            onPress={() => selectCity(city)}
+            style={{ backgroundColor: '#ffffff', borderColor: '#ededed', borderWidth: 1, margin: 5, paddingHorizontal: 12, paddingVertical: 6 }}
+            testID={`up-city-locate-hot-${groupIndex}-${cityIndex}`}
+          >
+            <Text style={{ color: '#303133', fontSize: 14 }}>{name}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+
   return (
     <View style={input.customStyle} testID="up-city-locate">
       <UPIndexList
         header={(
-          <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
-            <Text style={{ color: '#909399', fontSize: 13, marginBottom: 6 }}>当前定位城市</Text>
-            <Pressable
-              accessibilityLabel="定位城市"
-              accessibilityRole="button"
-              onPress={requestLocation}
-              style={{ alignSelf: 'flex-start', minHeight: 30, paddingVertical: 4 }}
-              testID="up-city-locate-location"
-            >
-              <Text style={{ color: '#303133', fontSize: 15 }} testID="up-city-locate-status">{locationCity}</Text>
-            </Pressable>
+          <View>
+            <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
+              <Text style={{ color: '#909399', fontSize: 13, marginBottom: 6 }}>当前定位城市</Text>
+              <Pressable
+                accessibilityLabel="定位城市"
+                accessibilityRole="button"
+                onPress={requestLocation}
+                style={{ alignSelf: 'flex-start', minHeight: 30, paddingVertical: 4 }}
+                testID="up-city-locate-location"
+              >
+                <Text style={{ color: '#303133', fontSize: 15 }} testID="up-city-locate-status">{locationCity}</Text>
+              </Pressable>
+            </View>
+            {hotCity && hotCity.length > 0 ? (
+              <View testID="up-city-locate-hot-city">{chipGrid(hotCity, 0)}</View>
+            ) : null}
           </View>
         )}
         indexList={indexes}
@@ -89,25 +120,7 @@ export function UPCityLocate(input: UPCityLocateProps): React.JSX.Element {
           return (
             <UPIndexItem key={`${anchorText}-${groupIndex}`}>
               <UPIndexAnchor text={anchorText} />
-              {groupIndex === 0 ? (
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 10, paddingVertical: 8 }}>
-                  {group.map((city, cityIndex) => {
-                    const name = String(city[props.nameKey ?? 'name'] ?? '');
-                    return (
-                      <Pressable
-                        accessibilityLabel={name}
-                        accessibilityRole="button"
-                        key={`${name}-${cityIndex}`}
-                        onPress={() => selectCity(city)}
-                        style={{ backgroundColor: '#ffffff', borderColor: '#ededed', borderWidth: 1, margin: 5, paddingHorizontal: 12, paddingVertical: 6 }}
-                        testID={`up-city-locate-hot-${groupIndex}-${cityIndex}`}
-                      >
-                        <Text style={{ color: '#303133', fontSize: 14 }}>{name}</Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              ) : group.map((city, cityIndex) => {
+              {chipsFromCityList && groupIndex === 0 ? chipGrid(group, groupIndex) : group.map((city, cityIndex) => {
                 const name = String(city[props.nameKey ?? 'name'] ?? '');
                 return (
                   <View key={`${name}-${cityIndex}`}>
