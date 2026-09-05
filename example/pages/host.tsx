@@ -75,13 +75,38 @@ const BY_ID = new Map(COMPONENTS.map((c) => [c.id, c]));
 export function DemoPagesHost() {
   const [view, setView] = useState<ViewState>({ type: 'index' });
   const demoScrollRef = useRef<ScrollView>(null);
+  // 首页有 115 行，退出 demo 页后如果回到顶部，等于把用户刚才翻的位置丢掉。
+  // 上游是 uni-app 页面栈，返回时页面还活着、位置天然保留；这里手动记住偏移并复位。
+  const indexScrollRef = useRef<ScrollView>(null);
+  const indexOffset = useRef(0);
+  // 复位只能做一次。第一版把 scrollTo 挂在 onLayout 上，而 scrollTo 会触发 onScroll、
+  // 进而可能再触发一次 layout —— 又是「测量结果反过来驱动被测量对象」那类回环，
+  // 结果 JS 线程被喂满，整棵树一个节点都没挂出来（层级里只剩一个 FrameLayout）。
+  const restored = useRef(false);
 
+  const openDemo = (component: ComponentMeta) => {
+    restored.current = false;
+    setView({ type: 'demo', component });
+  };
   const goBack = () => setView({ type: 'index' });
 
   // 首页：单页平铺，分组与顺序照抄上游索引
   if (view.type === 'index') {
     return (
-      <ScrollView style={s.fill} contentContainerStyle={s.page}>
+      <ScrollView
+        contentContainerStyle={s.page}
+        onContentSizeChange={() => {
+          if (restored.current || indexOffset.current <= 0) return;
+          restored.current = true;
+          indexScrollRef.current?.scrollTo({ animated: false, y: indexOffset.current });
+        }}
+        onScroll={(event) => {
+          indexOffset.current = event.nativeEvent.contentOffset.y;
+        }}
+        ref={indexScrollRef}
+        scrollEventThrottle={16}
+        style={s.fill}
+      >
         <View style={s.nav}>
           <Text style={s.navTitle}>ultra-ui-rn</Text>
           <Text style={s.navDesc}>{PAGE_DESC}</Text>
@@ -101,7 +126,7 @@ export function DemoPagesHost() {
                   isLink={Boolean(comp)}
                   key={item.title}
                   label={comp ? undefined : '暂无本地 demo'}
-                  onClick={comp ? () => setView({ type: 'demo', component: comp }) : undefined}
+                  onClick={comp ? () => openDemo(comp) : undefined}
                   title={item.title}
                   titleStyle={s.cellTitle}
                 />
