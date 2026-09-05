@@ -2,12 +2,17 @@
 /**
  * Native sweep: walk every registered demo page on a connected device and record
  * a health signal for each, so the failures can be triaged instead of eyeballing
- * ~94 screenshots.
+ * ~115 screenshots.
  *
  * Per page: visible text-node count, whether the page's own title rendered, and
  * any ReactNativeJS error logged while it was open.
  *
- * Usage: node sweep.cjs [categoryFilter]
+ * The index is a single flat page (it mirrors upstream's components.nvue), so
+ * navigation is one level: tap an entry's upstream title, then one back. Entries
+ * are visited in the order SOURCE_GROUPS lists them, which is the order they
+ * appear on screen — that matters because tapText only ever scrolls downward.
+ *
+ * Usage: node sweep.cjs [groupNameFilter]
  *        ONLY_IDS=Copy,Overlay node sweep.cjs   # just those component ids
  */
 const { execFileSync } = require('child_process');
@@ -24,18 +29,30 @@ const adb = (args) => execFileSync(ADB, args, { encoding: 'buffer', maxBuffer: 6
 const adbText = (args) => adb(args).toString('utf8');
 const wait = (ms) => execFileSync(process.execPath, ['-e', `setTimeout(()=>{},${ms})`]);
 
+/**
+ * Read the index exactly as the app renders it: SOURCE_GROUPS drives the screen,
+ * and `category` only says which folder the demo file lives in.
+ */
 function registry() {
   const src = fs.readFileSync(REGISTRY, 'utf8');
-  const cats = [];
-  for (const m of src.matchAll(/id:\s*'([a-z]+)'[^}]*?title:\s*'([^']+)'[^}]*?icon:/g)) {
-    cats.push({ id: m[1], title: m[2] });
-  }
-  const comps = [];
+  const category = new Map();
   for (const m of src.matchAll(/\{\s*id:\s*'(\w+)',\s*title:\s*'([^']+)',\s*category:\s*'([a-z]+)'/g)) {
-    comps.push({ id: m[1], title: m[2], category: m[3], cn: m[2].split(' ')[1] || m[2] });
+    category.set(m[1], m[3]);
   }
-  return { cats, comps };
+  const groupsBlock = src.slice(src.indexOf('SOURCE_GROUPS'));
+  const groups = [];
+  for (const chunk of groupsBlock.split(/groupName:\s*'/).slice(1)) {
+    const groupName = chunk.slice(0, chunk.indexOf("'"));
+    const items = [];
+    for (const m of chunk.matchAll(/\{\s*icon:\s*'[^']*',\s*id:\s*(?:'(\w+)'|null),\s*title:\s*'([^']+)'/g)) {
+      if (!m[1]) continue; // upstream entry with no local demo page
+      items.push({ cn: m[2].split(' ')[1] || m[2], id: m[1], title: m[2] });
+    }
+    groups.push({ groupName, items });
+  }
+  return { category, groups };
 }
+
 
 function nodes() {
   const xml = adbText(['exec-out', 'uiautomator', 'dump', '/dev/tty']);
@@ -67,31 +84,34 @@ function tapText(needle, { scrolls = 6 } = {}) {
   return false;
 }
 
+// One level of navigation now: a demo page is one back away from the index.
 const back = () => { adb(['shell', 'input', 'tap', '60', '195']); wait(900); };
-const home = () => { back(); back(); wait(400); };
+/** Scroll the index back to the top so the next entry is reachable downward. */
+const toTop = () => {
+  for (let i = 0; i < 12; i++) {
+    adb(['shell', 'input', 'swipe', '540', '600', '540', '2000', '250']);
+  }
+  wait(600);
+};
 
-const { cats, comps } = registry();
+const { category, groups } = registry();
 const only = process.argv[2];
 // Re-verifying a handful of pages should not cost a 10-minute full sweep.
 const onlyIds = process.env.ONLY_IDS ? new Set(process.env.ONLY_IDS.split(',').map((s) => s.trim())) : null;
 const results = [];
 
-for (const cat of cats) {
-  if (only && cat.id !== only) continue;
-  const pages = comps.filter((c) => c.category === cat.id && (!onlyIds || onlyIds.has(c.id)));
+for (const group of groups) {
+  if (only && group.groupName !== only) continue;
+  const pages = group.items.filter((c) => !onlyIds || onlyIds.has(c.id));
   if (!pages.length) continue;
-  home();
-  if (!tapText(cat.title)) {
-    results.push({ page: cat.title, status: 'CATEGORY NOT FOUND' });
-    continue;
-  }
   for (const page of pages) {
     adb(['logcat', '-c']);
-    const opened = tapText(page.id) || tapText(page.cn);
+    // The index is one long page and tapText only swipes downward, so start each
+    // entry from the top rather than wherever the previous one left the list.
+    toTop();
+    const opened = tapText(page.title) || tapText(page.id);
     if (!opened) {
-      results.push({ page: `${cat.id}/${page.id}`, status: 'LINK NOT FOUND' });
-      home();
-      tapText(cat.title);
+      results.push({ page: `${group.groupName}/${page.id}`, status: 'LINK NOT FOUND' });
       continue;
     }
     wait(2200);
@@ -107,9 +127,9 @@ for (const cat of cats) {
       .filter((l) => /ReactNativeJS/.test(l) && /Error|Exception|Warning:/.test(l))
       .map((l) => l.replace(/^.*ReactNativeJS:\s*/, '').slice(0, 160));
     const png = adb(['exec-out', 'screencap', '-p']);
-    fs.writeFileSync(path.join(OUT, `${cat.id}-${page.id}.png`), png);
+    fs.writeFileSync(path.join(OUT, `${category.get(page.id) ?? 'unknown'}-${page.id}.png`), png);
     results.push({
-      page: `${cat.id}/${page.id}`,
+      page: `${group.groupName}/${page.id}`,
       nodes: seen.length,
       inconclusive: seen.length === 0 ? 'hierarchy never idle (animating page?) — check the screenshot' : undefined,
       titleShown: texts.has(page.title) || [...texts].some((t) => t.includes(page.cn)),
