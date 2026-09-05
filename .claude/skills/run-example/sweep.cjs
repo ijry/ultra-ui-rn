@@ -25,7 +25,17 @@ const REGISTRY = process.env.REGISTRY ||
   'D:/Repos/xyito/ultra-ui/ultra-ui-rn/example/pages/registry.ts';
 fs.mkdirSync(OUT, { recursive: true });
 
-const adb = (args) => execFileSync(ADB, args, { encoding: 'buffer', maxBuffer: 64 * 1024 * 1024 });
+const adb = (args) => {
+  try {
+    return execFileSync(ADB, args, { encoding: 'buffer', maxBuffer: 64 * 1024 * 1024 });
+  } catch (err) {
+    // uiautomator dump exits 143 when the window is still animating/settling;
+    // treat that as "no output yet" rather than a hard failure, so the caller
+    // can retry after another wait.
+    if (err.status === 143) return Buffer.alloc(0);
+    throw err;
+  }
+};
 const adbText = (args) => adb(args).toString('utf8');
 const wait = (ms) => execFileSync(process.execPath, ['-e', `setTimeout(()=>{},${ms})`]);
 
@@ -69,30 +79,65 @@ function nodes() {
   return out;
 }
 
-function tapText(needle, { scrolls = 6 } = {}) {
+/**
+ * Tap the smallest node whose text equals `needle`, scrolling down to look for it.
+ *
+ * The subtlety: an empty dump means "could not read the screen" (uiautomator
+ * refuses while the window animates), NOT "the text is not here". Treating those
+ * the same made this scroll away from a target that was sitting right at the top —
+ * six blind scrolls later the entry was off-screen above and reported missing.
+ * So an empty dump only ever costs a wait and a retry; scrolling happens solely
+ * when the screen was read successfully and did not contain the needle.
+ */
+function tapText(needle, { scrolls = 8, settleTries = 4 } = {}) {
   for (let i = 0; i <= scrolls; i++) {
-    const hit = nodes().filter((n) => n.text === needle && n.area > 0).sort((a, b) => a.area - b.area)[0];
+    let seen = [];
+    for (let s = 0; s < settleTries; s++) {
+      seen = nodes();
+      if (seen.length > 0) break;
+      wait(700);
+    }
+    if (seen.length === 0) return false; // screen never became readable
+    const hit = seen.filter((n) => n.text === needle && n.area > 0).sort((a, b) => a.area - b.area)[0];
     if (hit) {
       adb(['shell', 'input', 'tap', String(Math.round((hit.x1 + hit.x2) / 2)), String(Math.round((hit.y1 + hit.y2) / 2))]);
       wait(900);
       return true;
     }
     if (i === scrolls) return false;
-    adb(['shell', 'input', 'swipe', '540', '1800', '540', '700', '350']);
-    wait(500);
+    adb(['shell', 'input', 'swipe', '540', '1800', '540', '700', '150']);
+    wait(600);
   }
   return false;
 }
 
-// One level of navigation now: a demo page is one back away from the index.
-const back = () => { adb(['shell', 'input', 'tap', '60', '195']); wait(900); };
-/** Scroll the index back to the top so the next entry is reachable downward. */
-const toTop = () => {
-  for (let i = 0; i < 12; i++) {
-    adb(['shell', 'input', 'swipe', '540', '600', '540', '2000', '250']);
+// One level of navigation now: a demo page is one back away from the index, and
+// the index re-mounts scrolled to the top, so tapText's downward scan always
+// starts from a known position. BUT: the scroll-to-top is animated (~500ms), and
+// uiautomator dump returns nothing while the window is animating, so we must wait
+// for the index to settle after each back() before the next tapText() can find
+// anything.
+const back = () => { adb(['shell', 'input', 'tap', '60', '195']); wait(1200); };
+
+/**
+ * Get back to the index, whatever is on screen.
+ *
+ * Two failure modes made this necessary. The script used to assume it started on
+ * the index — if the app happened to sit on a demo page (say from a previous run),
+ * entry #1 reported LINK NOT FOUND. Worse, the not-found branch `continue`d
+ * *without* backing out, so the app stayed on that page and every remaining entry
+ * failed the same way: one stale starting screen cascaded into 115 false failures.
+ */
+function ensureIndex({ tries = 3 } = {}) {
+  for (let i = 0; i < tries; i++) {
+    let seen = nodes();
+    if (seen.length === 0) { wait(700); seen = nodes(); }
+    // The first group header only exists on the index.
+    if (seen.some((n) => n.text === '基础组件')) return true;
+    back();
   }
-  wait(600);
-};
+  return false;
+}
 
 const { category, groups } = registry();
 const only = process.argv[2];
@@ -100,18 +145,34 @@ const only = process.argv[2];
 const onlyIds = process.env.ONLY_IDS ? new Set(process.env.ONLY_IDS.split(',').map((s) => s.trim())) : null;
 const results = [];
 
+const allPages = groups.flatMap(g => g.items.map(p => ({ group: g.groupName, ...p })));
+const toSweep = allPages.filter(p => !only || p.group === only).filter(p => !onlyIds || onlyIds.has(p.id));
+console.log(`will sweep ${toSweep.length} pages from ${groups.length} groups`);
+console.log('');
+
+if (!ensureIndex()) {
+  console.error('Failed to reach the index after 3 back attempts — is the app running?');
+  process.exit(1);
+}
+
+let pageIdx = 0;
 for (const group of groups) {
   if (only && group.groupName !== only) continue;
   const pages = group.items.filter((c) => !onlyIds || onlyIds.has(c.id));
   if (!pages.length) continue;
   for (const page of pages) {
+    pageIdx++;
+    console.log(`[${pageIdx}/${toSweep.length}] ${group.groupName}/${page.id}`);
     adb(['logcat', '-c']);
-    // The index is one long page and tapText only swipes downward, so start each
-    // entry from the top rather than wherever the previous one left the list.
-    toTop();
+    // Cheap insurance: one dump confirms we are on the index before scanning.
+    // Without it, a page that failed to close leaves every later entry unreachable.
+    ensureIndex();
+    // Try the full "Button 按钮" title first, then fall back to just the English id.
     const opened = tapText(page.title) || tapText(page.id);
     if (!opened) {
+      console.log(`    LINK NOT FOUND`);
       results.push({ page: `${group.groupName}/${page.id}`, status: 'LINK NOT FOUND' });
+      back();  // Back out so the next page starts from a known state.
       continue;
     }
     wait(2200);
@@ -128,6 +189,7 @@ for (const group of groups) {
       .map((l) => l.replace(/^.*ReactNativeJS:\s*/, '').slice(0, 160));
     const png = adb(['exec-out', 'screencap', '-p']);
     fs.writeFileSync(path.join(OUT, `${category.get(page.id) ?? 'unknown'}-${page.id}.png`), png);
+    console.log(`    nodes=${seen.length} title=${texts.has(page.title) || [...texts].some((t) => t.includes(page.cn))} errors=${errors.length}`);
     results.push({
       page: `${group.groupName}/${page.id}`,
       nodes: seen.length,
