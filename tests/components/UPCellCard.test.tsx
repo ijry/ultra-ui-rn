@@ -98,3 +98,13 @@ it('emits source card click events with the card index', () => {
   fireEvent.press(screen.getByTestId('up-card-foot'));
   expect(onFootClick).toHaveBeenCalledWith(7);
 });
+
+it('paints the source cell-group title background', () => {
+  // Upstream's own component index passes :title-bg-color (components.nvue:10),
+  // so the prop has to exist for that page to be replicable at all.
+  const screen = renderContent(<UPCellGroup title="基础组件" titleBgColor="rgb(243, 244, 246)" />);
+
+  expect(
+    StyleSheet.flatten(screen.getByTestId('up-cell-group-title').props.style).backgroundColor,
+  ).toBe('rgb(243, 244, 246)');
+});

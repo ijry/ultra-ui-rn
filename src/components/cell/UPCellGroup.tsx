@@ -7,6 +7,8 @@ import { UPLine } from '../line';
 export type UPCellGroupProps = {
   title?: string;
   border?: boolean;
+  /** Background behind the group title (source `title-bg-color`). */
+  titleBgColor?: string;
   customStyle?: StyleProp<ViewStyle>;
   /** @deprecated React Native has no CSS class runtime. */
   customClass?: string;
@@ -15,12 +17,20 @@ export type UPCellGroupProps = {
 };
 
 export function UPCellGroup(input: UPCellGroupProps): React.JSX.Element {
-  const props = { ...useUPConfig().props.cellGroup, ...input };
+  const props = { ...useUPConfig().props.cellGroup, ...input } as UPCellGroupProps;
   const { colors } = useUPTheme();
   return (
     <View style={[{ backgroundColor: '#ffffff', flex: 1 }, input.customStyle]} testID="up-cell-group">
       {props.title ? (
-        <View style={{ paddingBottom: 8, paddingHorizontal: 16, paddingTop: 16 }}>
+        <View
+          style={{
+            backgroundColor: props.titleBgColor || undefined,
+            paddingBottom: 8,
+            paddingHorizontal: 16,
+            paddingTop: 16,
+          }}
+          testID="up-cell-group-title"
+        >
           {input.titleNode ?? (
             <Text style={{ color: colors.mainColor, fontSize: 15, lineHeight: 16 }}>{props.title}</Text>
           )}

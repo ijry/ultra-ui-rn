@@ -1,7 +1,29 @@
 /**
  * 组件示例页注册表
- * 按 uview-plus 风格，两级导航：分类 → 组件
+ *
+ * 首页的分组与顺序严格照抄上游索引
+ * `docs/uview-plus-demo-source/pages/example/components.config.js`：
+ * 7 个分组、组内条目顺序、中文标签、icon 名全部逐条对齐（见 SOURCE_GROUPS）。
+ *
+ * `category` 不再决定首页怎么分组，它只用来定位 demo 文件所在目录
+ * （`components/<category>/<id>Demo.tsx`，host.tsx 靠它查表）。把「展示分组」和
+ * 「文件归属」拆开，是为了对齐上游索引而不必搬动 115 个文件 —— 上游的分组与本地
+ * 目录本来就不是一对一（例如上游把 Overlay/NoNetwork 放在布局组件，本地在 feedback）。
  */
+
+/** 上游索引里一条组件入口。`id` 为 null 表示上游有这一条、本地还没有 demo 页。 */
+export interface SourceGroupItem {
+  /** 上游 components.config.js 的 icon 名 */
+  icon: string;
+  id: string | null;
+  /** 上游原文标签，例如 `Icon 图标` */
+  title: string;
+}
+
+export interface SourceGroup {
+  groupName: string;
+  items: readonly SourceGroupItem[];
+}
 
 // Component categories
 export type ComponentCategory =
@@ -207,6 +229,170 @@ export const COMPONENTS: readonly ComponentMeta[] = [
   { id: 'Poster', title: 'Poster 海报生成', category: 'advanced', sourceComponent: 'UPPoster', description: '海报生成组件' },
   { id: 'ShortVideo', title: 'ShortVideo 短视频切换', category: 'advanced', sourceComponent: 'UPShortVideo', description: '短视频组件' },
   { id: 'ScrollList', title: 'ScrollList 横向滚动列表', category: 'layout', sourceComponent: 'UPScrollList', description: '横向滚动列表组件' },
+];
+
+
+/**
+ * 上游首页的分组表，顺序与 components.config.js 完全一致。
+ * 末尾第 8 组是本地补充：上游索引未收录的子组件与 RN 独有组件，若不列出来
+ * 它们的 demo 页在 app 里就点不到了。
+ */
+export const SOURCE_GROUPS: readonly SourceGroup[] = [
+  {
+    groupName: '基础组件',
+    items: [
+      { icon: 'color', id: null, title: 'Color 色彩' },
+      { icon: 'icon', id: 'Icon', title: 'Icon 图标' },
+      { icon: 'image', id: 'Image', title: 'Image 图片' },
+      { icon: 'button', id: 'Button', title: 'Button 按钮' },
+      { icon: 'text', id: 'Text', title: 'Text 文本' },
+      { icon: 'layout', id: 'Row', title: 'Layout 布局' },
+      { icon: 'cell', id: 'Cell', title: 'Cell 单元格' },
+      { icon: 'badge', id: 'Badge', title: 'Badge 徽标数' },
+      { icon: 'tag', id: 'Tag', title: 'Tag 标签' },
+      { icon: 'loading', id: 'LoadingIcon', title: 'Loading 加载动画' },
+      { icon: 'loading-page', id: 'LoadingPage', title: 'Loading page 加载页' },
+    ],
+  },
+  {
+    groupName: '表单组件',
+    items: [
+      { icon: 'form', id: 'Form', title: 'Form 表单' },
+      { icon: 'calendar', id: 'Calendar', title: 'Calendar 日历' },
+      { icon: 'keyboard', id: 'Keyboard', title: 'Keyboard 键盘' },
+      { icon: 'picker', id: 'Picker', title: 'Picker 选择器' },
+      { icon: 'picker', id: 'Select', title: 'Select 经典下拉框' },
+      { icon: 'cascader', id: 'Cascader', title: 'Cascader 级联选择器' },
+      { icon: 'choose', id: 'Choose', title: 'Choose 选项选择器' },
+      { icon: 'datetimePicker', id: 'DatetimePicker', title: 'DatetimePicker 时间选择器' },
+      { icon: 'rate', id: 'Rate', title: 'Rate 评分' },
+      { icon: 'search', id: 'Search', title: 'Search 搜索' },
+      { icon: 'numberBox', id: 'NumberBox', title: 'NumberBox 步进器' },
+      { icon: 'upload', id: 'Upload', title: 'Upload 上传' },
+      { icon: 'code', id: 'Code', title: 'Code 验证码倒计时' },
+      { icon: 'field', id: 'Input', title: 'Input 输入框' },
+      { icon: 'textarea', id: 'Textarea', title: 'Textarea 文本域' },
+      { icon: 'checkbox', id: 'Checkbox', title: 'Checkbox 复选框' },
+      { icon: 'radio', id: 'Radio', title: 'Radio 单选框' },
+      { icon: 'switch', id: 'Switch', title: 'Switch 开关选择器' },
+      { icon: 'slider', id: 'Slider', title: 'Slider 滑动选择器' },
+      { icon: 'album', id: 'Album', title: 'Album 相册' },
+    ],
+  },
+  {
+    groupName: '数据组件',
+    items: [
+      { icon: 'list', id: 'List', title: 'List 列表' },
+      { icon: 'virtualList', id: 'VirtualList', title: 'VirtualList 虚拟列表' },
+      { icon: 'progress', id: 'LineProgress', title: 'Progress 进度条' },
+      { icon: 'table', id: 'Table', title: 'Table 表格' },
+      { icon: 'table', id: 'Table2', title: 'Table2 表格2' },
+      { icon: 'countDown', id: 'CountDown', title: 'CountDown 倒计时' },
+      { icon: 'countTo', id: 'CountTo', title: 'CountTo 数字滚动' },
+    ],
+  },
+  {
+    groupName: '反馈组件',
+    items: [
+      { icon: 'tooltip', id: 'Tooltip', title: 'Tooltip 长按提示' },
+      { icon: 'tooltip', id: 'Guide', title: 'Guide 首屏引导' },
+      { icon: 'popover', id: 'Popover', title: 'Popover 弹窗提示' },
+      { icon: 'actionSheet', id: 'ActionSheet', title: 'ActionSheet 上拉菜单' },
+      { icon: 'alert', id: 'Alert', title: 'Alert 警告提示' },
+      { icon: 'toast', id: 'Toast', title: 'Toast 消息提示' },
+      { icon: 'noticeBar', id: 'NoticeBar', title: 'NoticeBar 滚动通知' },
+      { icon: 'notify', id: 'Notify', title: 'Notify 消息提示' },
+      { icon: 'swipeAction', id: 'SwipeAction', title: 'SwipeAction 滑动单元格' },
+      { icon: 'collapse', id: 'Collapse', title: 'Collapse 折叠面板' },
+      { icon: 'popup', id: 'Popup', title: 'Popup 弹出层' },
+      { icon: 'modal', id: 'Modal', title: 'Modal 模态框' },
+      { icon: 'copy', id: 'Copy', title: 'Copy 复制' },
+      { icon: 'copy', id: 'FloatButton', title: 'FloatButton 悬浮按钮' },
+      { icon: 'pullRefresh', id: 'PullRefresh', title: 'PullRefresh 下拉刷新' },
+      { icon: 'signature', id: 'Signature', title: 'Signature 签名签字' },
+      { icon: 'agreement', id: 'Agreement', title: 'agreement 弹窗协议' },
+    ],
+  },
+  {
+    groupName: '布局组件',
+    items: [
+      { icon: 'scrollList', id: 'ScrollList', title: 'ScrollList 横向滚动列表' },
+      { icon: 'line', id: 'Line', title: 'Line 线条' },
+      { icon: 'empty', id: 'Card', title: 'Card 卡片' },
+      { icon: 'mask', id: 'Overlay', title: 'Overlay 遮罩层' },
+      { icon: 'noNetwork', id: 'NoNetwork', title: 'NoNetwork 无网络提示' },
+      { icon: 'grid', id: 'Grid', title: 'Grid 宫格布局' },
+      { icon: 'swiper', id: 'Swiper', title: 'Swiper 轮播图' },
+      { icon: 'skeleton', id: 'Skeleton', title: 'Skeleton 骨架屏' },
+      { icon: 'sticky', id: 'Sticky', title: 'Sticky 吸顶' },
+      { icon: 'waterfall', id: 'Waterfall', title: 'Waterfall 瀑布流' },
+      { icon: 'divider', id: 'Divider', title: 'Divider 分割线' },
+      { icon: 'box', id: 'Box', title: 'Box 盒子' },
+      { icon: 'box', id: 'CateTab', title: 'CateTab 垂直TAB' },
+      { icon: 'title', id: 'Title', title: 'Title 标题' },
+      { icon: 'shortVideo', id: 'ShortVideo', title: 'ShortVideo 短视频切换' },
+    ],
+  },
+  {
+    groupName: '导航组件',
+    items: [
+      { icon: 'dropdown', id: 'Dropdown', title: 'Dropdown 下拉菜单' },
+      { icon: 'tabbar', id: 'Tabbar', title: 'Tabbar 底部导航栏' },
+      { icon: 'backTop', id: 'BackTop', title: 'BackTop 返回顶部' },
+      { icon: 'navbar', id: 'Navbar', title: 'Navbar 导航栏' },
+      { icon: 'navbar', id: 'NavbarMini', title: 'NavbarMini 迷你导航栏' },
+      { icon: 'tabs', id: 'Tabs', title: 'Tabs 标签' },
+      { icon: 'subsection', id: 'Subsection', title: 'Subsection 分段器' },
+      { icon: 'indexList', id: 'IndexList', title: 'IndexList 索引列表' },
+      { icon: 'steps', id: 'Steps', title: 'Steps 步骤条' },
+      { icon: 'empty', id: 'Empty', title: 'Empty 内容为空' },
+      { icon: 'pagination', id: 'Pagination', title: 'Pagination 分页器' },
+      { icon: 'tree', id: 'Tree', title: 'Tree 树形' },
+    ],
+  },
+  {
+    groupName: '其他组件',
+    items: [
+      { icon: 'parse', id: 'Parse', title: 'Parse 富文本解析器' },
+      { icon: 'markdown', id: 'Markdown', title: 'Markdown 解析器' },
+      { icon: 'messageInput', id: 'CodeInput', title: 'CodeInput 验证码输入' },
+      { icon: 'dragsort', id: 'Dragsort', title: 'Dragsort 拖动排序' },
+      { icon: 'cropper', id: 'Cropper', title: 'cropper 图片裁剪' },
+      { icon: 'loadmore', id: 'Loadmore', title: 'Loadmore 加载更多' },
+      { icon: 'readMore', id: 'ReadMore', title: 'ReadMore 展开阅读更多' },
+      { icon: 'lazyLoad', id: 'LazyLoad', title: 'LazyLoad 懒加载' },
+      { icon: 'gap', id: 'Gap', title: 'Gap 间隔槽' },
+      { icon: 'avatar', id: 'Avatar', title: 'Avatar 头像' },
+      { icon: 'link', id: 'Link', title: 'Link 超链接' },
+      { icon: 'transition', id: 'Transition', title: 'transition 动画' },
+      { icon: 'qrcode', id: 'Qrcode', title: 'Qrcode 二维码' },
+      { icon: 'coupon', id: 'Coupon', title: 'Coupon 优惠券' },
+      { icon: 'barcode', id: 'Barcode', title: 'Barcode 条码' },
+      { icon: 'colorPicker', id: 'ColorPicker', title: 'ColorPicker 颜色选择器' },
+      { icon: 'poster', id: 'Poster', title: 'Poster 海报生成' },
+      { icon: 'goodsSku', id: 'GoodsSku', title: 'GoodsSku 商品SKU' },
+      { icon: 'cityLocate', id: 'CityLocate', title: 'CityLocate 城市定位' },
+      { icon: 'pdfReader', id: 'PdfReader', title: 'PdfReader PDF阅读器' },
+      { icon: 'file-text', id: 'NovelReader', title: 'NovelReader 小说阅读器' },
+    ],
+  },
+  {
+    groupName: '本地扩展（源索引未收录）',
+    items: [
+      { icon: '', id: 'AvatarGroup', title: 'AvatarGroup 头像组' },
+      { icon: '', id: 'FormItem', title: 'FormItem 表单项' },
+      { icon: '', id: 'Toolbar', title: 'Toolbar 工具栏' },
+      { icon: '', id: 'CellGroup', title: 'CellGroup 单元格组' },
+      { icon: '', id: 'CircleProgress', title: 'CircleProgress 环形进度条' },
+      { icon: '', id: 'Section', title: 'Section 内容区' },
+      { icon: '', id: 'Canvas', title: 'Canvas 画布' },
+      { icon: '', id: 'Col', title: 'Col 列布局' },
+      { icon: '', id: 'GridItem', title: 'GridItem 网格项' },
+      { icon: '', id: 'View', title: 'View 视图容器' },
+      { icon: '', id: 'ScrollHost', title: 'ScrollHost 滚动容器' },
+      { icon: '', id: 'SafeBottom', title: 'SafeBottom 安全区域' },
+    ],
+  },
 ];
 
 // Helper: get components by category

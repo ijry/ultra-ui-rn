@@ -1,6 +1,9 @@
 /**
- * DemoPagesHost - uview-plus 风格两级导航
- * 分类列表用 UPCellGroup/UPCell，图标用 UPIcon
+ * DemoPagesHost
+ *
+ * 首页是**单页平铺**，不是两级下钻 —— 上游 `pages/example/components.nvue` 就是
+ * 一页 7 个 `up-cell-group` 依次列完全部条目，分组顺序、条目顺序、标签、icon 都
+ * 照抄 `SOURCE_GROUPS`。页尾也复刻上游的 gap + alert。
  */
 import React, { useRef, useState } from 'react';
 import {
@@ -10,13 +13,12 @@ import {
   Text,
   View,
 } from 'react-native';
-import { UPCell, UPCellGroup, UPIcon } from 'ultra-ui-rn';
+import { UPAlert, UPCell, UPCellGroup, UPGap, UPIcon } from 'ultra-ui-rn';
 import {
-  CATEGORIES,
   COMPONENTS,
+  SOURCE_GROUPS,
   type ComponentCategory,
   type ComponentMeta,
-  type CategoryMeta,
 } from './registry';
 import { DemoScrollContext } from './components/_shared';
 import * as advanced from './components/advanced';
@@ -27,10 +29,9 @@ import * as form from './components/form';
 import * as layout from './components/layout';
 import * as navigation from './components/navigation';
 
-// 页面状态
+// 页面状态：上游首页无下钻，所以只有「索引」和「演示页」两态
 type ViewState =
-  | { type: 'categories' }
-  | { type: 'components'; category: CategoryMeta }
+  | { type: 'index' }
   | { type: 'demo'; component: ComponentMeta };
 
 type DemoComponent = React.ComponentType<Record<string, never>>;
@@ -64,75 +65,53 @@ function MissingDemo({ componentId, category }: { componentId: string; category:
   );
 }
 
+/** 上游 components.nvue 里 page-nav 的 desc 原文 */
+const PAGE_DESC =
+  'uview-plus 是uview2.0的vue3版本，是全面兼容nvue/鸿蒙/uni-app-x(已发布)的uni-app生态框架，全面的组件和便捷的工具会让您信手拈来，如鱼得水。';
+
+const BY_ID = new Map(COMPONENTS.map((c) => [c.id, c]));
+
 export function DemoPagesHost() {
-  const [view, setView] = useState<ViewState>({ type: 'categories' });
+  const [view, setView] = useState<ViewState>({ type: 'index' });
   const demoScrollRef = useRef<ScrollView>(null);
 
-  const goBack = () => {
-    if (view.type === 'demo') {
-      const cat = CATEGORIES.find((c) => c.id === view.component.category);
-      if (cat) setView({ type: 'components', category: cat });
-      else setView({ type: 'categories' });
-    } else {
-      setView({ type: 'categories' });
-    }
-  };
+  const goBack = () => setView({ type: 'index' });
 
-  // 分类列表（uview-plus cell-group 风格）
-  if (view.type === 'categories') {
+  // 首页：单页平铺，分组与顺序照抄上游索引
+  if (view.type === 'index') {
     return (
       <ScrollView style={s.fill} contentContainerStyle={s.page}>
-        <Text style={s.pageTitle}>组件示例</Text>
-        <UPCellGroup border>
-          {CATEGORIES.map((cat) => {
-            const count = COMPONENTS.filter((c) => c.category === cat.id).length;
-            return (
-              <UPCell
-                key={cat.id}
-                title={cat.title}
-                label={`${count} 个组件`}
-                icon={cat.icon}
-                isLink
-                onClick={() => setView({ type: 'components', category: cat })}
-              />
-            );
-          })}
-        </UPCellGroup>
-      </ScrollView>
-    );
-  }
-
-  // 组件列表
-  if (view.type === 'components') {
-    const category = view.category;
-    const components = COMPONENTS.filter((c) => c.category === category.id);
-
-    return (
-      <View style={s.fill}>
-        <View style={s.topBar}>
-          <Pressable onPress={goBack} style={s.backBtn}>
-            <UPIcon name="arrow-left" customPrefix="uicon" size={16} color="#3c9cff" />
-          </Pressable>
-          <Text style={s.topTitle} numberOfLines={1}>
-            {category.title}
-          </Text>
-          <Text style={s.topHint}>{components.length}</Text>
+        <View style={s.nav}>
+          <Text style={s.navTitle}>ultra-ui-rn</Text>
+          <Text style={s.navDesc}>{PAGE_DESC}</Text>
         </View>
 
-        <ScrollView style={s.fill}>
-          <UPCellGroup border>
-            {components.map((comp) => (
-              <UPCell
-                key={comp.id}
-                title={comp.title.split(' ')[0]}
-                label={comp.title.split(' ')[1] || ''}
-                isLink
-                onClick={() => setView({ type: 'demo', component: comp })}
-              />
-            ))}
+        {SOURCE_GROUPS.map((group) => (
+          <UPCellGroup key={group.groupName} title={group.groupName} titleBgColor="rgb(243, 244, 246)">
+            {group.items.map((item) => {
+              const comp = item.id ? BY_ID.get(item.id) : undefined;
+              return (
+                <UPCell
+                  disabled={!comp}
+                  isLink={Boolean(comp)}
+                  key={item.title}
+                  // 上游用 /static/uview/demo/<icon>.png 作行首图标，那批 PNG 没有随
+                  // demo 源码一起进仓库（只有图标字体进来了），所以这里不放图标；
+                  // icon 名仍保留在 SOURCE_GROUPS 里，assets 补齐后可直接接上。
+                  label={comp ? undefined : '暂无本地 demo'}
+                  onClick={comp ? () => setView({ type: 'demo', component: comp }) : undefined}
+                  title={item.title}
+                  titleStyle={s.cellTitle}
+                />
+              );
+            })}
           </UPCellGroup>
-        </ScrollView>
-      </View>
+        ))}
+
+        <UPGap height={30} />
+        <UPAlert description="uview-plus 2022-2024" />
+        <UPGap height={30} />
+      </ScrollView>
     );
   }
 
@@ -172,6 +151,7 @@ export function DemoPagesHost() {
 
 const s = StyleSheet.create({
   backBtn: { paddingHorizontal: 12, paddingVertical: 8 },
+  cellTitle: { fontWeight: '500' },
   demoBody: {
     backgroundColor: '#f7f8fa',
     paddingBottom: 56,
@@ -184,14 +164,10 @@ const s = StyleSheet.create({
     padding: 32,
   },
   loadingText: { color: '#909399', marginTop: 8 },
+  nav: { backgroundColor: '#ffffff', paddingBottom: 16, paddingHorizontal: 16, paddingTop: 12 },
+  navDesc: { color: '#909399', fontSize: 13, lineHeight: 20 },
+  navTitle: { color: '#303133', fontSize: 22, fontWeight: '700', marginBottom: 8 },
   page: { backgroundColor: '#f5f7fa', paddingBottom: 48 },
-  pageTitle: {
-    color: '#303133',
-    fontSize: 22,
-    fontWeight: '700',
-    padding: 16,
-    paddingBottom: 8,
-  },
   topBar: {
     alignItems: 'center',
     backgroundColor: '#ffffff',
@@ -200,11 +176,6 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 4,
     paddingVertical: 6,
-  },
-  topHint: {
-    color: '#909399',
-    fontSize: 13,
-    paddingRight: 12,
   },
   topTitle: {
     color: '#303133',
