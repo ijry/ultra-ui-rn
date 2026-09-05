@@ -209,6 +209,8 @@ export const COMPONENTS: readonly ComponentMeta[] = [
   { id: 'SafeBottom', title: 'SafeBottom 安全区域', category: 'layout', sourceComponent: 'UPSafeBottom', description: '安全区域组件' },
   { id: 'BackTop', title: 'BackTop 返回顶部', category: 'layout', sourceComponent: 'UPBackTop', description: '返回顶部组件' },
   { id: 'List', title: 'List 列表', category: 'layout', sourceComponent: 'UPList', description: '列表组件' },
+  // 上游 color 页展示的是色彩规范，不对应任何组件，故 sourceComponent 留空。
+  { id: 'Color', title: 'Color 色彩', category: 'basic', sourceComponent: '', description: '色彩规范（无对应组件）' },
   { id: 'Copy', title: 'Copy 复制', category: 'basic', sourceComponent: 'UPCopy', description: '复制组件' },
   { id: 'LoadingIcon', title: 'LoadingIcon 加载图标', category: 'basic', sourceComponent: 'UPLoadingIcon', description: '加载图标组件' },
   { id: 'Transition', title: 'Transition 动画', category: 'basic', sourceComponent: 'UPTransition', description: '过渡动画组件' },
@@ -241,7 +243,7 @@ export const SOURCE_GROUPS: readonly SourceGroup[] = [
   {
     groupName: '基础组件',
     items: [
-      { icon: 'color', id: null, title: 'Color 色彩' },
+      { icon: 'color', id: 'Color', title: 'Color 色彩' },
       { icon: 'icon', id: 'Icon', title: 'Icon 图标' },
       { icon: 'image', id: 'Image', title: 'Image 图片' },
       { icon: 'button', id: 'Button', title: 'Button 按钮' },

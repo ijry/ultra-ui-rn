@@ -15,3 +15,4 @@ export const BASIC_COMPONENTS = ['Button', 'Icon', 'Text', 'Tag', 'Badge', 'Link
 export { default as CopyDemo } from './CopyDemo';
 export { default as LoadingIconDemo } from './LoadingIconDemo';
 export { default as TransitionDemo } from './TransitionDemo';
+export { default as ColorDemo } from './ColorDemo';

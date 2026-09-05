@@ -10,11 +10,14 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { UPCell, UPCellGroup, UPGap, UPIcon } from 'ultra-ui-rn';
 import type { DemoPageProps } from './types';
 import {
+  AddressAddSitePage,
   AddressIndexPage,
   CitySelectPage,
   CommentIndexPage,
+  CommentReplyPage,
   CouponPage,
   KeyboardPayPage,
+  LoginCodePage,
   LoginIndexPage,
   MallMenu1Page,
   MallMenu2Page,
@@ -28,6 +31,11 @@ type TemplatePage = React.ComponentType<DemoPageProps>;
 interface TemplateEntry {
   id: string;
   page: TemplatePage;
+  /**
+   * 上游从页面内部 `uni.navigateTo` 进去的子页，索引里不单独列。
+   * 三条：收货地址 → 新增地址、评论列表 → 回复、登录 → 验证码。
+   */
+  sub?: { page: TemplatePage; title: string };
   title: string;
 }
 
@@ -44,10 +52,25 @@ const GROUPS: readonly { groupName: string; items: readonly TemplateEntry[] }[] 
       { id: 'mallMenu1', page: MallMenu1Page, title: 'MallMenu 垂直分类(左右独立)' },
       { id: 'mallMenu2', page: MallMenu2Page, title: 'MallMenu 垂直分类(左右联动)' },
       { id: 'submitBar', page: SubmitBarPage, title: 'SubmitBar 提交订单栏' },
-      { id: 'comment', page: CommentIndexPage, title: 'Comment 评论列表' },
+      {
+        id: 'comment',
+        page: CommentIndexPage,
+        sub: { page: CommentReplyPage, title: 'Comment 评论回复' },
+        title: 'Comment 评论列表',
+      },
       { id: 'order', page: OrderPage, title: 'Order 订单列表' },
-      { id: 'login', page: LoginIndexPage, title: 'Login 登录界面' },
-      { id: 'address', page: AddressIndexPage, title: 'Address 收货地址' },
+      {
+        id: 'login',
+        page: LoginIndexPage,
+        sub: { page: LoginCodePage, title: 'Login 验证码' },
+        title: 'Login 登录界面',
+      },
+      {
+        id: 'address',
+        page: AddressIndexPage,
+        sub: { page: AddressAddSitePage, title: 'Address 新增地址' },
+        title: 'Address 收货地址',
+      },
       { id: 'citySelect', page: CitySelectPage, title: 'CitySelect 城市选择' },
     ],
   },
@@ -58,21 +81,29 @@ const DESC = '收集众多的常用页面和布局，减少开发者的重复工
 
 export function TemplatePagesHost() {
   const [open, setOpen] = useState<TemplateEntry | null>(null);
+  const [inSub, setInSub] = useState(false);
 
   if (open) {
-    const Page = open.page;
+    const Page = inSub && open.sub ? open.sub.page : open.page;
+    const title = inSub && open.sub ? open.sub.title : open.title;
     return (
       <View style={s.fill}>
         <View style={s.topBar}>
-          <Pressable onPress={() => setOpen(null)} style={s.backBtn}>
+          <Pressable
+            onPress={() => {
+              if (inSub) setInSub(false);
+              else setOpen(null);
+            }}
+            style={s.backBtn}
+          >
             <UPIcon color="#3c9cff" customPrefix="uicon" name="arrow-left" size={16} />
           </Pressable>
           <Text numberOfLines={1} style={s.topTitle}>
-            {open.title}
+            {title}
           </Text>
         </View>
         <ScrollView contentContainerStyle={s.body} style={s.fill}>
-          <Page onBack={() => setOpen(null)} />
+          <Page onBack={() => setOpen(null)} onOpenSub={open.sub ? () => setInSub(true) : undefined} />
         </ScrollView>
       </View>
     );
@@ -89,7 +120,15 @@ export function TemplatePagesHost() {
           <UPGap bgColor="#f3f4f6" height={10} />
           <UPCellGroup title={group.groupName} titleBgColor="rgb(243, 244, 246)">
             {group.items.map((item) => (
-              <UPCell isLink key={item.id} onClick={() => setOpen(item)} title={item.title} />
+              <UPCell
+                  isLink
+                  key={item.id}
+                  onClick={() => {
+                    setInSub(false);
+                    setOpen(item);
+                  }}
+                  title={item.title}
+                />
             ))}
           </UPCellGroup>
         </View>

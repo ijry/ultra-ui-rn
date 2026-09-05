@@ -5,6 +5,13 @@
 export interface DemoPageProps {
   /** Back button handler */
   onBack?: () => void;
+  /**
+   * Open this template's sub-page — upstream reaches those with `uni.navigateTo`
+   * from inside the parent (新建收货地址 → addSite, 全部回复 → reply,
+   * 获取短信验证码 → code). Those three call sites used to call `onBack`, which
+   * closed the page instead of opening anything.
+   */
+  onOpenSub?: () => void;
 }
 
 export interface DemoAddress {
