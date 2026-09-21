@@ -152,34 +152,42 @@ export function UPCateTab(input: UPCateTabProps): React.JSX.Element {
               {labelOf(item, props.tabKeyName ?? 'name')}
             </Text>
             <View style={styles.itemContainer}>
-              {children.map((child, childIndex) => (
-                <View
-                  key={`${labelOf(child, props.itemKeyName ?? 'name')}-${childIndex}`}
-                  style={styles.thumbBox}
-                  testID={`up-cate-tab-page-item-${index}-${childIndex}`}
-                >
-                  {input.renderPageItem?.({
-                    index: childIndex,
-                    item: child,
-                    parent: item,
-                    parentIndex: index,
-                  }) ?? (
-                    <>
-                      {child.icon ? (
-                        <UPImage
-                          height={50}
-                          mode="aspectFill"
-                          src={String(child.icon)}
-                          width={50}
-                        />
-                      ) : null}
-                      <Text style={[styles.thumbName, input.itemTextStyle]}>
-                        {labelOf(child, props.itemKeyName ?? 'name')}
-                      </Text>
-                    </>
-                  )}
-                </View>
-              ))}
+              {children.map((child, childIndex) => {
+                // Call the slot once: a nullish return means "use the built-in
+                // thumbnail", so both the content and the width must fall back to
+                // the default grid — deciding width off `renderPageItem` existing
+                // alone would keep the full-row width while showing the thumbnail.
+                const custom = input.renderPageItem?.({
+                  index: childIndex,
+                  item: child,
+                  parent: item,
+                  parentIndex: index,
+                });
+                const useSlot = custom !== null && custom !== undefined;
+                return (
+                  <View
+                    key={`${labelOf(child, props.itemKeyName ?? 'name')}-${childIndex}`}
+                    style={useSlot ? styles.pageItemSlot : styles.thumbBox}
+                    testID={`up-cate-tab-page-item-${index}-${childIndex}`}
+                  >
+                    {useSlot ? custom : (
+                      <>
+                        {child.icon ? (
+                          <UPImage
+                            height={50}
+                            mode="aspectFill"
+                            src={String(child.icon)}
+                            width={50}
+                          />
+                        ) : null}
+                        <Text style={[styles.thumbName, input.itemTextStyle]}>
+                          {labelOf(child, props.itemKeyName ?? 'name')}
+                        </Text>
+                      </>
+                    )}
+                  </View>
+                );
+              })}
             </View>
           </>
         )}
@@ -300,6 +308,9 @@ const styles = StyleSheet.create({
   menuTextActive: {
     color: '#3c9cff',
     fontWeight: '600',
+  },
+  pageItemSlot: {
+    width: '100%',
   },
   right: {
     backgroundColor: '#ffffff',

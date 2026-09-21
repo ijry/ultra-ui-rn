@@ -44,7 +44,44 @@ it('renders source-style left tabs and default right item grid', () => {
   expect(screen.getAllByText('手机')).toHaveLength(2);
   expect(screen.getByText('iPhone')).toBeTruthy();
   expect(screen.getByText('Windows')).toBeTruthy();
-  expect(screen.getByTestId('up-cate-tab-page-item-0-0')).toBeTruthy();
+  expect(
+    StyleSheet.flatten(screen.getByTestId('up-cate-tab-page-item-0-0').props.style).width,
+  ).toBe('33.3333%');
+});
+
+it('gives renderPageItem slot content the full right-side row', () => {
+  const custom = [{ title: '一级', children: [{ title: '二级' }] }];
+  const screen = renderRoot(
+    <UPCateTab
+      itemKeyName="title"
+      renderPageItem={({ item }) => <Text>{String(item.title)}</Text>}
+      tabKeyName="title"
+      tabList={custom}
+    />,
+  );
+
+  expect(
+    StyleSheet.flatten(screen.getByTestId('up-cate-tab-page-item-0-0').props.style).width,
+  ).toBe('100%');
+});
+
+it('keeps the default grid width when renderPageItem returns a nullish node', () => {
+  // renderPageItem's return type is ReactNode, which permits null/undefined. When
+  // it opts out, the built-in thumbnail renders — so the cell must stay in the
+  // 33.3333% grid, not the 100% custom-slot width.
+  const screen = renderRoot(
+    <UPCateTab
+      itemKeyName="title"
+      renderPageItem={() => null}
+      tabKeyName="title"
+      tabList={[{ title: '一级', children: [{ title: '二级' }] }]}
+    />,
+  );
+
+  expect(screen.getByText('二级')).toBeTruthy();
+  expect(
+    StyleSheet.flatten(screen.getByTestId('up-cate-tab-page-item-0-0').props.style).width,
+  ).toBe('33.3333%');
 });
 
 it('updates uncontrolled current from left menu presses and suppresses duplicate changes', () => {

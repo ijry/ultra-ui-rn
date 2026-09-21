@@ -68,8 +68,8 @@ export default function CateTabDemo() {
         itemKeyName="title"
         mode="follow"
         renderPageItem={({ item }) => (
-          // 源 pageItem 插槽内容宽度 100%；本地 UPCateTab 把每个子项塞进固定
-          // 33.3333% 宽的九宫格单元（UPCateTab.tsx thumbBox），无法撑满整行。
+          // 源 pageItem 插槽内容宽度 100%；UPCateTab 对自定义 pageItem 使用全宽行，
+          // 只有未提供插槽时的默认缩略项继续使用三列网格。
           <View style={s.pageItem}>
             <UPCellGroup border={false}>
               <UPCell

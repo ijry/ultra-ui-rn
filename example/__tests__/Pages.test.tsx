@@ -34,7 +34,7 @@ test('source groups reproduce the upstream index, plus one local-only group', ()
   expect(SOURCE_GROUPS).toHaveLength(8);
   expect(SOURCE_GROUPS[7]?.groupName).toBe('本地扩展（源索引未收录）');
 
-  // Upstream's own group sizes, in order. Two entries it marks 暂无 are excluded.
+  // Upstream's own group sizes, in order.
   expect(SOURCE_GROUPS.slice(0, 7).map((g) => g.items.length)).toEqual([11, 20, 7, 17, 15, 12, 21]);
 
   // Every entry either points at a registered demo or is explicitly null.
@@ -44,6 +44,11 @@ test('source groups reproduce the upstream index, plus one local-only group', ()
       if (item.id !== null) expect(ids.has(item.id)).toBe(true);
     }
   }
+});
+
+test('every registered component id is unique', () => {
+  const ids = COMPONENTS.map((component) => component.id);
+  expect(new Set(ids).size).toBe(ids.length);
 });
 
 test('every registered component is reachable from the index', () => {

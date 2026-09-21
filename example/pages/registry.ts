@@ -100,9 +100,9 @@ export const CATEGORIES: readonly CategoryMeta[] = [
   },
 ];
 
-// All components (95 total)
+// All components (115 unique registrations)
 export const COMPONENTS: readonly ComponentMeta[] = [
-  // Basic (9)
+  // Basic
   { id: 'Button', title: 'Button 按钮', category: 'basic', sourceComponent: 'UPButton', description: '按钮组件' },
   { id: 'Icon', title: 'Icon 图标', category: 'basic', sourceComponent: 'UPIcon', description: '图标组件' },
   { id: 'Text', title: 'Text 文本', category: 'basic', sourceComponent: 'UPText', description: '文本组件' },
@@ -114,7 +114,7 @@ export const COMPONENTS: readonly ComponentMeta[] = [
   { id: 'AvatarGroup', title: 'AvatarGroup 头像组', category: 'basic', sourceComponent: 'UPAvatarGroup', description: '头像组组件' },
   { id: 'LoadingIcon', title: 'Loading 加载动画', category: 'basic', sourceComponent: 'UPLoadingIcon', description: '加载图标组件' },
 
-  // Form (19)
+  // Form
   { id: 'Input', title: 'Input 输入框', category: 'form', sourceComponent: 'UPInput', description: '输入框组件' },
   { id: 'Textarea', title: 'Textarea 文本域', category: 'form', sourceComponent: 'UPTextarea', description: '多行输入框组件' },
   { id: 'Search', title: 'Search 搜索', category: 'form', sourceComponent: 'UPSearch', description: '搜索框组件' },
@@ -134,7 +134,7 @@ export const COMPONENTS: readonly ComponentMeta[] = [
   { id: 'Code', title: 'Code 验证码倒计时', category: 'form', sourceComponent: 'UPCode', description: '验证码组件' },
   { id: 'Choose', title: 'Choose 选项选择器', category: 'form', sourceComponent: 'UPChoose', description: '选择器组件' },
 
-  // Navigation (9)
+  // Navigation
   { id: 'Navbar', title: 'Navbar 导航栏', category: 'navigation', sourceComponent: 'UPNavbar', description: '导航栏组件' },
   { id: 'NavbarMini', title: 'NavbarMini 迷你导航栏', category: 'navigation', sourceComponent: 'UPNavbarMini', description: '迷你导航栏组件' },
   { id: 'Tabbar', title: 'Tabbar 底部导航栏', category: 'navigation', sourceComponent: 'UPTabbar', description: '标签栏组件' },
@@ -145,7 +145,7 @@ export const COMPONENTS: readonly ComponentMeta[] = [
   { id: 'Pagination', title: 'Pagination 分页器', category: 'navigation', sourceComponent: 'UPPagination', description: '分页组件' },
   { id: 'Toolbar', title: 'Toolbar 工具栏', category: 'navigation', sourceComponent: 'UPToolbar', description: '工具栏组件' },
 
-  // Display (14)
+  // Display
   { id: 'Card', title: 'Card 卡片', category: 'display', sourceComponent: 'UPCard', description: '卡片组件' },
   { id: 'Cell', title: 'Cell 单元格', category: 'display', sourceComponent: 'UPCell', description: '单元格组件' },
   { id: 'CellGroup', title: 'CellGroup 单元格组', category: 'display', sourceComponent: 'UPCellGroup', description: '单元格组组件' },
@@ -161,7 +161,7 @@ export const COMPONENTS: readonly ComponentMeta[] = [
   { id: 'Title', title: 'Title 标题', category: 'display', sourceComponent: 'UPTitle', description: '标题组件' },
   { id: 'Alert', title: 'Alert 警告提示', category: 'display', sourceComponent: 'UPAlert', description: '警告提示组件' },
 
-  // Feedback (10)
+  // Feedback
   { id: 'Toast', title: 'Toast 消息提示', category: 'feedback', sourceComponent: 'UPToast', description: '轻提示组件' },
   { id: 'Notify', title: 'Notify 消息提示', category: 'feedback', sourceComponent: 'UPNotify', description: '通知组件' },
   { id: 'Popup', title: 'Popup 弹出层', category: 'feedback', sourceComponent: 'UPPopup', description: '弹出层组件' },
@@ -173,7 +173,7 @@ export const COMPONENTS: readonly ComponentMeta[] = [
   { id: 'Popover', title: 'Popover 弹窗提示', category: 'feedback', sourceComponent: 'UPPopover', description: '气泡弹出组件' },
   { id: 'SwipeAction', title: 'SwipeAction 滑动单元格', category: 'feedback', sourceComponent: 'UPSwipeAction', description: '滑动操作组件' },
 
-  // Advanced (21)
+  // Advanced
   { id: 'Upload', title: 'Upload 上传', category: 'advanced', sourceComponent: 'UPUpload', description: '上传组件' },
   { id: 'Album', title: 'Album 相册', category: 'advanced', sourceComponent: 'UPAlbum', description: '相册组件' },
   { id: 'Swiper', title: 'Swiper 轮播图', category: 'advanced', sourceComponent: 'UPSwiper', description: '轮播组件' },
@@ -196,7 +196,7 @@ export const COMPONENTS: readonly ComponentMeta[] = [
   { id: 'Parse', title: 'Parse 富文本解析器', category: 'advanced', sourceComponent: 'UPParse', description: '富文本解析组件' },
   { id: 'NovelReader', title: 'NovelReader 小说阅读器', category: 'advanced', sourceComponent: 'UPNovelReader', description: '小说阅读组件' },
 
-  // Layout (13)
+  // Layout
   { id: 'Row', title: 'Row 行布局', category: 'layout', sourceComponent: 'UPRow', description: '行布局组件' },
   { id: 'Col', title: 'Col 列布局', category: 'layout', sourceComponent: 'UPCol', description: '列布局组件' },
   { id: 'Grid', title: 'Grid 宫格布局', category: 'layout', sourceComponent: 'UPGrid', description: '网格组件' },
@@ -213,7 +213,6 @@ export const COMPONENTS: readonly ComponentMeta[] = [
   // 上游 color 页展示的是色彩规范，不对应任何组件，故 sourceComponent 留空。
   { id: 'Color', title: 'Color 色彩', category: 'basic', sourceComponent: '', description: '色彩规范（无对应组件）' },
   { id: 'Copy', title: 'Copy 复制', category: 'basic', sourceComponent: 'UPCopy', description: '复制组件' },
-  { id: 'LoadingIcon', title: 'LoadingIcon 加载图标', category: 'basic', sourceComponent: 'UPLoadingIcon', description: '加载图标组件' },
   { id: 'Transition', title: 'Transition 动画', category: 'basic', sourceComponent: 'UPTransition', description: '过渡动画组件' },
   { id: 'Calendar', title: 'Calendar 日历', category: 'form', sourceComponent: 'UPCalendar', description: '日历组件' },
   { id: 'CityLocate', title: 'CityLocate 城市定位', category: 'form', sourceComponent: 'UPCityLocate', description: '城市定位组件' },
