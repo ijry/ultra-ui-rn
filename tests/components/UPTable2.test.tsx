@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 import { UPRoot, UPTable2, type UPTable2Column } from '../../src';
 import { buildTable2SpanMap } from '../../src/components/table2/state';
@@ -86,6 +86,39 @@ it('applies source column style to the header cell', () => {
       expect.objectContaining({ backgroundColor: '#f5f7fa' }),
     ]),
   );
+});
+
+it('routes a column style text colour to the cell text, not the cell box', () => {
+  // Upstream columnsStyle sets `{ background: 'red', color: '#fff' }` on a column
+  // (table2.nvue:154-156). color is a text property; on the cell View it is inert,
+  // so the default cell text has to pick it up.
+  const screen = renderRoot(
+    <UPTable2
+      columns={[{ key: 'name', title: 'Name', style: { backgroundColor: 'red', color: '#ffffff' } }]}
+      data={[{ id: 'a', name: 'Ada' }]}
+    />,
+  );
+
+  const cell = screen.getByTestId('up-table2-cell-a-name');
+  expect(StyleSheet.flatten(cell.props.style).backgroundColor).toBe('red');
+  const text = cell.findByType(Text);
+  expect(StyleSheet.flatten(text.props.style).color).toBe('#ffffff');
+});
+
+it('routes a cellStyle text colour to the cell text', () => {
+  // Upstream cellStyleFunc returns `{ background: 'blue', color: 'yellow' }`
+  // (table2.nvue:161-164).
+  const screen = renderRoot(
+    <UPTable2
+      cellStyle={() => ({ backgroundColor: 'blue', color: 'yellow' })}
+      columns={[{ key: 'name', title: 'Name' }]}
+      data={[{ id: 'a', name: 'Ada' }]}
+    />,
+  );
+
+  const cell = screen.getByTestId('up-table2-cell-a-name');
+  expect(StyleSheet.flatten(cell.props.style).backgroundColor).toBe('blue');
+  expect(StyleSheet.flatten(cell.findByType(Text).props.style).color).toBe('yellow');
 });
 
 it('renders an empty state and preserves explicit fixed dimensions', () => {

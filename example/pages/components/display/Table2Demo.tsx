@@ -49,7 +49,7 @@ const PROPS = [
   { prop: 'mainCol', type: 'string', default: "''", desc: '树形主列的 key，该列渲染展开箭头' },
   { prop: 'expandWidth', type: 'number | string', default: '25', desc: '展开箭头占位宽度' },
   { prop: 'rowStyle', type: 'ViewStyle | (payload) => ViewStyle', default: '—', desc: '行样式' },
-  { prop: 'cellStyle', type: '(payload) => ViewStyle', default: '—', desc: '单元格样式（仅 ViewStyle，无文字色）' },
+  { prop: 'cellStyle', type: '(payload) => ViewStyle & TextStyle', default: '—', desc: '单元格样式；文字色等 TextStyle 落到单元格文字' },
   { prop: 'spanMethod', type: '(payload) => [rowspan, colspan]', default: '—', desc: '合并单元格' },
   { prop: 'onRowClick', type: '(row, payload) => void', default: '—', desc: '点击行时触发' },
   { prop: 'onCellClick', type: '(payload) => void', default: '—', desc: '点击单元格时触发' },
@@ -104,20 +104,20 @@ const columns: UPTable2Column<Row>[] = [
 ];
 const columnsStyle: UPTable2Column<Row>[] = [
   { title: '姓名', key: 'name', width: '50px' },
-  // 上游还带 color: '#fff'（文字色）；column.style 是 ViewStyle，无法表达文字色。
-  // 与上游一致，column.style 只作用于表头单元格。
+  // 与上游逐字一致：column.style 现在同时作用于表头和该列每个单元格，文字色 color
+  // 会落到默认单元格文字上（backgroundColor 落到单元格盒子）。
   {
     title: '年龄',
     key: 'age',
     width: '50px',
-    style: { backgroundColor: 'red', justifyContent: 'center' },
+    style: { backgroundColor: 'red', color: '#fff', justifyContent: 'center' },
   },
   { title: '年龄', key: 'age', width: '50px' },
 ];
 const cellStyleFunc = (scope: UPTable2CellPayload<Row>) => {
   if (scope.column.key === 'age' && String(scope.row.age) === '25') {
-    // 上游同时返回 color: 'yellow'；cellStyle 的返回值是 ViewStyle，文字色无法表达
-    return { backgroundColor: 'blue' };
+    // 与上游一致：盒子背景蓝、文字黄。
+    return { backgroundColor: 'blue', color: 'yellow' };
   }
   return {};
 };

@@ -7,7 +7,9 @@ import {
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  StyleSheet,
   type StyleProp,
+  type TextStyle,
   type ViewStyle,
 } from 'react-native';
 import { useUPConfig } from '../../config/useUPConfig';
@@ -64,10 +66,29 @@ function resolveAlign(align: UPTable2Align | undefined): ViewStyle {
   return { justifyContent: 'flex-start' };
 }
 
-function renderContent(content: React.ReactNode): React.ReactNode {
+function renderContent(content: React.ReactNode, textStyle?: TextStyle): React.ReactNode {
   if (React.isValidElement(content)) return content;
   if (content === undefined || content === null) return null;
-  return <Text>{String(content)}</Text>;
+  return <Text style={textStyle}>{String(content)}</Text>;
+}
+
+// Text properties are inert on the cell's wrapping View, so pull the ones a cell
+// style might carry (upstream passes `color` on a column) and hand them to the
+// default cell text. A custom renderCell returns its own element and keeps full
+// control, so this only affects the plain-string path.
+const TEXT_STYLE_KEYS = [
+  'color', 'fontFamily', 'fontSize', 'fontStyle', 'fontWeight',
+  'letterSpacing', 'lineHeight', 'textAlign', 'textDecorationLine', 'textTransform',
+] as const;
+
+function textStyleFrom(style: StyleProp<ViewStyle & TextStyle> | undefined): TextStyle | undefined {
+  if (!style) return undefined;
+  const flat = StyleSheet.flatten(style) as Record<string, unknown>;
+  let picked: Record<string, unknown> | undefined;
+  for (const key of TEXT_STYLE_KEYS) {
+    if (flat[key] !== undefined) (picked ??= {})[key] = flat[key];
+  }
+  return picked as TextStyle | undefined;
 }
 
 function valueAt<T extends object>(row: T, key: string): unknown {
@@ -512,10 +533,11 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
             () => selectRow(row.key, !row.selected),
             () => toggleExpanded(row.key),
           );
+          const cellStyle = props.cellStyle?.(payload);
+          const cellTextStyle = textStyleFrom([column.style, cellStyle]);
           const value = valueAt(row.row, column.key);
           const content = column.renderCell?.(payload)
-            ?? renderContent(value === undefined || value === null ? null : String(value));
-          const cellStyle = props.cellStyle?.(payload);
+            ?? renderContent(value === undefined || value === null ? null : String(value), cellTextStyle);
           const isExpandColumn = column.type === 'expand'
             || (Boolean(props.mainCol) && column.key === props.mainCol);
           const cellContent = column.type === 'selection' ? (
@@ -563,6 +585,7 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
                 },
                 resolveAlign(column.align),
                 resolveSpanStyle(renderSpan, width, rowHeight),
+                column.style,
                 cellStyle,
               ]}
               testID={`up-table2-cell-${String(row.key)}-${column.key}`}

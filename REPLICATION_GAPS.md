@@ -165,8 +165,15 @@ example page. None is a blocker; all are documented in the demo pages themselves
   upstream's `radius: '16rpx'` / `'12rpx'` (poster.nvue:56,85).
 
 ### UPTable2
-- **`column.style` / `cellStyle` are `ViewStyle`**, so upstream's per-column and
-  per-cell **text** colours (`table2.nvue:154-164`) cannot be expressed
+- ~~**`column.style` / `cellStyle` are `ViewStyle`**, so upstream's per-column and
+  per-cell **text** colours cannot be expressed~~ — ✓ Fixed 2026-09-05: both now
+  accept `ViewStyle & TextStyle`. The box keeps the view props; text properties
+  (`color`, `fontSize`, …) are split out and applied to the default cell text,
+  where they were inert on the wrapping View. Matches upstream's
+  `{ background, color }` column style and `cellStyle` (`table2.nvue:154-164`).
+  A custom `renderCell` returns its own element and is left untouched. `column.style`
+  now also styles the body cell box, not only the header, as upstream styles the
+  whole column.
 - **`UPTable2Column.key` is required**; upstream's selection columns carry no key
 - **`expandRowKeys` compares keys by identity, not loosely.** Upstream passes
   `['1']` (a string) against numeric `id`s and still pre-expands; locally the
@@ -363,10 +370,10 @@ finally made the cause visible.
 ## Summary
 
 **Total gaps identified**: 40 (20 from the first replication rounds, 20 added 2026-09-04)  
-**Fixed**: 30 — the original 18 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor + canvas peer, UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags), the eight found on 2026-09-04 (UPTransition, UPNoNetwork, UPReadMore, UPSelect, the overlay host's missing containing block, UPPopup.onOpen, UPPopup centre mode, UPCopy nested press), plus UPCityLocate.hotCity, UPCateTab.renderPageItem width, and UPPoster onExport + radius on 2026-09-05
-**Remaining**: 10
+**Fixed**: 31 — the original 18 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor + canvas peer, UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags), the eight found on 2026-09-04 (UPTransition, UPNoNetwork, UPReadMore, UPSelect, the overlay host's missing containing block, UPPopup.onOpen, UPPopup centre mode, UPCopy nested press), plus UPCityLocate.hotCity, UPCateTab.renderPageItem width, UPPoster onExport + radius, and UPTable2 cell/column text styling on 2026-09-05
+**Remaining**: 9
 - Critical (defined but broken): 0
-- Actionable API gaps: UPTable2 text styling/key compatibility, UPCropper slot/adapter seam, and UPShortVideo item-field rendering
+- Actionable API gaps: UPTable2 required-key + loose expandRowKeys, UPCropper slot/adapter seam, and UPShortVideo item-field rendering
 - Platform/recorded boundaries: UPCateTab CSS `calc()` height, UPLoadingIcon.mode, native seam demos, and the React Native limitations listed below
 - Upstream defects retained as references: UPLazyLoad's nonexistent `statusChange` / `clickImg` events
 
