@@ -3,7 +3,7 @@
 This document tracks component features present in the upstream uview-plus demos but missing or incomplete in the ultra-ui-rn port.
 
 Generated: 2026-09-03  
-Last updated: 2026-09-04
+Last updated: 2026-09-05
 Source: Strict replication of 17 advanced component demos, extended 2026-09-04 by
 the 20 demo pages that closed the example-coverage gap
 
@@ -150,15 +150,19 @@ Nested children keep their own interactivity, which `box-only` would have remove
 
 ---
 
-## Gaps recorded from the 20 new demo pages (2026-09-04, not yet fixed)
+## Gaps recorded from the 20 new demo pages (status updated through 2026-09-05)
 
 Surfaced while replicating the demos for the components that previously had no
 example page. None is a blocker; all are documented in the demo pages themselves.
 
 ### UPPoster
-- **No `onExport` event** — upstream `poster.nvue:29` binds `@export`;
-  `UPPosterProps` has none, so `PosterDemo` calls its handler by hand
-- **`radius` in a view's css is ignored** — the renderer reads `borderRadius` only
+- ~~**No `onExport` event**~~ — ✓ Fixed 2026-09-05: added `onExport`, fired with the
+  result whenever `exportImage()` resolves (adapter or null-path branch), matching
+  upstream's `@export` (poster.nvue:29). PosterDemo now binds it instead of calling
+  the handler by hand.
+- ~~**`radius` in a view's css is ignored**~~ — ✓ Fixed 2026-09-05: css `radius` is now
+  read as `borderRadius` across image/qrcode/view branches (`radiusOf`), matching
+  upstream's `radius: '16rpx'` / `'12rpx'` (poster.nvue:56,85).
 
 ### UPTable2
 - **`column.style` / `cellStyle` are `ViewStyle`**, so upstream's per-column and
@@ -172,14 +176,20 @@ example page. None is a blocker; all are documented in the demo pages themselves
   the difference is only the pre-expanded row.
 
 ### UPCateTab
-- **`renderPageItem` slot content is forced into a 33.33%-wide cell**; upstream
-  gives the slot the full row
+- ~~**`renderPageItem` slot content was forced into a 33.33%-wide cell**~~ — ✓ Fixed
+  2026-09-05: custom `renderPageItem` content now receives the full right-side row;
+  the built-in thumbnail renderer deliberately keeps its three-column grid.
+  Regression tests pin both widths, and H5 geometry confirms the custom wrapper
+  exactly fills its parent content box (166.5 px vs 166.5 px).
 - **`height` does not accept CSS `calc()`** — upstream passes
-  `calc(100vh - 150px)`; the demo substitutes `useWindowDimensions().height - 150`
+  `calc(100vh - 150px)`; the demo substitutes `useWindowDimensions().height - 150`.
+  This remains a React Native platform boundary, not a fabricated CSS parser.
 
 ### UPCityLocate
-- **No `hotCity` prop** — upstream `cityLocate.nvue:10` passes one. The demo
-  folds the same entries into `cityList[0]`, which preserves behaviour
+- ~~**No `hotCity` prop**~~ — ✓ Fixed 2026-09-05: `hotCity` now owns the chip
+  grid when supplied, while omitting it preserves the old `cityList[0]` fallback.
+  CityLocateDemo passes upstream's `hotCity` and `cityList` separately instead of
+  folding one into the other.
 
 ### UPShortVideo
 - **Reads only `item.id` and `item.title`** — upstream's `videoUrl`, `progress`,
@@ -353,20 +363,18 @@ finally made the cause visible.
 ## Summary
 
 **Total gaps identified**: 40 (20 from the first replication rounds, 20 added 2026-09-04)  
-**Fixed**: 26 — the original 18 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor + canvas peer, UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags) plus the eight found on 2026-09-04 (UPTransition, UPNoNetwork, UPReadMore, UPSelect, the overlay host's missing containing block, UPPopup.onOpen, UPPopup centre mode, UPCopy nested press)
-**Remaining**: 14
+**Fixed**: 30 — the original 18 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor + canvas peer, UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags), the eight found on 2026-09-04 (UPTransition, UPNoNetwork, UPReadMore, UPSelect, the overlay host's missing containing block, UPPopup.onOpen, UPPopup centre mode, UPCopy nested press), plus UPCityLocate.hotCity, UPCateTab.renderPageItem width, and UPPoster onExport + radius on 2026-09-05
+**Remaining**: 10
 - Critical (defined but broken): 0
-- Missing props/events: 6 (UPPoster.onExport + radius, UPTable2 text colour + required key + loose expandRowKeys, UPCityLocate.hotCity, UPCropper slot/seam)
-- API discrepancies: 3 (UPCateTab slot width + calc height, UPShortVideo ignored item fields)
-- Platform limitations: 6 (including 2 upstream bugs in UPLazyLoad)
-- Recorded boundaries, not defects: UPLoadingIcon.mode (already `@deprecated`), UPShortVideo's own progress bar
-- Enum corrections: 1 (already applied)
+- Actionable API gaps: UPTable2 text styling/key compatibility, UPCropper slot/adapter seam, and UPShortVideo item-field rendering
+- Platform/recorded boundaries: UPCateTab CSS `calc()` height, UPLoadingIcon.mode, native seam demos, and the React Native limitations listed below
+- Upstream defects retained as references: UPLazyLoad's nonexistent `statusChange` / `clickImg` events
 
 **Components with most gaps**:
 1. ~~UPParse (6 gaps, all fixed)~~ ✓ — `navigateTo` anchor scrolling verified on an
    Android emulator; see "Scroll container composition"
 2. UPLazyLoad (2 upstream bugs) — statusChange/clickImg events referenced in demo but never emitted by component
-3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓ / ~~UPMarkdown~~ ✓ / ~~UPButton~~ ✓ / ~~UPVirtualList~~ ✓ / ~~UPSignature~~ ✓ / ~~UPTransition~~ ✓ / ~~UPNoNetwork~~ ✓ / ~~UPReadMore~~ ✓ / ~~UPSelect~~ ✓ / ~~OverlayProvider~~ ✓ / ~~UPPopup~~ ✓ / ~~UPCopy~~ ✓
+3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓ / ~~UPMarkdown~~ ✓ / ~~UPButton~~ ✓ / ~~UPVirtualList~~ ✓ / ~~UPSignature~~ ✓ / ~~UPTransition~~ ✓ / ~~UPNoNetwork~~ ✓ / ~~UPReadMore~~ ✓ / ~~UPSelect~~ ✓ / ~~OverlayProvider~~ ✓ / ~~UPPopup~~ ✓ / ~~UPCopy~~ ✓ / ~~UPCityLocate~~ ✓ / ~~UPCateTab~~ ✓ / ~~UPPoster~~ ✓
 
 **The classification lesson**: four entries on this list were not what they said.
 `UPSignature` theme reactivity was the local *demo* failing to replicate what the

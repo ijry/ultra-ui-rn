@@ -20,6 +20,8 @@ export type UPPosterView = {
     textAlign?: 'left' | 'center' | 'right';
     backgroundColor?: string;
     borderRadius?: UPDimension;
+    /** Source css uses `radius` (poster.nvue:56,85); treated as `borderRadius`. */
+    radius?: UPDimension;
   };
 };
 
@@ -47,10 +49,17 @@ export type UPPosterProps = {
   customClass?: string;
   /** Native export boundary: inject `exportImageAdapter` (e.g. react-native-view-shot) to produce a real image. */
   exportImageAdapter?: (json: UPPosterJson, layout: { width: number; height: number }) => Promise<UPPosterExportResult>;
+  /** Source `@export` event: fired with the result whenever `exportImage()` resolves. */
+  onExport?: (result: UPPosterExportResult) => void;
 };
 
 function dim(value: UPDimension | undefined, fallback: number): number {
   return value === undefined || value === '' ? fallback : getPx(value);
+}
+
+/** Source css exposes the corner radius as `radius`; RN styles it via `borderRadius`. */
+function radiusOf(css: UPPosterView['css']): number {
+  return dim(css?.borderRadius ?? css?.radius, 0);
 }
 
 export const UPPoster = forwardRef<UPPosterHandle, UPPosterProps>(function UPPoster(input, ref) {
@@ -63,10 +72,11 @@ export const UPPoster = forwardRef<UPPosterHandle, UPPosterProps>(function UPPos
 
   useImperativeHandle(ref, () => ({
     exportImage: async () => {
-      if (props.exportImageAdapter) {
-        return props.exportImageAdapter(json, { width, height });
-      }
-      return { path: null, width, height };
+      const result = props.exportImageAdapter
+        ? await props.exportImageAdapter(json, { width, height })
+        : { path: null, width, height };
+      input.onExport?.(result);
+      return result;
     },
   }));
 
@@ -87,7 +97,7 @@ export const UPPoster = forwardRef<UPPosterHandle, UPPosterProps>(function UPPos
                 source={{ uri: view.src ?? view.url }}
                 style={[
                   position,
-                  { borderRadius: dim(css.borderRadius, 0), height: viewHeight, width: viewWidth },
+                  { borderRadius: radiusOf(css), height: viewHeight, width: viewWidth },
                 ]}
                 testID={`up-poster-image-${index}`}
               />
@@ -117,7 +127,7 @@ export const UPPoster = forwardRef<UPPosterHandle, UPPosterProps>(function UPPos
                   ...position,
                   alignItems: 'center',
                   backgroundColor: '#f2f3f5',
-                  borderRadius: dim(css.borderRadius, 0),
+                  borderRadius: radiusOf(css),
                   height: viewHeight,
                   justifyContent: 'center',
                   width: viewWidth,
@@ -134,7 +144,7 @@ export const UPPoster = forwardRef<UPPosterHandle, UPPosterProps>(function UPPos
                 style={{
                   ...position,
                   backgroundColor: css.backgroundColor ?? 'transparent',
-                  borderRadius: dim(css.borderRadius, 0),
+                  borderRadius: radiusOf(css),
                   height: viewHeight,
                   width: viewWidth,
                 }}

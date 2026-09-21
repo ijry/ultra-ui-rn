@@ -23,6 +23,7 @@ const PROPS = [
     default: '—',
     desc: 'RN 原生接缝：注入 react-native-view-shot 才能拿到真实 path',
   },
+  { prop: 'onExport', type: '(result) => void', default: '—', desc: '海报导出完成时触发（源 @export）' },
 ];
 
 // 海报配置数据（与源库逐字一致）
@@ -41,7 +42,7 @@ const POSTER_CONFIG: UPPosterJson = {
         position: 'absolute',
         left: '40rpx',
         top: '144rpx',
-        // 缺失：UPPoster 读 backgroundColor / borderRadius，源库的 background / radius / shadow 均不生效
+        // 缺失：UPPoster 读 backgroundColor，源库的 background / shadow 不生效；radius 现已支持
         background: '#fff',
         radius: '16rpx',
         width: '670rpx',
@@ -157,8 +158,6 @@ export default function PosterDemo() {
       updatePosterPreviewSize(result.width, result.height);
       // 缺失：未注入 exportImageAdapter 时 exportImage() 的 path 恒为 null，预览区不会出现
       setPosterImageUrl(result.path ?? '');
-      // 缺失：UPPoster 没有 export 事件（源库 @export="onPosterExport"），只能在此手动回调
-      onPosterExport(result);
       toast.hide();
       toast.success('海报生成成功');
     } catch (error) {
@@ -188,7 +187,7 @@ export default function PosterDemo() {
         {/* 海报组件：源库是离屏 canvas（不可见），本地 UPPoster 用真实 RN 视图渲染，故可见。
             750rpx 正好等于屏宽，用 -30 负边距抵掉 DemoPage + PageItem 的 15+15 内边距。 */}
         <View style={s.posterStage}>
-          <UPPoster json={POSTER_CONFIG} ref={poster} />
+          <UPPoster json={POSTER_CONFIG} onExport={onPosterExport} ref={poster} />
         </View>
       </PageItem>
 
