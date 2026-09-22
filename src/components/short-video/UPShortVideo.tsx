@@ -2,12 +2,27 @@ import React, { useState } from 'react';
 import { Dimensions, Pressable, ScrollView, Text, View, type NativeScrollEvent, type NativeSyntheticEvent, type StyleProp, type ViewStyle } from 'react-native';
 import { useUPConfig } from '../../config/useUPConfig';
 
+export type UPShortVideoAuthor = { avatar?: string; name?: string; desc?: string };
+
 export type UPShortVideoItem = Record<string, unknown> & {
   id?: string | number;
   title?: string;
   cover?: string;
   url?: string;
+  /** Source per-video background (shortVideo.nvue:109); used by the placeholder. */
+  bgColor?: string;
+  /** Source creator block (shortVideo.nvue:110-114); shown as an overlay. */
+  author?: UPShortVideoAuthor;
 };
+
+function bgColorOf(item: UPShortVideoItem): string {
+  return typeof item.bgColor === 'string' && item.bgColor ? item.bgColor : '#1a1a1a';
+}
+
+function authorOf(item: UPShortVideoItem): UPShortVideoAuthor | null {
+  const author = item.author;
+  return author && typeof author === 'object' ? (author as UPShortVideoAuthor) : null;
+}
 
 export type UPShortVideoProps = {
   tabsList?: readonly { name: string }[];
@@ -123,11 +138,22 @@ export function UPShortVideo(input: UPShortVideoProps): React.JSX.Element {
             {props.renderVideo ? (
               props.renderVideo(item, index)
             ) : (
-              <Pressable onPress={() => togglePlay(index)} style={{ alignItems: 'center', backgroundColor: '#1a1a1a', flex: 1, justifyContent: 'center' }} testID={`up-short-video-player-${index}`}>
+              // The real video needs the renderVideo native seam; the placeholder
+              // still honours the per-video bgColor and author block upstream
+              // carries (shortVideo.nvue:109-114), which need no native player.
+              <Pressable onPress={() => togglePlay(index)} style={{ alignItems: 'center', backgroundColor: bgColorOf(item), flex: 1, justifyContent: 'center' }} testID={`up-short-video-player-${index}`}>
                 <Text style={{ color: '#ffffff', fontSize: 40 }}>{playing && currentIndex === index ? '⏸' : '▶'}</Text>
                 <Text style={{ color: '#cccccc', fontSize: 14, marginTop: 10 }}>{String(item.title ?? `视频 ${index + 1}`)}</Text>
               </Pressable>
             )}
+            {authorOf(item) ? (
+              <View style={{ bottom: 120, left: 12, position: 'absolute', right: 90, zIndex: 5 }} testID={`up-short-video-author-${index}`}>
+                <Text style={{ color: '#ffffff', fontSize: 15, fontWeight: '600' }}>{`@${authorOf(item)!.name ?? ''}`}</Text>
+                {authorOf(item)!.desc ? (
+                  <Text numberOfLines={2} style={{ color: '#eeeeee', fontSize: 13, marginTop: 4 }}>{authorOf(item)!.desc}</Text>
+                ) : null}
+              </View>
+            ) : null}
             {/* right action rail */}
             {props.renderActions?.(item, index) ?? (
               <View style={{ bottom: 120, position: 'absolute', right: 12, zIndex: 5 }}>

@@ -200,10 +200,13 @@ example page. None is a blocker; all are documented in the demo pages themselves
   folding one into the other.
 
 ### UPShortVideo
-- **Reads only `item.id` and `item.title`** — upstream's `videoUrl`, `progress`,
-  `bgColor` and `author` fields are ignored
+- ~~**Ignores `item.bgColor` and `item.author`**~~ — ✓ Fixed 2026-09-05: the default
+  placeholder now paints the per-video `bgColor` and shows an author overlay
+  (name + desc), matching the fields upstream carries (shortVideo.nvue:109-114).
+  `videoUrl` / `progress` still route through the `renderVideo` native player
+  seam and its events — a platform boundary, not a defect.
 - **Renders its own progress bar with a `+10%` button** that has no upstream
-  counterpart and overlaps an injected tabbar
+  counterpart and overlaps an injected tabbar (demo artefact, recorded boundary)
 
 ### UPCropper
 - **No default slot and no adapter seam.** Upstream nests the trigger inside
@@ -371,10 +374,10 @@ finally made the cause visible.
 ## Summary
 
 **Total gaps identified**: 40 (20 from the first replication rounds, 20 added 2026-09-04)  
-**Fixed**: 33 — the original 18 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor + canvas peer, UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags), the eight found on 2026-09-04 (UPTransition, UPNoNetwork, UPReadMore, UPSelect, the overlay host's missing containing block, UPPopup.onOpen, UPPopup centre mode, UPCopy nested press), plus UPCityLocate.hotCity, UPCateTab.renderPageItem width, UPPoster onExport + radius, and UPTable2 cell/column text styling + optional key + loose expandRowKeys on 2026-09-05
-**Remaining**: 7
+**Fixed**: 34 — the original 18 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor + canvas peer, UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags), the eight found on 2026-09-04 (UPTransition, UPNoNetwork, UPReadMore, UPSelect, the overlay host's missing containing block, UPPopup.onOpen, UPPopup centre mode, UPCopy nested press), plus UPCityLocate.hotCity, UPCateTab.renderPageItem width, UPPoster onExport + radius, UPTable2 cell/column text styling + optional key + loose expandRowKeys, and UPShortVideo bgColor + author on 2026-09-05
+**Remaining**: 6
 - Critical (defined but broken): 0
-- Actionable API gaps: UPCropper slot/adapter seam, and UPShortVideo item-field rendering
+- Actionable API gaps: UPCropper slot/adapter seam
 - Platform/recorded boundaries: UPCateTab CSS `calc()` height, UPLoadingIcon.mode, native seam demos, and the React Native limitations listed below
 - Upstream defects retained as references: UPLazyLoad's nonexistent `statusChange` / `clickImg` events
 
@@ -382,7 +385,7 @@ finally made the cause visible.
 1. ~~UPParse (6 gaps, all fixed)~~ ✓ — `navigateTo` anchor scrolling verified on an
    Android emulator; see "Scroll container composition"
 2. UPLazyLoad (2 upstream bugs) — statusChange/clickImg events referenced in demo but never emitted by component
-3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓ / ~~UPMarkdown~~ ✓ / ~~UPButton~~ ✓ / ~~UPVirtualList~~ ✓ / ~~UPSignature~~ ✓ / ~~UPTransition~~ ✓ / ~~UPNoNetwork~~ ✓ / ~~UPReadMore~~ ✓ / ~~UPSelect~~ ✓ / ~~OverlayProvider~~ ✓ / ~~UPPopup~~ ✓ / ~~UPCopy~~ ✓ / ~~UPCityLocate~~ ✓ / ~~UPCateTab~~ ✓ / ~~UPPoster~~ ✓
+3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓ / ~~UPMarkdown~~ ✓ / ~~UPButton~~ ✓ / ~~UPVirtualList~~ ✓ / ~~UPSignature~~ ✓ / ~~UPTransition~~ ✓ / ~~UPNoNetwork~~ ✓ / ~~UPReadMore~~ ✓ / ~~UPSelect~~ ✓ / ~~OverlayProvider~~ ✓ / ~~UPPopup~~ ✓ / ~~UPCopy~~ ✓ / ~~UPCityLocate~~ ✓ / ~~UPCateTab~~ ✓ / ~~UPPoster~~ ✓ / ~~UPTable2~~ ✓ / ~~UPShortVideo~~ ✓
 
 **The classification lesson**: four entries on this list were not what they said.
 `UPSignature` theme reactivity was the local *demo* failing to replicate what the

@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { UPRoot, UPShortVideo } from '../../src';
 
 function renderRoot(node: React.ReactElement) {
@@ -65,6 +65,30 @@ it('uses the injected renderVideo slot', () => {
     />,
   );
   expect(screen.getByTestId('custom-video-0')).toHaveTextContent(/V1/);
+});
+
+it('paints the default placeholder with the item bgColor', () => {
+  // Upstream feeds each video a bgColor (shortVideo.nvue:109); the default
+  // placeholder ignored it and hardcoded a background.
+  const screen = renderRoot(
+    <UPShortVideo videoList={[{ id: 1, title: 'V1', bgColor: '#123456' }]} />,
+  );
+  expect(
+    StyleSheet.flatten(screen.getByTestId('up-short-video-player-0').props.style).backgroundColor,
+  ).toBe('#123456');
+});
+
+it('renders the author name and desc when no renderVideo is injected', () => {
+  // Upstream carries an author block per video (shortVideo.nvue:110-114). Without
+  // it the placeholder only showed the title.
+  const screen = renderRoot(
+    <UPShortVideo
+      videoList={[{ id: 1, title: 'V1', author: { name: '创作者1', desc: '视频描述' } }]}
+    />,
+  );
+  const author = screen.getByTestId('up-short-video-author-0');
+  expect(author).toHaveTextContent(/创作者1/);
+  expect(author).toHaveTextContent(/视频描述/);
 });
 
 it('emits progressChange on progress button', () => {

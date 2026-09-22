@@ -65,8 +65,8 @@ type ShortVideo = UPShortVideoItem & {
 
 const TABS_LIST = [{ name: '推荐' }, { name: '关注' }, { name: '朋友' }, { name: '本地' }];
 
-// 数据与源库逐字一致。缺失：UPShortVideo 不消费 videoUrl / progress / bgColor / author，
-// 也不渲染作者信息浮层（源库组件内部有 <video> 与作者区）。
+// 数据与源库逐字一致。bgColor 与 author 现由占位层消费（背景色 + 作者浮层）；
+// videoUrl / progress 仍需 renderVideo 原生播放器接缝，属平台边界而非缺陷。
 const VIDEO_LIST: ShortVideo[] = [
   {
     videoUrl: 'https://uview-plus.jiangruyi.com/big/rjtsdl.MP4',
