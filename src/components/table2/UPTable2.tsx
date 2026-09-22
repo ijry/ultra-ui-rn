@@ -21,6 +21,7 @@ import {
   createTable2CellPayload,
   filterTable2Rows,
   flattenTable2Rows,
+  normalizeTable2Keys,
   normalizeTable2Tree,
   resolveTable2Rows,
   sortTable2Rows,
@@ -153,7 +154,15 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
     [columns],
   );
   const columnsWithIndex = useMemo(
-    () => columns.map((column, columnIndex) => ({ column, columnIndex })),
+    // Resolve an effective key once so every downstream consumer (React key,
+    // testID, sort field, fixed-column matching) can rely on it. Upstream's
+    // selection/expand columns have no key; derive one from the type, else index.
+    () => columns.map((column, columnIndex) => ({
+      column: column.key !== undefined
+        ? (column as UPTable2Column<T> & { key: string })
+        : { ...column, key: column.type ?? `__col${columnIndex}` },
+      columnIndex,
+    })),
     [columns],
   );
   const fixedColumnsWithIndex = useMemo(
@@ -221,9 +230,13 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
   const selectedKeys = props.selectedRowKeys !== undefined
     ? props.selectedRowKeys
     : localSelectedKeys;
-  const expandedKeys = controlledExpandedKeys !== undefined
-    ? controlledExpandedKeys
-    : localExpandedKeys;
+  const expandedKeys = useMemo(
+    () => normalizeTable2Keys(
+      model,
+      controlledExpandedKeys !== undefined ? controlledExpandedKeys : localExpandedKeys,
+    ),
+    [controlledExpandedKeys, localExpandedKeys, model],
+  );
   const currentKey = props.currentRowKey !== undefined
     ? props.currentRowKey
     : localCurrentKey;
@@ -383,26 +396,29 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
   ): void => {
     props.onHeaderClick?.(column, columnIndex);
     if (!(column.sortable ?? props.sortable)) return;
+    // Sorting keys off the column field; a keyless column cannot be a sort field.
+    const field = column.key;
+    if (field === undefined) return;
     const orders = column.sortOrders?.length
       ? column.sortOrders
       : props.sortOrders?.length
         ? props.sortOrders
         : ['ascending', 'descending'] as const;
     const currentIndex = sortConditions.findIndex(
-      (condition) => condition.field === column.key,
+      (condition) => condition.field === field,
     );
     const currentOrder = currentIndex >= 0 ? sortConditions[currentIndex].order : null;
     const nextOrderIndex = currentOrder === null
       ? 0
       : orders.indexOf(currentOrder) + 1;
     const next = nextOrderIndex >= orders.length
-      ? sortConditions.filter((condition) => condition.field !== column.key)
+      ? sortConditions.filter((condition) => condition.field !== field)
       : props.multiSort
         ? [
-            ...sortConditions.filter((condition) => condition.field !== column.key),
-            { field: column.key, order: orders[nextOrderIndex], column },
+            ...sortConditions.filter((condition) => condition.field !== field),
+            { field, order: orders[nextOrderIndex], column },
           ]
-        : [{ field: column.key, order: orders[nextOrderIndex], column }];
+        : [{ field, order: orders[nextOrderIndex], column }];
     setSortConditions(next);
     props.onSortChange?.(next);
   };
@@ -535,7 +551,9 @@ function UPTable2Inner<T extends object = Record<string, unknown>>(
           );
           const cellStyle = props.cellStyle?.(payload);
           const cellTextStyle = textStyleFrom([column.style, cellStyle]);
-          const value = valueAt(row.row, column.key);
+          // A keyless column (selection/expand) has no data field; its content
+          // comes from the type branch or renderCell, not a row value.
+          const value = column.key !== undefined ? valueAt(row.row, column.key) : undefined;
           const content = column.renderCell?.(payload)
             ?? renderContent(value === undefined || value === null ? null : String(value), cellTextStyle);
           const isExpandColumn = column.type === 'expand'

@@ -15,7 +15,12 @@ export type UPTable2Align = 'left' | 'center' | 'right';
 export type UPTable2CellStyle = StyleProp<ViewStyle & TextStyle>;
 
 export type UPTable2Column<T = unknown> = {
-  key: string;
+  /**
+   * Data field / column identity. Optional because upstream's selection and
+   * expand columns carry none; when omitted the component derives one from the
+   * column `type` or its index.
+   */
+  key?: string;
   title?: React.ReactNode;
   label?: React.ReactNode;
   width?: UPDimension;

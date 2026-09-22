@@ -174,13 +174,14 @@ example page. None is a blocker; all are documented in the demo pages themselves
   A custom `renderCell` returns its own element and is left untouched. `column.style`
   now also styles the body cell box, not only the header, as upstream styles the
   whole column.
-- **`UPTable2Column.key` is required**; upstream's selection columns carry no key
-- **`expandRowKeys` compares keys by identity, not loosely.** Upstream passes
-  `['1']` (a string) against numeric `id`s and still pre-expands; locally the
-  resolved key is the number `1`, so nothing matches and 树形结构 renders
-  unexpanded. Upstream's own tree section has its `type: 'expand'` column
-  commented out (`table2.nvue:202`), so neither version expands interactively —
-  the difference is only the pre-expanded row.
+- ~~**`UPTable2Column.key` is required**~~ — ✓ Fixed 2026-09-05: `key` is optional;
+  the component derives an effective key from the column `type` (else index) so
+  upstream's keyless selection/expand columns work without inventing one.
+- ~~**`expandRowKeys` compares keys by identity, not loosely.**~~ — ✓ Fixed 2026-09-05:
+  caller keys are normalised against the model's node keys by string form
+  (`normalizeTable2Keys`), so upstream's string `['1']` pre-expands a numeric
+  `id: 1` row. Exact matches are unchanged; keys with no node fall through
+  untouched.
 
 ### UPCateTab
 - ~~**`renderPageItem` slot content was forced into a 33.33%-wide cell**~~ — ✓ Fixed
@@ -370,10 +371,10 @@ finally made the cause visible.
 ## Summary
 
 **Total gaps identified**: 40 (20 from the first replication rounds, 20 added 2026-09-04)  
-**Fixed**: 31 — the original 18 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor + canvas peer, UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags), the eight found on 2026-09-04 (UPTransition, UPNoNetwork, UPReadMore, UPSelect, the overlay host's missing containing block, UPPopup.onOpen, UPPopup centre mode, UPCopy nested press), plus UPCityLocate.hotCity, UPCateTab.renderPageItem width, UPPoster onExport + radius, and UPTable2 cell/column text styling on 2026-09-05
-**Remaining**: 9
+**Fixed**: 33 — the original 18 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor + canvas peer, UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags), the eight found on 2026-09-04 (UPTransition, UPNoNetwork, UPReadMore, UPSelect, the overlay host's missing containing block, UPPopup.onOpen, UPPopup centre mode, UPCopy nested press), plus UPCityLocate.hotCity, UPCateTab.renderPageItem width, UPPoster onExport + radius, and UPTable2 cell/column text styling + optional key + loose expandRowKeys on 2026-09-05
+**Remaining**: 7
 - Critical (defined but broken): 0
-- Actionable API gaps: UPTable2 required-key + loose expandRowKeys, UPCropper slot/adapter seam, and UPShortVideo item-field rendering
+- Actionable API gaps: UPCropper slot/adapter seam, and UPShortVideo item-field rendering
 - Platform/recorded boundaries: UPCateTab CSS `calc()` height, UPLoadingIcon.mode, native seam demos, and the React Native limitations listed below
 - Upstream defects retained as references: UPLazyLoad's nonexistent `statusChange` / `clickImg` events
 

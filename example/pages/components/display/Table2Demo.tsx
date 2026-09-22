@@ -122,8 +122,8 @@ const cellStyleFunc = (scope: UPTable2CellPayload<Row>) => {
   return {};
 };
 const columnsCheck: UPTable2Column<Row>[] = [
-  // 复选框列（上游该列没有 key，本地 UPTable2Column.key 是必填项）
-  { key: 'selection', type: 'selection', width: '50px' },
+  // 复选框列，与上游一致不带 key（组件按 type 自动派生 key）
+  { type: 'selection', width: '50px' },
   // 普通列
   { title: '姓名', key: 'name' },
   { title: '年龄', key: 'age' },
@@ -160,11 +160,13 @@ const treeCell = (scope: UPTable2CellPayload<TreeRow>): React.ReactNode => {
   if (scope.column.key === 'actions') {
     return <UPTag size="mini" text="编辑" type="primary" />;
   }
-  const value = (scope.row as Record<string, unknown>)[scope.column.key];
+  const value = scope.column.key === undefined
+    ? undefined
+    : (scope.row as Record<string, unknown>)[scope.column.key];
   return <Text>{value === undefined || value === null || value === '' ? '-' : String(value)}</Text>;
 };
 const columns3: UPTable2Column<TreeRow>[] = [
-  { key: 'selection', type: 'selection', width: '50px' },
+  { type: 'selection', width: '50px' },
   // 上游注释掉了 { title: '', type: 'expand', width: '50px' }
   { title: '名称', key: 'name', width: '150px', fixed: 'left', renderCell: treeCell },
   { title: '年龄', key: 'age', width: '80px', renderCell: treeCell },
@@ -332,8 +334,8 @@ export default function Table2Demo() {
         {/* 逐字照抄上游，包括 expandRowKeys=['1']。上游 columns3 里的
             `{ title: '', type: 'expand' }` 本来就是注释掉的（table2.nvue:202），
             所以上游这一节同样没有展开箭头，本地不补。
-            唯一落差：上游给的是字符串 '1'，本地按 rowKey='id' 解析出的 key 是数字 1，
-            类型不同故命中不了，预展开不生效（已记入 REPLICATION_GAPS）。 */}
+            上游给的是字符串 '1'，本地按 rowKey='id' 解析出的 key 是数字 1；组件现在
+            按字符串宽松匹配，预展开与上游一致生效。 */}
         <UPTable2
           columns={columns3}
           data={tableData3}

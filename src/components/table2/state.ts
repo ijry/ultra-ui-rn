@@ -213,6 +213,22 @@ export function collectTable2SelectableKeys<T extends object>(
   return [...model.nodes.keys()];
 }
 
+/**
+ * Map caller-supplied keys onto the model's actual node keys, matching loosely by
+ * string form. Upstream passes `expandRowKeys: ['1']` (string) against numeric
+ * `id`s and still pre-expands; a resolved numeric key of `1` must accept the
+ * string `'1'`. Exact matches are returned unchanged; keys with no node fall
+ * through untouched so nothing is silently dropped.
+ */
+export function normalizeTable2Keys<T extends object>(
+  model: UPTable2TreeModel<T>,
+  keys: readonly UPKey[],
+): UPKey[] {
+  const byString = new Map<string, UPKey>();
+  for (const nodeKey of model.nodes.keys()) byString.set(String(nodeKey), nodeKey);
+  return keys.map((key) => (model.nodes.has(key) ? key : byString.get(String(key)) ?? key));
+}
+
 export function resolveTable2Rows<T extends object>(
   model: UPTable2TreeModel<T>,
   keys: readonly UPKey[],

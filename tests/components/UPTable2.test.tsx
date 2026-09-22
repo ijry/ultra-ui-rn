@@ -69,6 +69,22 @@ it('accepts the source expandRowKeys controlled prop', () => {
   expect(screen.getByTestId('up-table2-row-child')).toBeTruthy();
 });
 
+it('pre-expands when expandRowKeys uses a string against a numeric row key', () => {
+  // Upstream passes expandRowKeys: ['1'] (string) against numeric ids
+  // (table2.nvue), and still pre-expands. A resolved numeric key of 1 must match
+  // the string '1' loosely.
+  const screen = renderRoot(
+    <UPTable2
+      columns={[{ key: 'name', title: 'Name', type: 'expand' }]}
+      data={[{ id: 1, name: 'Root', children: [{ id: 2, name: 'Child' }] }]}
+      expandRowKeys={['1']}
+      rowKey="id"
+    />,
+  );
+
+  expect(screen.getByTestId('up-table2-row-2')).toBeTruthy();
+});
+
 it('applies source column style to the header cell', () => {
   const screen = renderRoot(
     <UPTable2
@@ -119,6 +135,23 @@ it('routes a cellStyle text colour to the cell text', () => {
   const cell = screen.getByTestId('up-table2-cell-a-name');
   expect(StyleSheet.flatten(cell.props.style).backgroundColor).toBe('blue');
   expect(StyleSheet.flatten(cell.findByType(Text).props.style).color).toBe('yellow');
+});
+
+it('accepts a keyless selection column and still toggles selection', () => {
+  // Upstream's selection column carries no `key` (table2.nvue). The keyless column
+  // gets a derived key from its type, so selection still works without the caller
+  // inventing one.
+  const onSelectionChange = jest.fn();
+  const screen = renderRoot(
+    <UPTable2
+      columns={[{ type: 'selection' }, { key: 'name', title: 'Name' }]}
+      data={[{ id: 'a', name: 'Ada' }]}
+      onSelectionChange={onSelectionChange}
+    />,
+  );
+
+  fireEvent.press(screen.getByTestId('up-table2-select-a'));
+  expect(onSelectionChange).toHaveBeenCalled();
 });
 
 it('renders an empty state and preserves explicit fixed dimensions', () => {
