@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { Image, PanResponder, Pressable, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useUPConfig } from '../../config/useUPConfig';
 import { getPx, range } from '../../utils';
@@ -17,6 +17,25 @@ export type UPCropperConfirmPayload = {
   path: string | null;
   index?: string | number;
   data: UPCropperConfirmData;
+};
+
+/** Per-call options for `chooseImage`, mirroring the source method's second arg. */
+export type UPCropperChooseOptions = {
+  imageSrc?: string;
+  index?: string | number;
+  canChangeSize?: boolean;
+  inner?: boolean;
+  areaWidth?: string;
+  areaHeight?: string;
+  exportWidth?: string;
+  exportHeight?: string;
+};
+
+export type UPCropperHandle = {
+  /** Source `chooseImage(index, options)`: resolve an image (via `options.imageSrc`
+   *  or the injected `imagePickerAdapter`) and open it for cropping with per-call
+   *  overrides. Resolves once the image is set; a null pick is a no-op (cancel). */
+  chooseImage: (index?: string | number, options?: UPCropperChooseOptions) => Promise<void>;
 };
 
 export type UPCropperProps = {
@@ -42,6 +61,11 @@ export type UPCropperProps = {
   customStyle?: StyleProp<ViewStyle>;
   /** @deprecated React Native has no CSS class runtime. */
   customClass?: string;
+  /** Native image-picker boundary: inject a picker (e.g. react-native-image-picker)
+   *  that resolves the chosen image URI, or null if the user cancelled. Source
+   *  drives this through `uni.chooseImage`; `chooseImage()` calls it when no
+   *  `imageSrc` is supplied. */
+  imagePickerAdapter?: (options?: UPCropperChooseOptions) => Promise<string | null>;
   /** Source `avtinit` event: fires when the cropper is initialized. */
   onAvtinit?: () => void;
   /** Source `confirm` event: fires with crop params on confirm.
@@ -53,15 +77,28 @@ export type UPCropperProps = {
 
 const AREA = 280;
 
-export function UPCropper(input: UPCropperProps): React.JSX.Element {
+export const UPCropper = forwardRef<UPCropperHandle, UPCropperProps>(function UPCropper(input, ref) {
   const props = { ...useUPConfig().props.cropper, ...input } as UPCropperProps;
-  const area = getPx(props.areaWidth ?? '300rpx');
+  // A chooseImage() call layers its own imageSrc + crop options over the props,
+  // the way the source method's second arg overrides the component config.
+  const [chosen, setChosen] = useState<UPCropperChooseOptions | null>(null);
+  const resolved = { ...props, ...(chosen ?? {}) } as UPCropperProps & UPCropperChooseOptions;
+  const imageSrc = resolved.imageSrc;
+  const area = getPx(resolved.areaWidth ?? '300rpx');
   const [box, setBox] = useState({ x: (AREA - area) / 2, y: (AREA - area) / 2, size: area });
   const [scale, setScale] = useState(1);
 
   useEffect(() => {
     input.onAvtinit?.();
   }, []);
+
+  useImperativeHandle(ref, () => ({
+    chooseImage: async (index, options = {}) => {
+      const picked = options.imageSrc ?? (await input.imagePickerAdapter?.(options)) ?? null;
+      if (picked === null) return; // cancelled — leave the current image untouched
+      setChosen({ ...options, imageSrc: picked, index: options.index ?? index });
+    },
+  }));
 
   const moveResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
@@ -89,16 +126,16 @@ export function UPCropper(input: UPCropperProps): React.JSX.Element {
 
   const confirm = () => {
     input.onConfirm?.({
-      avatar: props.imageSrc ?? '',
+      avatar: imageSrc ?? '',
       path: null,
-      index: props.index,
+      index: resolved.index,
       data: {
         x: Math.round(box.x),
         y: Math.round(box.y),
         width: Math.round(box.size),
         height: Math.round(box.size),
-        destWidth: Math.round(getPx(props.exportWidth ?? '260rpx')),
-        destHeight: Math.round(getPx(props.exportHeight ?? '260rpx')),
+        destWidth: Math.round(getPx(resolved.exportWidth ?? '260rpx')),
+        destHeight: Math.round(getPx(resolved.exportHeight ?? '260rpx')),
       },
     });
   };
@@ -116,10 +153,10 @@ export function UPCropper(input: UPCropperProps): React.JSX.Element {
         }}
         testID="up-cropper-stage"
       >
-        {props.imageSrc ? (
+        {imageSrc ? (
           <Image
             resizeMode="contain"
-            source={{ uri: props.imageSrc }}
+            source={{ uri: imageSrc }}
             style={{ height: AREA, width: AREA }}
             testID="up-cropper-image"
           />
@@ -203,4 +240,4 @@ export function UPCropper(input: UPCropperProps): React.JSX.Element {
       </View>
     </View>
   );
-}
+});

@@ -209,10 +209,18 @@ example page. None is a blocker; all are documented in the demo pages themselves
   counterpart and overlaps an injected tabbar (demo artefact, recorded boundary)
 
 ### UPCropper
-- **No default slot and no adapter seam.** Upstream nests the trigger inside
-  `<up-cropper>` and drives selection through `uni.chooseImage`; the local
-  component accepts neither `children` nor an injection prop, so the demo places
-  the trigger outside it
+- ~~**No adapter seam for image selection**~~ — ✓ Fixed 2026-09-05: `forwardRef`
+  handle `chooseImage(index, options)` mirrors the source ref method — it takes
+  `options.imageSrc` or calls the injected `imagePickerAdapter` (the
+  `uni.chooseImage` boundary), then opens the picked image with per-call crop
+  overrides (areaWidth/exportWidth/canChangeSize/inner). A null pick is a no-op
+  (cancel). CropperDemo's 可变大小 section now drives it through the ref with a
+  mock picker.
+- **Default slot as auto-trigger not replicated** — upstream section 1 nests the
+  avatar inside `<up-cropper>` as its trigger. The exact click-to-pick semantics
+  of that slot are not derivable from the demo-only sources (no component source
+  vendored), so that section keeps an external trigger rather than guessing.
+  Recorded boundary, not a fabricated behaviour.
 
 ### UPLoadingIcon
 - **`mode` renders identically for all three values** (one `ActivityIndicator`),
@@ -374,10 +382,11 @@ finally made the cause visible.
 ## Summary
 
 **Total gaps identified**: 40 (20 from the first replication rounds, 20 added 2026-09-04)  
-**Fixed**: 34 — the original 18 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor + canvas peer, UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags), the eight found on 2026-09-04 (UPTransition, UPNoNetwork, UPReadMore, UPSelect, the overlay host's missing containing block, UPPopup.onOpen, UPPopup centre mode, UPCopy nested press), plus UPCityLocate.hotCity, UPCateTab.renderPageItem width, UPPoster onExport + radius, UPTable2 cell/column text styling + optional key + loose expandRowKeys, and UPShortVideo bgColor + author on 2026-09-05
-**Remaining**: 6
+**Fixed**: 35 — the original 18 (UPMarkdown.showLineNumber, UPCoupon.circle/amountNode/titleNode, UPButton.type="default", UPLazyLoad.borderRadius, UPColorPicker.children, UPNovelReader.toolbarExtraNode, UPSignature theme bgColor + canvas peer, UPVirtualList.scrollTop echo, UPParse.containerStyle documented + domain + scrollTable + useAnchor + image rendering + missing tags), the eight found on 2026-09-04 (UPTransition, UPNoNetwork, UPReadMore, UPSelect, the overlay host's missing containing block, UPPopup.onOpen, UPPopup centre mode, UPCopy nested press), plus UPCityLocate.hotCity, UPCateTab.renderPageItem width, UPPoster onExport + radius, UPTable2 cell/column text styling + optional key + loose expandRowKeys, UPShortVideo bgColor + author, and UPCropper imagePickerAdapter + chooseImage ref on 2026-09-05
+**Remaining**: 5 — none are actionable API gaps; all are platform/recorded boundaries
 - Critical (defined but broken): 0
-- Actionable API gaps: UPCropper slot/adapter seam
+- Platform / recorded boundaries: UPCateTab CSS `calc()` height, UPCropper default-slot auto-trigger, UPLoadingIcon.mode, UPShortVideo own progress bar, native seam demos (renderPdf/renderVideo/exportImageAdapter undemonstrated on device), UPPullRefresh virtual-list section, UPIndexList explicit height
+- Upstream defects retained as references: UPLazyLoad's nonexistent `statusChange` / `clickImg` events
 - Platform/recorded boundaries: UPCateTab CSS `calc()` height, UPLoadingIcon.mode, native seam demos, and the React Native limitations listed below
 - Upstream defects retained as references: UPLazyLoad's nonexistent `statusChange` / `clickImg` events
 
@@ -385,7 +394,7 @@ finally made the cause visible.
 1. ~~UPParse (6 gaps, all fixed)~~ ✓ — `navigateTo` anchor scrolling verified on an
    Android emulator; see "Scroll container composition"
 2. UPLazyLoad (2 upstream bugs) — statusChange/clickImg events referenced in demo but never emitted by component
-3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓ / ~~UPMarkdown~~ ✓ / ~~UPButton~~ ✓ / ~~UPVirtualList~~ ✓ / ~~UPSignature~~ ✓ / ~~UPTransition~~ ✓ / ~~UPNoNetwork~~ ✓ / ~~UPReadMore~~ ✓ / ~~UPSelect~~ ✓ / ~~OverlayProvider~~ ✓ / ~~UPPopup~~ ✓ / ~~UPCopy~~ ✓ / ~~UPCityLocate~~ ✓ / ~~UPCateTab~~ ✓ / ~~UPPoster~~ ✓ / ~~UPTable2~~ ✓ / ~~UPShortVideo~~ ✓
+3. ~~UPCoupon~~ ✓ / ~~UPColorPicker~~ ✓ / ~~UPNovelReader~~ ✓ / ~~UPMarkdown~~ ✓ / ~~UPButton~~ ✓ / ~~UPVirtualList~~ ✓ / ~~UPSignature~~ ✓ / ~~UPTransition~~ ✓ / ~~UPNoNetwork~~ ✓ / ~~UPReadMore~~ ✓ / ~~UPSelect~~ ✓ / ~~OverlayProvider~~ ✓ / ~~UPPopup~~ ✓ / ~~UPCopy~~ ✓ / ~~UPCityLocate~~ ✓ / ~~UPCateTab~~ ✓ / ~~UPPoster~~ ✓ / ~~UPTable2~~ ✓ / ~~UPShortVideo~~ ✓ / ~~UPCropper~~ ✓
 
 **The classification lesson**: four entries on this list were not what they said.
 `UPSignature` theme reactivity was the local *demo* failing to replicate what the

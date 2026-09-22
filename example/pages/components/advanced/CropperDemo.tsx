@@ -2,9 +2,9 @@
  * Cropper 图片裁剪
  * 严格复刻 uview-plus pages/componentsD/cropper/cropper.nvue
  */
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { UPAvatar, UPCropper, UPImage, type UPCropperConfirmPayload } from 'ultra-ui-rn';
+import { UPAvatar, UPCropper, UPImage, type UPCropperConfirmPayload, type UPCropperHandle } from 'ultra-ui-rn';
 import { DemoPage, PageItem, PropsTable } from '../_shared';
 
 const PROPS = [
@@ -28,14 +28,19 @@ const PROPS = [
   { prop: 'exportHeight', type: 'string', default: "'260rpx'", desc: '导出高度，回传为 data.destHeight' },
   { prop: 'fillColor', type: 'string', default: "'transparent'", desc: '导出留白填充色（RN 侧尚未实现）' },
   { prop: 'customStyle', type: 'StyleProp<ViewStyle>', default: '—', desc: '根节点样式' },
+  { prop: 'imagePickerAdapter', type: '(options?) => Promise<string | null>', default: '—', desc: 'RN 原生选图接缝：注入相册/相机，返回图片 URI 或 null（取消）' },
   { prop: 'onAvtinit', type: '() => void', default: '—', desc: '组件初始化完成时触发' },
   { prop: 'onConfirm', type: '(payload) => void', default: '—', desc: '确定时触发，path 需原生适配器' },
   { prop: 'onCancel', type: '() => void', default: '—', desc: '取消时触发' },
 ];
+// ref 方法 chooseImage(index, options)：优先用 options.imageSrc，否则走
+// imagePickerAdapter 选图，再带每次调用的裁剪参数打开裁剪。
 
-// 源库第 4 段先用 uni.chooseImage 取临时路径再交给 cropper；RN 没有 uni API，
-// 本地 UPCropper 也不带选图能力，四段统一用同一张远程示例图当 imageSrc。
 const IMAGE_SRC = 'https://uview-plus.jiangruyi.com/uview/swiper/swiper1.png';
+
+// 源库靠 uni.chooseImage 从相册选图；RN 没有该 API，demo 用一个 mock 适配器返回
+// 固定示例图来演示选图路径（真机应接 react-native-image-picker 等）。
+const mockPicker = async (): Promise<string | null> => IMAGE_SRC;
 
 export default function CropperDemo() {
   const [urls, setUrls] = useState<Record<number, string>>({});
@@ -51,11 +56,15 @@ export default function CropperDemo() {
 
   const cancel = () => setOpenIndex(null);
 
+  // section 2 走 ref 驱动：头像作外置触发器，点击调 chooseImage（对齐源库 chooseImage1）。
+  const cropperRef1 = useRef<UPCropperHandle>(null);
+
   return (
     <DemoPage>
       <PageItem title="头像裁剪">
         <View style={s.cutBox}>
-          {/* 缺失：UPCropper 没有默认插槽，源库把头像塞进 up-cropper 内当触发器，这里外置 Pressable */}
+          {/* 源库把头像作 up-cropper 默认插槽当触发器；本地插槽的自动触发语义无法从
+              demo-only 源码验证，故这一段仍用外置 Pressable + 声明式 imageSrc。 */}
           <Pressable onPress={() => setOpenIndex(0)} style={s.avatarWrapper}>
             <UPAvatar size="120px" src={urls[0]} />
           </Pressable>
@@ -77,23 +86,27 @@ export default function CropperDemo() {
 
       <PageItem title="可变大小">
         <View style={s.cutBox}>
-          {/* 缺失：UPCropper 无 ref，源库 chooseImage(1, {...}) 的参数这里改成声明式 props */}
-          <Pressable onPress={() => setOpenIndex(1)} style={s.avatarWrapper}>
+          {/* 对齐源库 chooseImage1(1, {...})：ref.chooseImage 经 imagePickerAdapter 选图，
+              再带每次调用的裁剪参数打开。cropper 常驻，未选图时显示占位提示。 */}
+          <Pressable
+            onPress={() => cropperRef1.current?.chooseImage(1, {
+              canChangeSize: true,
+              areaWidth: '300rpx',
+              areaHeight: '180rpx',
+              exportWidth: '260rpx',
+              exportHeight: '160rpx',
+            })}
+            style={s.avatarWrapper}
+          >
             <UPImage height="160px" src={urls[1]} />
           </Pressable>
-          {openIndex === 1 ? (
-            <UPCropper
-              areaHeight="180rpx"
-              areaWidth="300rpx"
-              canChangeSize
-              exportHeight="160rpx"
-              exportWidth="260rpx"
-              imageSrc={IMAGE_SRC}
-              index={1}
-              onCancel={cancel}
-              onConfirm={cutImage}
-            />
-          ) : null}
+          <UPCropper
+            imagePickerAdapter={mockPicker}
+            index={1}
+            onCancel={cancel}
+            onConfirm={cutImage}
+            ref={cropperRef1}
+          />
         </View>
       </PageItem>
 
