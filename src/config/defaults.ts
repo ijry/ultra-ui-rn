@@ -321,6 +321,14 @@ export type UPColDefaults = {
   textAlign: string;
 };
 
+export type UPFlexDefaults = {
+  direction: 'row' | 'column' | 'row-reverse' | 'column-reverse';
+  justify: string;
+  align: string;
+  wrap: boolean;
+  gap: number;
+};
+
 export type UPGridDefaults = {
   col: number;
   border: boolean;
@@ -746,6 +754,7 @@ export type UPProps = {
   skeleton: UPSkeletonDefaults;
   row: UPRowDefaults;
   col: UPColDefaults;
+  flex: UPFlexDefaults;
   grid: UPGridDefaults;
   gridItem: UPGridItemDefaults;
   input: UPInputDefaults;
@@ -1158,6 +1167,13 @@ export const sourceDefaults: Readonly<{
       gutter: 0,
       justify: 'start',
       align: 'center',
+    }),
+    flex: Object.freeze({
+      direction: 'row' as const,
+      justify: 'flex-start',
+      align: 'stretch',
+      wrap: false,
+      gap: 0,
     }),
     col: Object.freeze({
       span: 12,

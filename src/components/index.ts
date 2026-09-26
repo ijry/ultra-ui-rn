@@ -19,6 +19,7 @@ export * from './code';
 export * from './count-down';
 export * from './count-to';
 export * from './col';
+export * from './flex';
 export * from './collapse';
 export * from './copy';
 export * from './divider';

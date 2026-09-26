@@ -35,6 +35,7 @@ export type UPConfigOverrides = {
     skeleton?: Partial<UPProps['skeleton']>;
     row?: Partial<UPProps['row']>;
     col?: Partial<UPProps['col']>;
+    flex?: Partial<UPProps['flex']>;
     grid?: Partial<UPProps['grid']>;
     gridItem?: Partial<UPProps['gridItem']>;
     input?: Partial<UPProps['input']>;
@@ -174,6 +175,7 @@ function createSourceState(): UPConfigState {
       skeleton: { ...sourceDefaults.props.skeleton },
       row: { ...sourceDefaults.props.row },
       col: { ...sourceDefaults.props.col },
+      flex: { ...sourceDefaults.props.flex },
       grid: { ...sourceDefaults.props.grid },
       gridItem: { ...sourceDefaults.props.gridItem },
       input: { ...sourceDefaults.props.input },
@@ -318,6 +320,7 @@ export function setUPConfig(overrides: UPConfigOverrides): void {
       skeleton: { ...state.props.skeleton, ...overrides.props?.skeleton },
       row: { ...state.props.row, ...overrides.props?.row },
       col: { ...state.props.col, ...overrides.props?.col },
+      flex: { ...state.props.flex, ...overrides.props?.flex },
       grid: { ...state.props.grid, ...overrides.props?.grid },
       gridItem: { ...state.props.gridItem, ...overrides.props?.gridItem },
       input: { ...state.props.input, ...overrides.props?.input },
